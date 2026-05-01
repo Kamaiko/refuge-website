@@ -3,6 +3,7 @@ import Hero from "@/components/sections/Hero";
 import Manifeste from "@/components/sections/Manifeste";
 import Medaillons from "@/components/sections/Medaillons";
 import Choisir from "@/components/sections/Choisir";
+import Capsules from "@/components/sections/Capsules";
 import MarqueeBrand from "@/components/sections/MarqueeBrand";
 import Feedback from "@/components/sections/Feedback";
 
@@ -15,6 +16,7 @@ export default function Home() {
         <Manifeste />
         <Medaillons />
         <Choisir />
+        <Capsules />
         <MarqueeBrand />
         <Feedback />
       </main>
