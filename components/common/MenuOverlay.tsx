@@ -14,10 +14,9 @@ const NAV = [
   { label: "Manifeste", href: "#manifeste" },
   { label: "Le lieu", href: "#lieu" },
   { label: "Concept", href: "#concept" },
-  { label: "Les refuges", href: "#refuges" },
+  { label: "Refuges", href: "#refuges" },
   { label: "Expériences", href: "#experiences" },
   { label: "Galerie", href: "#galerie" },
-  { label: "Journal", href: "#journal" },
   { label: "Réservation", href: "#reservation" },
 ];
 
@@ -30,7 +29,11 @@ export default function MenuOverlay() {
   // Sync initial state with GSAP cache
   useGSAP(() => {
     if (containerRef.current) {
-      gsap.set(containerRef.current, { autoAlpha: 0, pointerEvents: "none" });
+      gsap.set(containerRef.current, {
+        autoAlpha: 0,
+        pointerEvents: "none",
+        clipPath: "circle(0% at 50% 100%)",
+      });
     }
     if (imagePanelRef.current) gsap.set(imagePanelRef.current, { xPercent: 110 });
     if (navRef.current) {
@@ -47,10 +50,12 @@ export default function MenuOverlay() {
       if (!container || !navItems) return;
 
       if (isOpen) {
+        // Emerge from the Menu CTA position (bottom center)
         gsap.to(container, {
           autoAlpha: 1,
           pointerEvents: "auto",
-          duration: 0.4,
+          clipPath: "circle(150% at 50% 100%)",
+          duration: 0.85,
           ease: PANEL.ease,
         });
         if (imagePanel) {
@@ -58,7 +63,7 @@ export default function MenuOverlay() {
             xPercent: 0,
             duration: 0.8,
             ease: PANEL.ease,
-            delay: 0.1,
+            delay: 0.15,
           });
         }
         gsap.to(navItems, {
@@ -66,7 +71,7 @@ export default function MenuOverlay() {
           opacity: 1,
           duration: 0.85,
           stagger: 0.05,
-          delay: 0.25,
+          delay: 0.3,
           ease: PANEL.ease,
         });
       } else {
@@ -88,9 +93,10 @@ export default function MenuOverlay() {
         gsap.to(container, {
           autoAlpha: 0,
           pointerEvents: "none",
-          duration: 0.3,
+          clipPath: "circle(0% at 50% 100%)",
+          duration: 0.55,
           ease: PANEL.closeEase,
-          delay: 0.35,
+          delay: 0.25,
         });
       }
     },
@@ -113,19 +119,9 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[200] bg-base-noir"
+      className="fixed inset-0 z-[200] bg-gris-tan"
       aria-hidden={!isOpen}
     >
-      {/* Marquee wordmark — full-width back layer, very dim */}
-      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 z-[1] flex items-center select-none">
-        <Marquee
-          text={SITE_CONFIG.name}
-          speed={40}
-          separator="·"
-          className="text-creme/[0.06] text-[22vw] md:text-[18vw] font-semibold leading-none tracking-[-0.04em]"
-        />
-      </div>
-
       {/* Layout split — nav left + image right */}
       <div className="relative z-[2] flex h-full">
         {/* LEFT — nav vertical */}
@@ -159,21 +155,31 @@ export default function MenuOverlay() {
           </div>
         </div>
 
-        {/* RIGHT — cropped image (desktop only) */}
+        {/* RIGHT — cropped image with the wordmark marquee inside, centered vertically */}
         <div
           ref={imagePanelRef}
-          className="hidden md:block md:basis-[42%] relative overflow-hidden rounded-l-card my-6 mr-6"
+          className="hidden md:block md:basis-[40%] relative overflow-hidden rounded-l-card my-6 mr-6"
         >
           <Image
             src="/images/unite-galets.avif"
             alt=""
             fill
-            sizes="42vw"
+            sizes="40vw"
             className="object-cover object-[60%_40%]"
             priority={false}
           />
-          {/* Soft fade on the inner edge so the image meets the dark side smoothly */}
-          <div className="absolute inset-0 bg-gradient-to-r from-base-noir/40 via-transparent to-transparent" />
+          {/* Slight darkening overlay so the marquee text reads cleanly over the image */}
+          <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
+
+          {/* Marquee wordmark — large, horizontal, centered vertically inside the image */}
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
+            <Marquee
+              text={SITE_CONFIG.name}
+              speed={45}
+              separator="·"
+              className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"
+            />
+          </div>
         </div>
       </div>
 

@@ -35,6 +35,8 @@ export default function ReservePanel() {
   const { isOpen, close } = useReservePanel();
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bottomBarRef = useRef<HTMLDivElement>(null);
+  const bottomBarContentRef = useRef<HTMLDivElement>(null);
 
   const [refuge, setRefuge] = useState<RefugeSlug>("aubepine");
   const [arrivee, setArrivee] = useState("");
@@ -48,6 +50,8 @@ export default function ReservePanel() {
   useGSAP(() => {
     if (panelRef.current) gsap.set(panelRef.current, { xPercent: 100 });
     if (backdropRef.current) gsap.set(backdropRef.current, { opacity: 0, pointerEvents: "none" });
+    if (bottomBarRef.current) gsap.set(bottomBarRef.current, { scaleX: 0, transformOrigin: "right center" });
+    if (bottomBarContentRef.current) gsap.set(bottomBarContentRef.current, { opacity: 0 });
   }, []);
 
   // Animate panel + backdrop on open/close
@@ -55,6 +59,8 @@ export default function ReservePanel() {
     () => {
       const backdrop = backdropRef.current;
       const panel = panelRef.current;
+      const bar = bottomBarRef.current;
+      const barContent = bottomBarContentRef.current;
       if (!backdrop || !panel) return;
 
       if (isOpen) {
@@ -69,17 +75,52 @@ export default function ReservePanel() {
           duration: PANEL.open,
           ease: PANEL.ease,
         });
+        // Bottom bar grows from right after the panel has mostly settled
+        if (bar) {
+          gsap.to(bar, {
+            scaleX: 1,
+            duration: 0.7,
+            ease: PANEL.ease,
+            delay: 0.45,
+          });
+        }
+        if (barContent) {
+          gsap.to(barContent, {
+            opacity: 1,
+            duration: 0.5,
+            ease: PANEL.ease,
+            delay: 0.95,
+          });
+        }
       } else {
+        // Reverse: content fades, then bar shrinks, then panel rolls back
+        if (barContent) {
+          gsap.to(barContent, {
+            opacity: 0,
+            duration: 0.25,
+            ease: PANEL.closeEase,
+          });
+        }
+        if (bar) {
+          gsap.to(bar, {
+            scaleX: 0,
+            duration: 0.4,
+            ease: PANEL.closeEase,
+            delay: 0.15,
+          });
+        }
+        gsap.to(panel, {
+          xPercent: 100,
+          duration: PANEL.close,
+          ease: PANEL.closeEase,
+          delay: 0.35,
+        });
         gsap.to(backdrop, {
           opacity: 0,
           pointerEvents: "none",
           duration: 0.35,
           ease: PANEL.closeEase,
-        });
-        gsap.to(panel, {
-          xPercent: 100,
-          duration: PANEL.close,
-          ease: PANEL.closeEase,
+          delay: 0.45,
         });
       }
     },
@@ -139,9 +180,9 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        className="fixed top-0 right-0 z-[210] h-dvh w-full md:w-[480px] bg-base-noir text-creme overflow-y-auto"
+        className="fixed top-0 right-0 z-[210] h-dvh w-full md:w-[480px] bg-gris-tan text-creme overflow-y-auto rounded-l-card md:rounded-l-card"
       >
-        <div className="flex flex-col min-h-full p-6 md:p-8">
+        <div className="flex flex-col min-h-full p-6 md:p-8 pb-32">
           {/* Close */}
           <button
             type="button"
@@ -183,7 +224,7 @@ export default function ReservePanel() {
                       onClick={() => setRefuge(unite.slug as RefugeSlug)}
                       className={`group relative aspect-[3/4] overflow-hidden rounded-soft transition-all ${
                         selected
-                          ? "ring-2 ring-creme ring-offset-2 ring-offset-base-noir"
+                          ? "ring-2 ring-creme ring-offset-2 ring-offset-gris-tan"
                           : "ring-1 ring-creme/15 hover:ring-creme/40"
                       }`}
                     >
@@ -252,39 +293,6 @@ export default function ReservePanel() {
               />
             </fieldset>
 
-            {/* Spacer pushes summary to bottom */}
-            <div className="flex-1" />
-
-            {/* Summary + CTA */}
-            <div className="border-t border-creme/10 pt-6 flex items-end justify-between gap-6">
-              <div className="flex flex-col gap-1">
-                <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em]">
-                  Séjour
-                </span>
-                <span className="text-creme text-sm">
-                  {nights > 0 ? `${nights} ${nights === 1 ? "nuit" : "nuits"}` : "—"}
-                </span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em]">
-                  Estimation
-                </span>
-                <span className="text-creme text-sm tabular-nums">
-                  {total > 0 ? formatCAD(total) : "—"}
-                </span>
-              </div>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {submitting ? "Envoi…" : "Suivant"}
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                  <path d="M3 11L11 3M11 3H4M11 3V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-
             {feedback ? (
               <p
                 aria-live="polite"
@@ -294,6 +302,50 @@ export default function ReservePanel() {
               </p>
             ) : null}
           </form>
+        </div>
+
+        {/* Bottom bar — pinned to bottom of panel, grows from right */}
+        <div
+          ref={bottomBarRef}
+          className="absolute bottom-4 left-4 right-4 rounded-pill bg-base-noir/95 backdrop-blur-sm origin-right will-change-transform"
+        >
+          <div
+            ref={bottomBarContentRef}
+            className="flex items-center justify-between gap-4 px-5 py-3"
+          >
+            <div className="flex flex-col leading-tight">
+              <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em]">
+                Séjour
+              </span>
+              <span className="text-creme text-xs">
+                {nights > 0 ? `${nights} ${nights === 1 ? "nuit" : "nuits"}` : "—"}
+              </span>
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em]">
+                Estimation
+              </span>
+              <span className="text-creme text-xs tabular-nums">
+                {total > 0 ? formatCAD(total) : "—"}
+              </span>
+            </div>
+            <button
+              type="submit"
+              form=""
+              onClick={(e) => {
+                // Find form and submit
+                const form = (e.currentTarget.closest("aside") as HTMLElement)?.querySelector("form");
+                if (form) (form as HTMLFormElement).requestSubmit();
+              }}
+              disabled={submitting}
+              className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {submitting ? "Envoi…" : "Suivant"}
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path d="M3 11L11 3M11 3H4M11 3V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </aside>
     </>

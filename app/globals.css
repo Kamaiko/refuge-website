@@ -56,6 +56,14 @@ body {
   color: var(--color-creme);
 }
 
+/* Menu CTA — circle to pill morph driven by data-morphed attribute */
+button.menu-cta[data-morphed="true"] .menu-cta-label {
+  max-width: 100px;
+  opacity: 1;
+  margin-left: 1.25rem;
+  margin-right: 0.75rem;
+}
+
 /* Hide native cursor when custom cursor is active (desktop only) */
 html.has-custom-cursor,
 html.has-custom-cursor * {

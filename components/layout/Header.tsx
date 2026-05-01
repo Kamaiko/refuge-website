@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
@@ -11,44 +11,65 @@ import { SITE_CONFIG } from "@/lib/constants";
 export default function Header() {
   const { toggle, isOpen } = useMenu();
   const { open: openReservePanel } = useReservePanel();
-  const menuBtnRef = useRef<HTMLButtonElement>(null);
   const reserveRef = useRef<HTMLButtonElement>(null);
+  const menuBtnRef = useRef<HTMLButtonElement>(null);
+  const menuLabelRef = useRef<HTMLSpanElement>(null);
+  const [menuMorphed, setMenuMorphed] = useState(false);
 
-  // Menu CTA fades / scales in only after scrolling past hero
+  // Initial reveal — Reserve fades in from above, Menu morphs from circle to pill
   useGSAP(() => {
-    if (!menuBtnRef.current) return;
-    gsap.set(menuBtnRef.current, { scale: 0, opacity: 0 });
-    ScrollTrigger.create({
-      start: "top -10%",
-      end: "max",
-      onEnter: () => {
-        gsap.to(menuBtnRef.current, {
-          scale: 1,
-          opacity: 1,
-          duration: 0.6,
-          ease: "expo.out",
-        });
-      },
-      onLeaveBack: () => {
-        gsap.to(menuBtnRef.current, {
-          scale: 0,
-          opacity: 0,
-          duration: 0.4,
-          ease: "expo.in",
-        });
-      },
-    });
+    // Reserve button entrance
+    if (reserveRef.current) {
+      gsap.fromTo(
+        reserveRef.current,
+        { opacity: 0, y: -10 },
+        { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "expo.out" },
+      );
+    }
+
+    // Menu CTA — visible at load as a small circle, then morphs to pill with label
+    if (menuBtnRef.current && menuLabelRef.current) {
+      gsap.fromTo(
+        menuBtnRef.current,
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7, delay: 0.6, ease: "expo.out" },
+      );
+      // After the circle is in, morph to pill with label
+      gsap.delayedCall(1.4, () => setMenuMorphed(true));
+    }
   });
 
-  // Initial reveal of header chrome (logo + reserve)
-  useEffect(() => {
+  // Reserve scroll-out — disappears upward past 40% of the hero
+  useGSAP(() => {
     if (!reserveRef.current) return;
-    gsap.fromTo(
-      [reserveRef.current],
-      { opacity: 0, y: -10 },
-      { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "expo.out" },
-    );
-  }, []);
+    const trigger = ScrollTrigger.create({
+      start: () => `${window.innerHeight * 0.4} top`,
+      end: "max",
+      onEnter: () =>
+        gsap.to(reserveRef.current, {
+          y: -80,
+          opacity: 0,
+          duration: 0.5,
+          ease: "expo.in",
+          pointerEvents: "none" as unknown as number,
+        }),
+      onLeaveBack: () =>
+        gsap.to(reserveRef.current, {
+          y: 0,
+          opacity: 1,
+          duration: 0.5,
+          ease: "expo.out",
+          pointerEvents: "auto" as unknown as number,
+        }),
+    });
+    return () => trigger.kill();
+  });
+
+  // Sync the morphed state attribute for CSS-driven label reveal
+  useEffect(() => {
+    if (!menuBtnRef.current) return;
+    menuBtnRef.current.setAttribute("data-morphed", menuMorphed ? "true" : "false");
+  }, [menuMorphed]);
 
   return (
     <>
@@ -68,7 +89,7 @@ export default function Header() {
           ref={reserveRef}
           type="button"
           onClick={openReservePanel}
-          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-5 py-2.5 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
+          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-6 py-3 text-base font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
         >
           Réserver
           <svg
@@ -76,7 +97,6 @@ export default function Header() {
             height="14"
             viewBox="0 0 14 14"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
             className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
             aria-hidden
           >
@@ -98,20 +118,44 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Floating Menu CTA — appears after scrolling past hero */}
+      {/* Floating Menu CTA — visible from page load, morphs from circle to pill */}
       <button
         ref={menuBtnRef}
         type="button"
         onClick={toggle}
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={isOpen}
-        className="fixed bottom-6 left-1/2 z-[110] -translate-x-1/2 inline-flex items-center gap-3 rounded-full bg-creme/95 px-5 py-3 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme will-change-transform"
+        data-morphed="false"
+        className="menu-cta fixed bottom-6 left-1/2 z-[110] -translate-x-1/2 inline-flex items-center justify-center rounded-pill bg-creme/95 text-base font-medium text-base-noir backdrop-blur-sm hover:bg-creme will-change-transform overflow-hidden h-14"
         style={{ opacity: 0, transform: "translateX(-50%) scale(0)" }}
       >
-        {isOpen ? "Fermer" : "Menu"}
-        <span className="flex flex-col gap-1">
-          <span className={`block h-px w-3.5 bg-current transition-transform ${isOpen ? "translate-y-0.5 rotate-45" : ""}`} />
-          <span className={`block h-px w-3.5 bg-current transition-transform ${isOpen ? "-translate-y-0.5 -rotate-45" : ""}`} />
+        <span
+          ref={menuLabelRef}
+          className="menu-cta-label inline-block whitespace-nowrap overflow-hidden"
+          style={{
+            maxWidth: 0,
+            opacity: 0,
+            marginLeft: 0,
+            marginRight: 0,
+            transition:
+              "max-width 0.7s var(--ease-cinematic), opacity 0.5s var(--ease-cinematic), margin 0.7s var(--ease-cinematic)",
+          }}
+        >
+          {isOpen ? "Fermer" : "Menu"}
+        </span>
+        <span className="inline-flex items-center justify-center h-14 w-14 shrink-0">
+          <span className="flex flex-col gap-1.5">
+            <span
+              className={`block h-px w-5 bg-current transition-transform duration-300 ${
+                isOpen ? "translate-y-1 rotate-45" : ""
+              }`}
+            />
+            <span
+              className={`block h-px w-5 bg-current transition-transform duration-300 ${
+                isOpen ? "-translate-y-1 -rotate-45" : ""
+              }`}
+            />
+          </span>
         </span>
       </button>
     </>
