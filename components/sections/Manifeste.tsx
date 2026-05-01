@@ -1,15 +1,7 @@
-import ScrollLineReveal from "@/components/common/ScrollLineReveal";
+import CurtainReveal from "@/components/common/CurtainReveal";
 
-const MANIFESTE_LINES = [
-  "Charlevoix garde encore quelque chose de pur.",
-  "Le fleuve qui s’élargit en mer,",
-  "la forêt qui descend jusqu’à l’eau,",
-  "le silence qu’on n’attend plus.",
-  "Brume s’y pose sans bruit —",
-  "trois refuges où ralentir cesse",
-  "d’être un luxe pour devenir",
-  "une évidence.",
-].join("\n");
+const MANIFESTE =
+  "Charlevoix garde encore quelque chose de pur. Brume s’y pose sans bruit — trois refuges où ralentir devient une évidence.";
 
 export default function Manifeste() {
   return (
@@ -17,12 +9,9 @@ export default function Manifeste() {
       id="manifeste"
       className="relative w-full px-5 md:px-10 py-32 md:py-48 min-h-[100svh] flex items-center"
     >
-      <ScrollLineReveal
-        baseOpacity={0.18}
-        className="text-creme w-full text-5xl md:text-7xl lg:text-[6.5vw] font-light leading-[1.06] tracking-[-0.015em]"
-      >
-        {MANIFESTE_LINES}
-      </ScrollLineReveal>
+      <CurtainReveal className="w-full text-5xl md:text-7xl lg:text-[6.2vw] font-light leading-[1.06] tracking-[-0.015em]">
+        {MANIFESTE}
+      </CurtainReveal>
     </section>
   );
 }

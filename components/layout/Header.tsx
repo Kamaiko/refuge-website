@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
@@ -13,12 +13,12 @@ export default function Header() {
   const { open: openReservePanel } = useReservePanel();
   const reserveRef = useRef<HTMLButtonElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const menuLabelRef = useRef<HTMLSpanElement>(null);
-  const [menuMorphed, setMenuMorphed] = useState(false);
+  const whitePillRef = useRef<HTMLSpanElement>(null);
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Initial reveal — Reserve fades in from above, Menu morphs from circle to pill
+  // Initial entrance — Reserve fades in, Menu shows as black circle then white pill unrolls behind
   useGSAP(() => {
-    // Reserve button entrance
     if (reserveRef.current) {
       gsap.fromTo(
         reserveRef.current,
@@ -27,17 +27,31 @@ export default function Header() {
       );
     }
 
-    // Menu CTA — visible at load as a small circle, then morphs to pill with label
-    if (menuBtnRef.current && menuLabelRef.current) {
-      gsap.fromTo(
-        menuBtnRef.current,
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.7, delay: 0.6, ease: "expo.out" },
-      );
-      // After the circle is in, morph to pill with label
-      gsap.delayedCall(1.4, () => setMenuMorphed(true));
+    if (menuBtnRef.current && whitePillRef.current && labelRef.current) {
+      // Initial: only black circle visible, pill collapsed, label hidden
+      gsap.set(menuBtnRef.current, { opacity: 0, scale: 0.6 });
+      gsap.set(whitePillRef.current, { scaleX: 0 });
+      gsap.set(labelRef.current, { opacity: 0 });
+
+      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+      tl.to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
+        .to(whitePillRef.current, { scaleX: 1, duration: 0.7, delay: 0.5 })
+        .to(labelRef.current, { opacity: 1, duration: 0.4 }, "-=0.3");
     }
   });
+
+  // iOS-wheel switch: Menu (top) ↔ Close (bottom). isOpen true → wheel slides up to show Close
+  useGSAP(
+    () => {
+      if (!wheelRef.current) return;
+      gsap.to(wheelRef.current, {
+        yPercent: isOpen ? -50 : 0,
+        duration: 0.5,
+        ease: "expo.inOut",
+      });
+    },
+    { dependencies: [isOpen] },
+  );
 
   // Reserve scroll-out — disappears upward past 40% of the hero
   useGSAP(() => {
@@ -65,15 +79,9 @@ export default function Header() {
     return () => trigger.kill();
   });
 
-  // Sync the morphed state attribute for CSS-driven label reveal
-  useEffect(() => {
-    if (!menuBtnRef.current) return;
-    menuBtnRef.current.setAttribute("data-morphed", menuMorphed ? "true" : "false");
-  }, [menuMorphed]);
-
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-5 md:p-7 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-7 md:p-10 pointer-events-none">
         <Link
           href="/"
           aria-label={SITE_CONFIG.name}
@@ -89,7 +97,7 @@ export default function Header() {
           ref={reserveRef}
           type="button"
           onClick={openReservePanel}
-          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-6 py-3 text-base font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
+          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-8 py-4 text-base font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
         >
           Réserver
           <svg
@@ -118,43 +126,40 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Floating Menu CTA — visible from page load, morphs from circle to pill */}
+      {/* Menu CTA — black circle initial, white pill unrolls behind, iOS wheel for Menu↔Close.
+          z-[210] keeps it above MenuOverlay (z-[200]) so the user can click it to close. */}
       <button
         ref={menuBtnRef}
         type="button"
         onClick={toggle}
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={isOpen}
-        data-morphed="false"
-        className="menu-cta fixed bottom-6 left-1/2 z-[110] -translate-x-1/2 inline-flex items-center justify-center rounded-pill bg-creme/95 text-base font-medium text-base-noir backdrop-blur-sm hover:bg-creme will-change-transform overflow-hidden h-14"
-        style={{ opacity: 0, transform: "translateX(-50%) scale(0)" }}
+        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-stretch h-16 will-change-transform"
+        style={{ opacity: 0 }}
       >
+        {/* White pill — unrolls behind, extending to the LEFT of the circle */}
         <span
-          ref={menuLabelRef}
-          className="menu-cta-label inline-block whitespace-nowrap overflow-hidden"
-          style={{
-            maxWidth: 0,
-            opacity: 0,
-            marginLeft: 0,
-            marginRight: 0,
-            transition:
-              "max-width 0.7s var(--ease-cinematic), opacity 0.5s var(--ease-cinematic), margin 0.7s var(--ease-cinematic)",
-          }}
+          ref={whitePillRef}
+          aria-hidden
+          className="absolute inset-0 bg-creme rounded-pill origin-right will-change-transform"
+        />
+
+        {/* Label area — sits over the white pill, contains the iOS-wheel */}
+        <span
+          ref={labelRef}
+          className="relative z-10 inline-flex items-center pl-7 pr-4 h-16 text-base font-medium text-base-noir overflow-hidden"
         >
-          {isOpen ? "Fermer" : "Menu"}
+          <span ref={wheelRef} className="block will-change-transform">
+            <span className="block h-16 leading-[64px]">Menu</span>
+            <span className="block h-16 leading-[64px]">Close</span>
+          </span>
         </span>
-        <span className="inline-flex items-center justify-center h-14 w-14 shrink-0">
+
+        {/* Black circle — always visible, on the right */}
+        <span className="relative z-10 inline-flex items-center justify-center h-16 w-16 rounded-full bg-base-noir shrink-0">
           <span className="flex flex-col gap-1.5">
-            <span
-              className={`block h-px w-5 bg-current transition-transform duration-300 ${
-                isOpen ? "translate-y-1 rotate-45" : ""
-              }`}
-            />
-            <span
-              className={`block h-px w-5 bg-current transition-transform duration-300 ${
-                isOpen ? "-translate-y-1 -rotate-45" : ""
-              }`}
-            />
+            <span className="block h-px w-5 bg-gris-secondaire" />
+            <span className="block h-px w-5 bg-gris-secondaire" />
           </span>
         </span>
       </button>

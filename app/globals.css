@@ -6,10 +6,13 @@
   --color-creme: #F4EFE7;
   --color-creme-dim: #C9C5BD;
 
-  /* Warm grey-tan family — used for Reserve panel, Menu overlay, mid-scroll bg */
+  /* Warm grey-tan family — used for Reserve panel, Menu overlay, Choisir section */
   --color-gris-tan: #2A2725;
   --color-gris-tan-soft: #3A3631;
   --color-gris-tan-warm: #44403B;
+
+  /* Secondary grey — used for hamburger lines, secondary text, "filter" overlay */
+  --color-gris-secondaire: #6B6660;
 
   --color-vert-sapin: #2D5F4E;
   --color-vert-sapin-deep: #1F4338;
@@ -54,14 +57,6 @@ body {
 ::selection {
   background: var(--color-orange-sunset);
   color: var(--color-creme);
-}
-
-/* Menu CTA — circle to pill morph driven by data-morphed attribute */
-button.menu-cta[data-morphed="true"] .menu-cta-label {
-  max-width: 100px;
-  opacity: 1;
-  margin-left: 1.25rem;
-  margin-right: 0.75rem;
 }
 
 /* Hide native cursor when custom cursor is active (desktop only) */
