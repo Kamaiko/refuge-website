@@ -1,3 +1,4 @@
+import Image from "next/image";
 import RevealText from "@/components/common/RevealText";
 import RevealOnScroll from "@/components/common/RevealOnScroll";
 import ScrollScaleImage from "@/components/common/ScrollScaleImage";
@@ -34,30 +35,32 @@ export default function Lieu() {
             >
               <p>
                 Cinquante kilomètres de falaises, de baies et de villages accrochés
-                au fleuve. Le Saint-Laurent y devient mer. Les bélugas remontent
-                l’été ; les baleines, plus loin, après Tadoussac.
+                au fleuve. Le Saint-Laurent y devient mer.
               </p>
               <p>
-                À l’automne, la forêt boréale prend feu en silence. La lumière, le
-                matin, devient liquide. C’est ce paysage que nos refuges essaient
-                simplement de ne pas déranger.
+                À l’automne, la forêt boréale prend feu en silence. C’est ce
+                paysage que nos refuges essaient de ne pas déranger.
               </p>
             </RevealOnScroll>
           </div>
 
           <div className="md:col-span-7 md:col-start-7">
             <ScrollScaleImage
-              scaleFrom={1.3}
+              scaleFrom={1.25}
               scaleTo={1}
-              className="aspect-[4/5] w-full rounded-[28px] bg-base-noir-soft"
+              className="aspect-[4/5] w-full rounded-card bg-base-noir-soft"
             >
-              <div className="flex h-full w-full items-center justify-center text-creme-dim/40 text-sm">
-                [paysage Charlevoix — image AI]
-              </div>
+              <Image
+                src="/images/unite-brume.avif"
+                alt="Charlevoix — fjord du Saint-Laurent vu depuis un promontoire boréal"
+                fill
+                sizes="(min-width: 768px) 58vw, 100vw"
+                className="object-cover object-[60%_50%]"
+              />
             </ScrollScaleImage>
             <div className="mt-4 flex items-center justify-between text-xs text-creme-dim">
               <span>Baie-Saint-Paul → Tadoussac</span>
-              <span>Région touristique du Québec</span>
+              <span>Charlevoix · Québec</span>
             </div>
           </div>
         </div>
