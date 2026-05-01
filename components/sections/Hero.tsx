@@ -31,6 +31,7 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
+      data-hero
       className="relative h-[100svh] w-full p-3 md:p-4"
     >
       {/* Inner frame — rounded corners + thin black border breathing space */}
