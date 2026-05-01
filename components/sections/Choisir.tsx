@@ -41,7 +41,7 @@ export default function Choisir() {
       <WordmarkMaskReveal
         word={SITE_CONFIG.name}
         imageSrc="/images/hero-shape.avif"
-        imageAlt="Refuge en forêt boréale de Charlevoix"
+        imageAlt="Un refuge Brume au bord du lac, terrasse en walnut et spa cèdre"
       />
     </section>
   );
