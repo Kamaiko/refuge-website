@@ -6,6 +6,11 @@
   --color-creme: #F4EFE7;
   --color-creme-dim: #C9C5BD;
 
+  /* Warm grey-tan family — used for Reserve panel, Menu overlay, mid-scroll bg */
+  --color-gris-tan: #2A2725;
+  --color-gris-tan-soft: #3A3631;
+  --color-gris-tan-warm: #44403B;
+
   --color-vert-sapin: #2D5F4E;
   --color-vert-sapin-deep: #1F4338;
 
