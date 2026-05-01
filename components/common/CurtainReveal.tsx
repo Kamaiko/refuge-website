@@ -33,11 +33,14 @@ export default function CurtainReveal({
   useGSAP(
     () => {
       if (!wrapRef.current || !filterRef.current) return;
+      // Filter recedes downward: top inset grows from 0 → 100% so the cream
+      // is revealed FROM THE TOP. Cream sits above, grey filter remains below
+      // mid-scroll. Sharp horizontal cut at the boundary.
       gsap.fromTo(
         filterRef.current,
         { clipPath: "inset(0% 0% 0% 0%)" },
         {
-          clipPath: "inset(0% 0% 100% 0%)",
+          clipPath: "inset(100% 0% 0% 0%)",
           ease: "none",
           scrollTrigger: {
             trigger: wrapRef.current,

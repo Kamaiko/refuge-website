@@ -180,7 +180,7 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        className="fixed top-0 right-0 z-[210] h-dvh w-full md:w-[480px] bg-gris-tan text-creme overflow-y-auto rounded-l-card md:rounded-l-card"
+        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[560px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div className="flex flex-col min-h-full p-6 md:p-8 pb-32">
           {/* Close */}
@@ -266,31 +266,6 @@ export default function ReservePanel() {
                 <DateInput label="Arrivée" name="arrivee" value={arrivee} onChange={setArrivee} />
                 <DateInput label="Départ" name="depart" value={depart} onChange={setDepart} />
               </div>
-            </fieldset>
-
-            {/* (3) Contact */}
-            <fieldset className="flex flex-col gap-4">
-              <legend className="text-creme/90 text-sm">
-                <span className="text-creme-dim/60 mr-2">(3)</span>Vous êtes ?
-              </legend>
-              <input
-                type="text"
-                name="nom"
-                required
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                placeholder="Nom"
-                className="w-full bg-transparent border border-creme/20 rounded-pill px-5 py-3 text-creme text-sm placeholder:text-creme-dim/50 focus:outline-none focus:border-creme transition-colors"
-              />
-              <input
-                type="email"
-                name="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Courriel"
-                className="w-full bg-transparent border border-creme/20 rounded-pill px-5 py-3 text-creme text-sm placeholder:text-creme-dim/50 focus:outline-none focus:border-creme transition-colors"
-              />
             </fieldset>
 
             {feedback ? (

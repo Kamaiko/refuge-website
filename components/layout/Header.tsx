@@ -16,10 +16,9 @@ export default function Header() {
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Initial entrance — Reserve fades in. Menu starts as a centered black circle,
-  // then the white pill unrolls to the LEFT and the label area widens. The
-  // parent stays viewport-centered via -translate-x-1/2, so as it grows the
-  // black circle visually "drifts" rightward to its final position.
+  // Initial entrance — Reserve fades in. Menu starts as a centered black circle
+  // (cream pill collapsed to circle width), then the cream pill unrolls leftward
+  // and the circle drifts to the right edge.
   useGSAP(() => {
     if (reserveRef.current) {
       gsap.fromTo(
@@ -30,7 +29,6 @@ export default function Header() {
     }
 
     if (menuBtnRef.current && labelAreaRef.current) {
-      // Initial: button hidden, label width 0 (parent = circle width only)
       gsap.set(menuBtnRef.current, { opacity: 0, scale: 0.6 });
       gsap.set(labelAreaRef.current, { width: 0 });
 
@@ -40,7 +38,7 @@ export default function Header() {
     }
   });
 
-  // iOS-wheel: only one word visible at any time. yPercent 0 → -50 to switch.
+  // iOS-wheel: only one word visible. yPercent 0 → -50 to switch.
   useGSAP(
     () => {
       if (!wheelRef.current) return;
@@ -93,16 +91,16 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Reserve CTA — same format as Menu: pill with black circle on right */}
+        {/* Reserve CTA — cream pill EXTENDS beyond the inner black circle */}
         <button
           ref={reserveRef}
           type="button"
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
-          className="pointer-events-auto inline-flex items-stretch h-14 rounded-pill bg-creme/95 text-base font-medium text-base-noir transition-colors hover:bg-creme overflow-hidden"
+          className="pointer-events-auto inline-flex items-center h-16 rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme pl-7 pr-2"
         >
-          <span className="inline-flex items-center pl-6 pr-3">Réserver</span>
-          <span className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-base-noir shrink-0">
+          <span className="pr-5">Réserver</span>
+          <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-base-noir shrink-0">
             <svg
               width="14"
               height="14"
@@ -123,41 +121,42 @@ export default function Header() {
         </button>
       </header>
 
-      {/* Side badge — vertical text right edge */}
+      {/* Side badge */}
       <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[90] pointer-events-none">
         <div className="rounded-l-md bg-base-noir/80 backdrop-blur-sm px-2 py-4 text-creme/80 text-[10px] uppercase tracking-[0.3em] [writing-mode:vertical-rl]">
           Concept · 2026
         </div>
       </div>
 
-      {/* Menu CTA — black circle centered initially, white pill unrolls to the
-          left, circle drifts right. iOS-wheel for Menu↔Close.
-          z-[210] keeps it above MenuOverlay (z-[200]). */}
+      {/* Menu CTA — cream pill EXTENDS beyond the inner black circle. Initial:
+          label width 0 → parent width = circle area only (with the cream ring
+          around). Entrance: label widens, parent grows leftward, black circle
+          drifts to the right of the pill. iOS wheel for Menu↔Close. */}
       <button
         ref={menuBtnRef}
         type="button"
         onClick={toggle}
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={isOpen}
-        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-stretch h-16 rounded-pill bg-creme overflow-hidden will-change-transform"
+        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-center h-16 rounded-pill bg-creme pr-2 will-change-transform"
         style={{ opacity: 0 }}
       >
         {/* Label area — width animates 0 → auto on initial entrance */}
         <span
           ref={labelAreaRef}
-          className="inline-flex items-center text-base font-medium text-base-noir overflow-hidden h-16 will-change-[width]"
+          className="inline-flex items-center text-lg font-medium text-base-noir overflow-hidden h-12 will-change-[width]"
           style={{ width: 0 }}
         >
-          <span className="block pl-7 pr-4 whitespace-nowrap">
+          <span className="block pl-7 pr-5 whitespace-nowrap">
             <span ref={wheelRef} className="block will-change-transform">
-              <span className="block h-16 leading-[64px]">Menu</span>
-              <span className="block h-16 leading-[64px]">Close</span>
+              <span className="block h-12 leading-[48px]">Menu</span>
+              <span className="block h-12 leading-[48px]">Close</span>
             </span>
           </span>
         </span>
 
-        {/* Black circle — always visible, on the right of the pill */}
-        <span className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-base-noir shrink-0">
+        {/* Black circle — smaller than the cream pill (cream visible around) */}
+        <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-base-noir shrink-0">
           <span className="flex flex-col gap-1.5">
             <span className="block h-px w-5 bg-gris-secondaire" />
             <span className="block h-px w-5 bg-gris-secondaire" />

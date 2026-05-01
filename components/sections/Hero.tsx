@@ -34,7 +34,7 @@ export default function Hero() {
       className="relative h-[100svh] w-full p-3 md:p-4"
     >
       {/* Inner frame — rounded corners + thin black border breathing space */}
-      <div className="relative h-full w-full overflow-hidden rounded-[40px]">
+      <div className="relative h-full w-full overflow-hidden rounded-[60px]">
         <div className="absolute inset-0">
           <video
             className="h-full w-full object-cover"
@@ -64,14 +64,14 @@ export default function Hero() {
           <div className="flex flex-col gap-10 pb-12 md:flex-row md:items-end md:justify-between md:gap-16">
             <p
               ref={taglineRef}
-              className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-5xl"
+              className="text-creme max-w-2xl text-4xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
             >
               {SITE_CONFIG.heroTagline}
             </p>
 
             <p
               ref={subcopyRef}
-              className="text-creme max-w-md text-base font-semibold leading-snug md:text-lg"
+              className="text-creme max-w-md text-lg font-semibold leading-snug md:text-xl"
             >
               {SITE_CONFIG.heroSubcopy}
             </p>

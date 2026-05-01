@@ -1,7 +1,7 @@
 export const SITE_CONFIG = {
   name: "Brume",
   brandMark: "B",
-  heroTagline: "Trois silences au creux du fjord.",
+  heroTagline: "Trois silences\nau creux du fjord.",
   heroSubcopy:
     "Passer du temps de qualité dans nos emplacements au Québec avec — Brume®.",
   manifeste:

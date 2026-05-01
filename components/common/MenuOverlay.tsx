@@ -11,13 +11,10 @@ import Marquee from "./Marquee";
 
 const NAV = [
   { label: "Accueil", href: "#" },
-  { label: "Manifeste", href: "#manifeste" },
-  { label: "Le lieu", href: "#lieu" },
-  { label: "Concept", href: "#concept" },
+  { label: "Introduction", href: "#manifeste" },
   { label: "Refuges", href: "#refuges" },
-  { label: "Expériences", href: "#experiences" },
-  { label: "Galerie", href: "#galerie" },
-  { label: "Réservation", href: "#reservation" },
+  { label: "Pourquoi Brume®", href: "#choisir" },
+  { label: "Feedback", href: "#feedback" },
 ];
 
 export default function MenuOverlay() {
@@ -133,7 +130,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="group flex items-baseline gap-6 text-creme-dim text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors"
+                    className="group flex items-baseline gap-6 text-gris-secondaire text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors"
                   >
                     <span className="text-creme-dim/40 text-xs font-normal tabular-nums">
                       {String(i + 1).padStart(2, "0")}
