@@ -1,6 +1,5 @@
 import RevealText from "@/components/common/RevealText";
 import WordmarkMaskReveal from "@/components/common/WordmarkMaskReveal";
-import BrandMark from "@/components/common/BrandMark";
 
 export default function Choisir() {
   return (
@@ -13,9 +12,7 @@ export default function Choisir() {
             duration={0.9}
             className="text-gris-secondaire text-xs uppercase tracking-[0.3em] mb-12"
           >
-            <>
-              Découvrir les refuges <BrandMark className="inline" />
-            </>
+            Découvrir les refuges Brume®
           </RevealText>
 
           {/* Headline — screen-wide, ~14-15vw so chars almost touch the edges */}
