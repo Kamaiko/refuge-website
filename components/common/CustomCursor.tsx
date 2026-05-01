@@ -1,0 +1,67 @@
+"use client";
+
+import { useEffect, useRef } from "react";
+import { gsap } from "@/lib/gsap";
+
+export default function CustomCursor() {
+  const dotRef = useRef<HTMLDivElement>(null);
+  const ringRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!canHover) return;
+
+    const dot = dotRef.current;
+    const ring = ringRef.current;
+    if (!dot || !ring) return;
+
+    const xToDot = gsap.quickTo(dot, "x", { duration: 0.15, ease: "power3.out" });
+    const yToDot = gsap.quickTo(dot, "y", { duration: 0.15, ease: "power3.out" });
+    const xToRing = gsap.quickTo(ring, "x", { duration: 0.5, ease: "power3.out" });
+    const yToRing = gsap.quickTo(ring, "y", { duration: 0.5, ease: "power3.out" });
+
+    const onMove = (e: MouseEvent) => {
+      xToDot(e.clientX);
+      yToDot(e.clientY);
+      xToRing(e.clientX);
+      yToRing(e.clientY);
+    };
+
+    const onEnter = () => gsap.to(ring, { scale: 1.8, duration: 0.4, ease: "expo.out" });
+    const onLeave = () => gsap.to(ring, { scale: 1, duration: 0.4, ease: "expo.out" });
+
+    window.addEventListener("mousemove", onMove);
+
+    const interactive = document.querySelectorAll(
+      "a, button, [role='button'], input, textarea, select, [data-cursor='hover']",
+    );
+    interactive.forEach((el) => {
+      el.addEventListener("mouseenter", onEnter);
+      el.addEventListener("mouseleave", onLeave);
+    });
+
+    document.documentElement.classList.add("has-custom-cursor");
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      interactive.forEach((el) => {
+        el.removeEventListener("mouseenter", onEnter);
+        el.removeEventListener("mouseleave", onLeave);
+      });
+      document.documentElement.classList.remove("has-custom-cursor");
+    };
+  }, []);
+
+  return (
+    <>
+      <div
+        ref={dotRef}
+        className="pointer-events-none fixed top-0 left-0 z-[9999] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-creme mix-blend-difference will-change-transform max-[640px]:hidden"
+      />
+      <div
+        ref={ringRef}
+        className="pointer-events-none fixed top-0 left-0 z-[9999] h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-creme/60 mix-blend-difference will-change-transform max-[640px]:hidden"
+      />
+    </>
+  );
+}

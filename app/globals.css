@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base-noir: #181717;
+  --color-base-noir-soft: #1F1E1E;
+  --color-creme: #F4EFE7;
+  --color-creme-dim: #C9C5BD;
+
+  --color-vert-sapin: #2D5F4E;
+  --color-vert-sapin-deep: #1F4338;
+
+  --color-turquoise: #4FB8B0;
+  --color-turquoise-deep: #2C8A82;
+
+  --color-orange-sunset: #C2410C;
+  --color-or-ambre: #D97706;
+
+  --color-creme-terre: #E8DCC4;
+
+  --font-sans: var(--font-host-grotesk), ui-sans-serif, system-ui, sans-serif;
+
+  --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-soft: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: var(--color-base-noir);
+  color: var(--color-creme);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-feature-settings: "ss01", "ss02";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-orange-sunset);
+  color: var(--color-creme);
+}
+
+/* Hide native cursor when custom cursor is active (desktop only) */
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+
+/* Hide horizontal scrollbar inside marquee/scroll-x containers */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  html.has-custom-cursor,
+  html.has-custom-cursor * { cursor: auto !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
