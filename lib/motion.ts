@@ -5,6 +5,8 @@
  * `expo.out` and the cinematic curve come from the design tokens already defined
  * in `app/globals.css` (`--ease-cinematic`, `--ease-soft`). Keep both sources in
  * sync if values change.
+ *
+ * See `docs/Design.md` § 4 for usage rules.
  */
 
 export const REVEAL = {
@@ -25,4 +27,27 @@ export const PANEL = {
   close: 0.6,
   ease: "expo.out",
   closeEase: "expo.in",
+} as const;
+
+/** Header CTA scroll-out timings (Reserve hides during hero, reappears after). */
+export const SCROLL_OUT = {
+  /** Anti-jitter delay before the tween starts. */
+  delay: 0.35,
+  duration: 0.5,
+} as const;
+
+/** Marquee behavior — constant speed, direction switch on viewport threshold. */
+export const MARQUEE = {
+  /** Pixels per second, constant (no scroll-driven acceleration). */
+  speedBase: 80,
+  /** Viewport threshold (0-1) for direction switch. 0.2 = section ≥20% in view. */
+  threshold: 0.2,
+} as const;
+
+/** Capsules section pin behavior. */
+export const CAPSULES = {
+  /** Total scroll length while pinned (3 viewports). */
+  stickyDuration: "+=300%",
+  /** Scale reduction per stacked card (5-10%). */
+  scaleStep: 0.07,
 } as const;
