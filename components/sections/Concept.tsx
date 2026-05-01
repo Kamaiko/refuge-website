@@ -6,17 +6,17 @@ export default function Concept() {
     {
       titre: "Bois carbonisé",
       texte:
-        "La technique japonaise du shou sugi ban : le bois passé au feu pour qu’il absorbe la lumière au lieu de la renvoyer. Le refuge se fond, la forêt revient à elle-même.",
+        "Shou sugi ban : le bois passé au feu, qui absorbe la lumière au lieu de la renvoyer. Le refuge se fond, la forêt revient à elle-même.",
     },
     {
       titre: "Baies pleine façade",
       texte:
-        "Le verre prend toute la place qu’il peut. Quand on est dedans, on est presque dehors. Quand on est dehors, on devine quelqu’un dedans.",
+        "Le verre prend toute la place qu’il peut. Quand on est dedans, on est presque dehors. Dehors, on devine quelqu’un dedans.",
     },
     {
       titre: "Ancrage léger",
       texte:
-        "Pilotis fins, fondations minimales, aucune coupe d’arbre inutile. Le sol garde sa mousse. Quand le refuge partira, il ne restera presque rien.",
+        "Pilotis fins, fondations minimales, aucune coupe d’arbre inutile. Quand le refuge partira, il ne restera presque rien sur la mousse.",
     },
   ];
 
@@ -55,7 +55,7 @@ export default function Concept() {
         <RevealOnScroll
           stagger={0.15}
           y={40}
-          className="mt-20 grid gap-px bg-creme/10 md:grid-cols-3 overflow-hidden rounded-[20px]"
+          className="mt-20 grid gap-px bg-creme/10 md:grid-cols-3 overflow-hidden rounded-card"
         >
           {principes.map((p, i) => (
             <div key={p.titre} className="bg-base-noir-soft p-8 md:p-10">
