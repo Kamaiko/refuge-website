@@ -6,26 +6,27 @@ import { gsap } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 /**
- * Continuously scroll-driven line reveal: each line's opacity is tied to scroll
- * position via scrub. Reveals on scroll-down, un-reveals on scroll-up.
+ * Continuously scroll-driven line reveal: each line is its own ScrollTrigger,
+ * so it fades from `baseOpacity` to 1 as the user scrolls past it. Reverses on
+ * scroll-up. Feels like the lines "wake up" one after another as you read them.
  * Distinct from RevealText (one-shot on enter-viewport).
  */
 type Props = {
   children: string;
   className?: string;
   baseOpacity?: number;
-  start?: string;
-  end?: string;
-  staggerEach?: number;
+  /** Start trigger per line — defaults to "top 85%" (line top reaches 85% of viewport). */
+  startEach?: string;
+  /** End trigger per line — defaults to "top 45%" (line top reaches 45% of viewport). */
+  endEach?: string;
 };
 
 export default function ScrollLinesScrub({
   children,
   className,
   baseOpacity = 0.15,
-  start = "top 80%",
-  end = "bottom 60%",
-  staggerEach = 0.4,
+  startEach = "top 85%",
+  endEach = "top 45%",
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,22 +34,22 @@ export default function ScrollLinesScrub({
     () => {
       if (!ref.current) return;
       const lines = ref.current.querySelectorAll<HTMLElement>(".sls-line");
-      if (!lines.length) return;
-      gsap.fromTo(
-        lines,
-        { opacity: baseOpacity },
-        {
-          opacity: 1,
-          ease: "none",
-          stagger: staggerEach,
-          scrollTrigger: {
-            trigger: ref.current,
-            start,
-            end,
-            scrub: 0.5,
+      lines.forEach((line) => {
+        gsap.fromTo(
+          line,
+          { opacity: baseOpacity },
+          {
+            opacity: 1,
+            ease: "none",
+            scrollTrigger: {
+              trigger: line,
+              start: startEach,
+              end: endEach,
+              scrub: 0.4,
+            },
           },
-        },
-      );
+        );
+      });
     },
     { scope: ref, dependencies: [children] },
   );

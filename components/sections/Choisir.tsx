@@ -4,12 +4,12 @@ import ScrollLinesScrub from "@/components/common/ScrollLinesScrub";
 export default function Choisir() {
   return (
     <section id="choisir" className="relative w-full bg-gris-tan">
-      {/* Soft gradient at the top — transition from the noir of preceding
-          section into the gris-tan of this section. Begins at the top edge,
-          fades out by ~25% so the rest is solid gris-tan. */}
+      {/* Soft gradient at the bottom — transition from this gris-tan section
+          into the base-noir section that follows (Capsules / MarqueeBrand).
+          Begins ~65% down, fully noir at the bottom edge. */}
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 h-[35vh] pointer-events-none bg-gradient-to-b from-base-noir to-transparent"
+        className="absolute inset-x-0 bottom-0 h-[35vh] pointer-events-none bg-gradient-to-t from-base-noir to-transparent"
       />
 
       <div className="relative px-5 md:px-8 py-32 md:py-48">
