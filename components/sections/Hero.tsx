@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
 import BrandMark from "@/components/common/BrandMark";
 
@@ -11,6 +11,7 @@ export default function Hero() {
   const wordmarkRef = useRef<HTMLHeadingElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const subcopyRef = useRef<HTMLParagraphElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
 
   // Instant entrance — content visible from page load, no scroll required
   useGSAP(
@@ -28,6 +29,34 @@ export default function Hero() {
     { scope: sectionRef },
   );
 
+  // Subtle scroll-driven zoom-out on the video — gives the hero a sense of
+  // recession as the page begins. Scrub-tied so it stays glued to scroll.
+  useGSAP(
+    () => {
+      if (!mediaRef.current || !sectionRef.current) return;
+      gsap.fromTo(
+        mediaRef.current,
+        { scale: 1.05 },
+        {
+          scale: 0.92,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        },
+      );
+      return () => {
+        ScrollTrigger.getAll().forEach((t) => {
+          if (t.trigger === sectionRef.current) t.kill();
+        });
+      };
+    },
+    { scope: sectionRef },
+  );
+
   return (
     <section
       ref={sectionRef}
@@ -36,7 +65,7 @@ export default function Hero() {
     >
       {/* Inner frame — rounded corners + thin black border breathing space */}
       <div className="relative h-full w-full overflow-hidden rounded-[60px]">
-        <div className="absolute inset-0">
+        <div ref={mediaRef} className="absolute inset-0 will-change-transform">
           <video
             className="h-full w-full object-cover"
             autoPlay
@@ -57,7 +86,7 @@ export default function Hero() {
               ref={wordmarkRef}
               className="text-creme font-semibold leading-[0.85] tracking-[-0.04em] text-[18vw] md:text-[15vw]"
             >
-              <BrandMark registeredClassName="ml-[0.04em] text-[0.32em] align-super tracking-normal font-medium" />
+              <BrandMark />
             </h1>
           </div>
 
