@@ -180,11 +180,10 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        // Inline transform = off-screen on SSR/initial paint; GSAP takes over on mount.
-        // Without this, the panel briefly flashes at its natural position before
-        // useGSAP fires gsap.set({ xPercent: 100 }).
-        style={{ transform: "translateX(100%)" }}
-        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[560px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
+        // panel-offscreen-right: CSS class → off-screen on SSR/initial paint.
+        // GSAP's inline-style transforms (xPercent) override the class without
+        // React reverting on re-render (which an inline style prop would suffer).
+        className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[560px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div className="flex flex-col min-h-full p-6 md:p-8 pb-32">
           {/* Close */}

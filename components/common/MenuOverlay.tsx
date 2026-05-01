@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { useMenu } from "./MenuContext";
-import { SITE_CONFIG } from "@/lib/constants";
 import { PANEL } from "@/lib/motion";
 import Marquee from "./Marquee";
 
@@ -47,7 +46,6 @@ export default function MenuOverlay() {
       if (!container || !navItems) return;
 
       if (isOpen) {
-        // Emerge from the Menu CTA position (bottom center)
         gsap.to(container, {
           autoAlpha: 1,
           pointerEvents: "auto",
@@ -116,83 +114,103 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[200] bg-gris-tan"
+      className="fixed inset-0 z-[200] p-3 md:p-4"
       aria-hidden={!isOpen}
     >
-      {/* Layout split — nav left + image right */}
-      <div className="relative z-[2] flex h-full">
-        {/* LEFT — nav vertical */}
-        <div className="flex-1 md:basis-[75%] flex flex-col p-5 md:p-10 pt-24 pb-24">
-          <div className="flex-1 flex items-center">
+      {/* Inner frame — rounded corners matching Hero, sits inside outer padding */}
+      <div className="relative h-full w-full overflow-hidden rounded-[60px] bg-gris-tan">
+        {/* Layout split — nav left + image right */}
+        <div className="relative z-[2] flex h-full">
+          {/* LEFT — nav vertical, anchored TOP (not centered) */}
+          <div className="flex-1 md:basis-[75%] flex flex-col px-6 md:px-12 pt-32 md:pt-40 pb-10">
             <ul ref={navRef} className="w-full space-y-1 md:space-y-2">
-              {NAV.map((item, i) => (
+              {NAV.map((item) => (
                 <li key={item.href} className="overflow-hidden">
                   <a
                     href={item.href}
                     onClick={close}
-                    className="group flex items-baseline gap-6 text-gris-secondaire text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors"
+                    className="block text-creme-terre/70 text-6xl md:text-7xl lg:text-[9vw] font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors duration-500 ease-out"
                   >
-                    <span className="text-creme-dim/40 text-xs font-normal tabular-nums">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="block">{item.label}</span>
+                    {item.label}
                   </a>
                 </li>
               ))}
             </ul>
+
+            {/* Bottom — social icons + concept disclaimer, pushed to bottom */}
+            <div className="mt-auto flex flex-col gap-6">
+              <div className="flex items-center gap-4">
+                <a
+                  href="https://www.instagram.com/kamaiko/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram — Kamaiko"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" />
+                    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
+                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+                  </svg>
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/patrickpatenaude"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn — Patrick Patenaude"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
+                    <path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </a>
+              </div>
+              <p className="text-creme-dim/60 text-xs max-w-md leading-relaxed">
+                Ce site web est juste un concept de projet réalisé par moi pour démontrer mes capacités.
+              </p>
+            </div>
           </div>
 
-          {/* Bottom utility row */}
-          <div className="flex flex-col gap-2 text-xs text-creme-dim md:flex-row md:items-center md:gap-6">
-            <a href="#" className="hover:text-creme transition-colors">Instagram</a>
-            <a href="#" className="hover:text-creme transition-colors">Bulletin saisonnier</a>
-            <a href="mailto:bonjour@brume.ca" className="hover:text-creme transition-colors">
-              bonjour@brume.ca
-            </a>
-          </div>
-        </div>
-
-        {/* RIGHT — cropped image with the wordmark marquee inside, centered vertically */}
-        <div
-          ref={imagePanelRef}
-          className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card my-6 mr-6"
-        >
-          <Image
-            src="/images/unite-galets.avif"
-            alt=""
-            fill
-            sizes="25vw"
-            className="object-cover object-[60%_40%]"
-            priority={false}
-          />
-          {/* Slight darkening overlay so the marquee text reads cleanly over the image */}
-          <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
-
-          {/* Marquee wordmark — large, horizontal, centered vertically inside the image */}
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
-            <Marquee
-              text="Brume®"
-              speed={120}
-              separator="·"
-              className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"
+          {/* RIGHT — cropped image with the wordmark marquee inside, centered vertically */}
+          <div
+            ref={imagePanelRef}
+            className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
+          >
+            <Image
+              src="/images/unite-galets.avif"
+              alt=""
+              fill
+              sizes="25vw"
+              className="object-cover object-[60%_40%]"
+              priority={false}
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
+              <Marquee
+                text="Brume®"
+                speed={120}
+                separator="·"
+                className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Close pill — bottom center, mirrors Menu CTA */}
-      <button
-        type="button"
-        onClick={close}
-        aria-label="Fermer le menu"
-        className="absolute bottom-6 left-1/2 z-[3] -translate-x-1/2 inline-flex items-center gap-3 rounded-pill bg-creme/95 px-5 py-3 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
-      >
-        Fermer
-        <span className="relative h-3 w-3">
-          <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-45 bg-current" />
-          <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-current" />
-        </span>
-      </button>
+        {/* Close pill — bottom center, mirrors Menu CTA */}
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Fermer le menu"
+          className="absolute bottom-6 left-1/2 z-[3] -translate-x-1/2 inline-flex items-center gap-3 rounded-pill bg-creme/95 px-5 py-3 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
+        >
+          Fermer
+          <span className="relative h-3 w-3">
+            <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-45 bg-current" />
+            <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-current" />
+          </span>
+        </button>
+      </div>
     </div>
   );
 }

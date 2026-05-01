@@ -69,6 +69,11 @@ html.has-custom-cursor * {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* Initial off-screen position for slide-in panels — defined as a CSS class so
+   GSAP's inline-style transforms (xPercent) can override it without React's
+   re-render reverting the inline style on every state change. */
+.panel-offscreen-right { transform: translateX(100%); }
+
 @media (prefers-reduced-motion: reduce) {
   html.has-custom-cursor,
   html.has-custom-cursor * { cursor: auto !important; }
