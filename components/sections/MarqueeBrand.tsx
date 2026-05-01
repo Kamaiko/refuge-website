@@ -9,8 +9,8 @@ export default function MarqueeBrand() {
     >
       <Marquee
         text={SITE_CONFIG.name}
-        speed={70}
-        separator="✦"
+        speed={50}
+        separator="·"
         directional
         className="text-creme text-[24vw] md:text-[16vw] font-semibold leading-none tracking-[-0.04em]"
       />
