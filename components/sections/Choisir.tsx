@@ -22,7 +22,6 @@ export default function Choisir() {
               scroll, un-reveal in reverse on scroll-up. */}
           <ScrollLinesScrub
             baseOpacity={0.15}
-            staggerEach={0.4}
             className="text-creme text-[15vw] md:text-[13vw] font-semibold leading-[0.86] tracking-[-0.045em]"
           >
             {"Trois refuges.\nUn seul, le vôtre."}
