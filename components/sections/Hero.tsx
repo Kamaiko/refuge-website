@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
 import BrandMark from "@/components/common/BrandMark";
 
@@ -31,10 +31,10 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative h-[100svh] w-full p-2 md:p-3"
+      className="relative h-[100svh] w-full p-3 md:p-4"
     >
       {/* Inner frame — rounded corners + thin black border breathing space */}
-      <div className="relative h-full w-full overflow-hidden rounded-card">
+      <div className="relative h-full w-full overflow-hidden rounded-[40px]">
         <div className="absolute inset-0">
           <video
             className="h-full w-full object-cover"
@@ -71,7 +71,7 @@ export default function Hero() {
 
             <p
               ref={subcopyRef}
-              className="text-creme/85 max-w-md text-base leading-snug md:text-lg"
+              className="text-creme max-w-md text-base font-semibold leading-snug md:text-lg"
             >
               {SITE_CONFIG.heroSubcopy}
             </p>

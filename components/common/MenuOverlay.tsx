@@ -125,7 +125,7 @@ export default function MenuOverlay() {
       {/* Layout split — nav left + image right */}
       <div className="relative z-[2] flex h-full">
         {/* LEFT — nav vertical */}
-        <div className="flex-1 md:basis-[58%] flex flex-col p-5 md:p-10 pt-24 pb-24">
+        <div className="flex-1 md:basis-[75%] flex flex-col p-5 md:p-10 pt-24 pb-24">
           <div className="flex-1 flex items-center">
             <ul ref={navRef} className="w-full space-y-1 md:space-y-2">
               {NAV.map((item, i) => (
@@ -133,7 +133,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="group flex items-baseline gap-6 text-creme text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] hover:text-creme-dim transition-colors"
+                    className="group flex items-baseline gap-6 text-creme-dim text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors"
                   >
                     <span className="text-creme-dim/40 text-xs font-normal tabular-nums">
                       {String(i + 1).padStart(2, "0")}
@@ -158,13 +158,13 @@ export default function MenuOverlay() {
         {/* RIGHT — cropped image with the wordmark marquee inside, centered vertically */}
         <div
           ref={imagePanelRef}
-          className="hidden md:block md:basis-[40%] relative overflow-hidden rounded-l-card my-6 mr-6"
+          className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card my-6 mr-6"
         >
           <Image
             src="/images/unite-galets.avif"
             alt=""
             fill
-            sizes="40vw"
+            sizes="25vw"
             className="object-cover object-[60%_40%]"
             priority={false}
           />
@@ -174,8 +174,8 @@ export default function MenuOverlay() {
           {/* Marquee wordmark — large, horizontal, centered vertically inside the image */}
           <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
             <Marquee
-              text={SITE_CONFIG.name}
-              speed={45}
+              text="Brume®"
+              speed={120}
               separator="·"
               className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"
             />

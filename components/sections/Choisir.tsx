@@ -22,7 +22,7 @@ export default function Choisir() {
           </RevealText>
 
           {/* Body — present and NOT animated (plain paragraph) */}
-          <p className="text-gris-secondaire mt-12 max-w-2xl text-base md:text-lg leading-relaxed">
+          <p className="text-creme-dim mt-12 max-w-2xl text-base md:text-lg leading-relaxed font-medium">
             On les a posés à des distances précises. Chacun ouvre sur quelque chose qu’aucun autre ne voit.
           </p>
         </div>

@@ -8,15 +8,16 @@ import Marquee from "@/components/common/Marquee";
 export default function MarqueeBrand() {
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Parallax depth — the marquee drifts vertically at a different speed than scroll
+  // Parallax depth — INVERSED + more aggressive: marquee drifts opposite to scroll
+  // direction with a wider Y range, giving a deeper "behind" feeling.
   useGSAP(
     () => {
       if (!wrapRef.current) return;
       gsap.fromTo(
         wrapRef.current,
-        { yPercent: 18 },
+        { yPercent: -45 },
         {
-          yPercent: -18,
+          yPercent: 45,
           ease: "none",
           scrollTrigger: {
             trigger: wrapRef.current,
@@ -38,7 +39,7 @@ export default function MarqueeBrand() {
       <div ref={wrapRef} className="will-change-transform">
         <Marquee
           text="Pourquoi Brume® ?"
-          speed={90}
+          speed={140}
           separator="·"
           directional
           className="text-creme/90 text-[24vw] md:text-[14vw] font-semibold leading-none tracking-[-0.04em]"

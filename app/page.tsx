@@ -24,8 +24,8 @@ export default function Home() {
         <Medaillons />
         <Lieu />
         <Concept />
-        <MarqueeBrand />
         <Choisir />
+        <MarqueeBrand />
         <Unites />
         <Activites />
         <Galerie />

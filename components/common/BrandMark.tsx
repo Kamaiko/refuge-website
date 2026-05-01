@@ -6,7 +6,7 @@ import { SITE_CONFIG } from "@/lib/constants";
  */
 export default function BrandMark({
   className,
-  registeredClassName = "ml-[0.05em] text-[0.4em] align-super tracking-normal",
+  registeredClassName = "ml-[0.04em] text-[0.4em] align-sub tracking-normal opacity-90",
 }: {
   className?: string;
   registeredClassName?: string;

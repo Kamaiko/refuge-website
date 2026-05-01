@@ -13,11 +13,13 @@ export default function Header() {
   const { open: openReservePanel } = useReservePanel();
   const reserveRef = useRef<HTMLButtonElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const whitePillRef = useRef<HTMLSpanElement>(null);
-  const labelRef = useRef<HTMLSpanElement>(null);
+  const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Initial entrance — Reserve fades in, Menu shows as black circle then white pill unrolls behind
+  // Initial entrance — Reserve fades in. Menu starts as a centered black circle,
+  // then the white pill unrolls to the LEFT and the label area widens. The
+  // parent stays viewport-centered via -translate-x-1/2, so as it grows the
+  // black circle visually "drifts" rightward to its final position.
   useGSAP(() => {
     if (reserveRef.current) {
       gsap.fromTo(
@@ -27,33 +29,31 @@ export default function Header() {
       );
     }
 
-    if (menuBtnRef.current && whitePillRef.current && labelRef.current) {
-      // Initial: only black circle visible, pill collapsed, label hidden
+    if (menuBtnRef.current && labelAreaRef.current) {
+      // Initial: button hidden, label width 0 (parent = circle width only)
       gsap.set(menuBtnRef.current, { opacity: 0, scale: 0.6 });
-      gsap.set(whitePillRef.current, { scaleX: 0 });
-      gsap.set(labelRef.current, { opacity: 0 });
+      gsap.set(labelAreaRef.current, { width: 0 });
 
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
       tl.to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
-        .to(whitePillRef.current, { scaleX: 1, duration: 0.7, delay: 0.5 })
-        .to(labelRef.current, { opacity: 1, duration: 0.4 }, "-=0.3");
+        .to(labelAreaRef.current, { width: "auto", duration: 0.85, delay: 0.45 });
     }
   });
 
-  // iOS-wheel switch: Menu (top) ↔ Close (bottom). isOpen true → wheel slides up to show Close
+  // iOS-wheel: only one word visible at any time. yPercent 0 → -50 to switch.
   useGSAP(
     () => {
       if (!wheelRef.current) return;
       gsap.to(wheelRef.current, {
         yPercent: isOpen ? -50 : 0,
-        duration: 0.5,
+        duration: 0.55,
         ease: "expo.inOut",
       });
     },
     { dependencies: [isOpen] },
   );
 
-  // Reserve scroll-out — disappears upward past 40% of the hero
+  // Reserve scroll-out at 40% of hero
   useGSAP(() => {
     if (!reserveRef.current) return;
     const trigger = ScrollTrigger.create({
@@ -93,29 +93,33 @@ export default function Header() {
           </span>
         </Link>
 
+        {/* Reserve CTA — same format as Menu: pill with black circle on right */}
         <button
           ref={reserveRef}
           type="button"
           onClick={openReservePanel}
-          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-8 py-4 text-base font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
+          aria-label="Ouvrir le panneau de réservation"
+          className="pointer-events-auto inline-flex items-stretch h-14 rounded-pill bg-creme/95 text-base font-medium text-base-noir transition-colors hover:bg-creme overflow-hidden"
         >
-          Réserver
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-            aria-hidden
-          >
-            <path
-              d="M3 11L11 3M11 3H4M11 3V10"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <span className="inline-flex items-center pl-6 pr-3">Réserver</span>
+          <span className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-base-noir shrink-0">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              className="text-creme"
+              aria-hidden
+            >
+              <path
+                d="M3 11L11 3M11 3H4M11 3V10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
         </button>
       </header>
 
@@ -126,37 +130,34 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Menu CTA — black circle initial, white pill unrolls behind, iOS wheel for Menu↔Close.
-          z-[210] keeps it above MenuOverlay (z-[200]) so the user can click it to close. */}
+      {/* Menu CTA — black circle centered initially, white pill unrolls to the
+          left, circle drifts right. iOS-wheel for Menu↔Close.
+          z-[210] keeps it above MenuOverlay (z-[200]). */}
       <button
         ref={menuBtnRef}
         type="button"
         onClick={toggle}
         aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={isOpen}
-        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-stretch h-16 will-change-transform"
+        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-stretch h-16 rounded-pill bg-creme overflow-hidden will-change-transform"
         style={{ opacity: 0 }}
       >
-        {/* White pill — unrolls behind, extending to the LEFT of the circle */}
+        {/* Label area — width animates 0 → auto on initial entrance */}
         <span
-          ref={whitePillRef}
-          aria-hidden
-          className="absolute inset-0 bg-creme rounded-pill origin-right will-change-transform"
-        />
-
-        {/* Label area — sits over the white pill, contains the iOS-wheel */}
-        <span
-          ref={labelRef}
-          className="relative z-10 inline-flex items-center pl-7 pr-4 h-16 text-base font-medium text-base-noir overflow-hidden"
+          ref={labelAreaRef}
+          className="inline-flex items-center text-base font-medium text-base-noir overflow-hidden h-16 will-change-[width]"
+          style={{ width: 0 }}
         >
-          <span ref={wheelRef} className="block will-change-transform">
-            <span className="block h-16 leading-[64px]">Menu</span>
-            <span className="block h-16 leading-[64px]">Close</span>
+          <span className="block pl-7 pr-4 whitespace-nowrap">
+            <span ref={wheelRef} className="block will-change-transform">
+              <span className="block h-16 leading-[64px]">Menu</span>
+              <span className="block h-16 leading-[64px]">Close</span>
+            </span>
           </span>
         </span>
 
-        {/* Black circle — always visible, on the right */}
-        <span className="relative z-10 inline-flex items-center justify-center h-16 w-16 rounded-full bg-base-noir shrink-0">
+        {/* Black circle — always visible, on the right of the pill */}
+        <span className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-base-noir shrink-0">
           <span className="flex flex-col gap-1.5">
             <span className="block h-px w-5 bg-gris-secondaire" />
             <span className="block h-px w-5 bg-gris-secondaire" />
