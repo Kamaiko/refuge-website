@@ -148,15 +148,28 @@ A wide horizontal interior shot of a minimalist cabin: cream linen bed, warm pen
 
 Format : 16:9, 5-8s, loop-friendly.
 
-### Hero loop — régénération propre (optionnel mais recommandé)
+### Hero loop — régénération propre (optionnel)
 
-Le hero actuel est un trim simple sans crossfade — le loop a une légère rupture visible. Pour un loop parfait, regénérer avec ces specs :
+Le hero actuel utilise la vidéo source 7s avec reverse-start crossfade de 0.2s pour assurer le loop seamless. Le reverse est imperceptible (5 frames). Si tu remarques quand même quelque chose, régénérer une vidéo nativement loopable.
+
+**Specs critiques pour régénération nativement loopable (ZÉRO retouche post-prod) :**
 
 - Path : `public/videos/hero-loop.mp4`
 - Tool : Kling 3.0 (ou Seedance 2.0)
-- Duration : **8 secondes**
-- Prompt : voir `CLAUDE.md` → section "Phase 2B — Hero loop video"
-- Spec critique pour seamless loop : motion uniquement chaotique (steam, brume), tous les cycles complètent un nombre entier en 8s, pas de mouvement directionnel net
+- Duration : **8 secondes** précises
+- Frame rate : **24fps**
+
+**Le critère le plus important : le frame de fin doit ressembler IDENTIQUEMENT au frame de début.**
+
+Pour y arriver dans le prompt :
+
+```
+CRITICAL: this video must be a perfect seamless loop. The first frame and the last frame must be identical in composition: same steam pattern, same lighting, same water surface, same leaf positions. All ambient motion (steam, mist, water ripples) must complete an INTEGER number of cycles within the 8 seconds — for example: steam takes exactly 4 seconds to rise from the spa surface to the top of the frame, completing 2 full cycles in 8 seconds. Light pulse cycles complete 4 times (2-second period). Trees sway completes 2 times (4-second period). No directional motion that doesn't return to start (no leaves falling, no clouds drifting linearly, no birds, no people).
+```
+
+**Vérification post-génération** : ouvre la vidéo, met sur frame 0 et frame final (frame 191 à 24fps × 8s). Les deux doivent être visuellement identiques (steam au même endroit, lumière identique). Si ce n'est pas le cas, régénère.
+
+- Prompt complet : voir `CLAUDE.md` → section "Phase 2B — Hero loop video"
 
 ### Mini-loops d'ambiance (transitions)
 - `public/videos/transition-brume.mp4` — brume qui dérive horizontale 5s

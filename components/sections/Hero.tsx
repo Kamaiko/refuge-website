@@ -39,7 +39,7 @@ export default function Hero() {
           playsInline
           poster="/images/hero-shape.avif"
         >
-          <source src="/videos/hero-loop.mp4?v=4" type="video/mp4" />
+          <source src="/videos/hero-loop.mp4?v=5" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-b from-base-noir/40 via-transparent to-base-noir/70" />
       </div>
