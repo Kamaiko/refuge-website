@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -56,19 +57,29 @@ export default function Medaillons() {
         <div className="md:col-span-5 relative flex flex-col items-start gap-8 md:gap-10">
           <div
             ref={med1}
-            className="aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft will-change-transform"
+            className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft will-change-transform"
           >
-            <div className="flex h-full w-full items-center justify-center text-creme-dim/40 text-xs">
-              [Ciel — image AI]
-            </div>
+            <Image
+              src="/images/unite-aubepine.avif"
+              alt=""
+              role="presentation"
+              fill
+              sizes="280px"
+              className="object-cover object-[50%_30%]"
+            />
           </div>
           <div
             ref={med2}
-            className="aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft self-end will-change-transform"
+            className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft self-end will-change-transform"
           >
-            <div className="flex h-full w-full items-center justify-center text-creme-dim/40 text-xs">
-              [Foyer — image AI]
-            </div>
+            <Image
+              src="/images/unite-galets.avif"
+              alt=""
+              role="presentation"
+              fill
+              sizes="280px"
+              className="object-cover object-[65%_55%]"
+            />
           </div>
         </div>
 
