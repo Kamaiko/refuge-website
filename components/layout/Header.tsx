@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
+import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { SITE_CONFIG } from "@/lib/constants";
 
 export default function Header() {
   const { toggle, isOpen } = useMenu();
+  const { open: openReservePanel } = useReservePanel();
   const menuBtnRef = useRef<HTMLButtonElement>(null);
-  const reserveRef = useRef<HTMLAnchorElement>(null);
-  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  const reserveRef = useRef<HTMLButtonElement>(null);
 
   // Menu CTA fades / scales in only after scrolling past hero
   useGSAP(() => {
@@ -20,10 +21,6 @@ export default function Header() {
     ScrollTrigger.create({
       start: "top -10%",
       end: "max",
-      onUpdate: (self) => {
-        const past = self.progress > 0;
-        setScrolledPastHero(past);
-      },
       onEnter: () => {
         gsap.to(menuBtnRef.current, {
           scale: 1,
@@ -67,10 +64,11 @@ export default function Header() {
           </span>
         </Link>
 
-        <Link
+        <button
           ref={reserveRef}
-          href="#reservation"
-          className="group pointer-events-auto inline-flex items-center gap-3 rounded-full bg-creme/95 px-5 py-2.5 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
+          type="button"
+          onClick={openReservePanel}
+          className="group pointer-events-auto inline-flex items-center gap-3 rounded-pill bg-creme/95 px-5 py-2.5 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
         >
           Réserver
           <svg
@@ -90,7 +88,7 @@ export default function Header() {
               strokeLinejoin="round"
             />
           </svg>
-        </Link>
+        </button>
       </header>
 
       {/* Side badge — vertical text right edge */}

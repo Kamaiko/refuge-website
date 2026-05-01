@@ -4,6 +4,8 @@ import SmoothScroll from "@/components/common/SmoothScroll";
 import CustomCursor from "@/components/common/CustomCursor";
 import { MenuProvider } from "@/components/common/MenuContext";
 import MenuOverlay from "@/components/common/MenuOverlay";
+import { ReservePanelProvider } from "@/components/common/ReservePanelContext";
+import ReservePanel from "@/components/common/ReservePanel";
 import "./globals.css";
 
 const hostGrotesk = Host_Grotesk({
@@ -28,9 +30,12 @@ export default function RootLayout({
     <html lang="fr" className={`${hostGrotesk.variable} antialiased`}>
       <body>
         <MenuProvider>
-          <SmoothScroll>{children}</SmoothScroll>
-          <MenuOverlay />
-          <CustomCursor />
+          <ReservePanelProvider>
+            <SmoothScroll>{children}</SmoothScroll>
+            <MenuOverlay />
+            <ReservePanel />
+            <CustomCursor />
+          </ReservePanelProvider>
         </MenuProvider>
       </body>
     </html>

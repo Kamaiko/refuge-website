@@ -21,6 +21,12 @@
 
   --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-soft: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Radius scale — used consistently across CTAs, cards, panels, inputs */
+  --radius-pill: 9999px;
+  --radius-card: 28px;
+  --radius-soft: 16px;
+  --radius-tight: 8px;
 }
 
 :root {

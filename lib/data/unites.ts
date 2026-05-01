@@ -8,6 +8,8 @@ export type Unite = {
   surface: string;
   particularite: string;
   image: string;
+  /** Indicative night rate in CAD — used for the reservation cost summary. */
+  tarifParNuit: number;
 };
 
 export const UNITES: Unite[] = [
@@ -23,6 +25,7 @@ export const UNITES: Unite[] = [
     surface: "32 m²",
     particularite: "Sauna nordique extérieur",
     image: "/images/unite-aubepine.avif",
+    tarifParNuit: 380,
   },
   {
     slug: "galets",
@@ -36,6 +39,7 @@ export const UNITES: Unite[] = [
     surface: "38 m²",
     particularite: "Bain à remous extérieur face au fleuve",
     image: "/images/unite-galets.avif",
+    tarifParNuit: 420,
   },
   {
     slug: "brume",
@@ -49,5 +53,6 @@ export const UNITES: Unite[] = [
     surface: "46 m²",
     particularite: "Foyer extérieur sur terrasse panoramique",
     image: "/images/unite-brume.avif",
+    tarifParNuit: 480,
   },
 ];
