@@ -5,7 +5,7 @@ export const SITE_CONFIG = {
   heroSubcopy:
     "Trois refuges contemporains, posés en forêt boréale au-dessus du fleuve.",
   manifeste:
-    "Charlevoix garde encore quelque chose de pur. Le fleuve qui s'élargit en mer. La forêt qui descend jusqu'à l'eau. Le silence que l'on n'attend plus. Brume est née de cette intuition : qu'il existe un lieu où ralentir n'est pas un luxe mais une évidence.",
+    "Charlevoix garde encore quelque chose de pur : le fleuve qui s'élargit en mer, la forêt qui descend jusqu'à l'eau, le silence qu'on n'attend plus. Brume s'y pose sans bruit — trois refuges où ralentir cesse d'être un luxe pour devenir une évidence.",
   locale: "fr-CA",
   url: "https://refuges-charlevoix.local",
 } as const;

@@ -6,7 +6,7 @@ export default function Manifeste() {
   return (
     <section
       id="manifeste"
-      className="relative w-full px-5 md:px-10 py-48 md:py-64 min-h-[100svh] flex flex-col justify-center"
+      className="relative w-full px-5 md:px-10 py-32 md:py-48 min-h-[100svh] flex flex-col justify-center"
     >
       <div className="mx-auto w-full max-w-[1600px]">
         <RevealText
@@ -20,10 +20,10 @@ export default function Manifeste() {
 
         <ScrollTextReveal
           as="p"
-          baseOpacity={0.1}
-          start="top 75%"
-          end="bottom 70%"
-          className="text-creme text-4xl md:text-7xl lg:text-[5.5vw] font-light leading-[1.05] tracking-[-0.01em]"
+          baseOpacity={0.12}
+          start="top 70%"
+          end="bottom 75%"
+          className="text-creme text-5xl md:text-7xl lg:text-[6vw] font-light leading-[1.05] tracking-[-0.015em]"
         >
           {SITE_CONFIG.manifeste}
         </ScrollTextReveal>
