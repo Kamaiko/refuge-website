@@ -12,6 +12,7 @@ import { submitReservation } from "@/actions/reservation";
 type RefugeSlug = "aubepine" | "galets" | "brume" | "trois";
 
 const TROIS_REFUGES_RATE = 1100; // bundle rate per night when picking the three together
+const DEFAULT_STAY_NIGHTS = 5;
 
 function formatCAD(value: number) {
   return new Intl.NumberFormat("fr-CA", {
@@ -31,18 +32,23 @@ function diffNights(arrival: string, departure: string) {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
+function isoDate(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
 export default function ReservePanel() {
   const { isOpen, close } = useReservePanel();
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const bottomBarRef = useRef<HTMLDivElement>(null);
   const bottomBarContentRef = useRef<HTMLDivElement>(null);
 
-  const [refuge, setRefuge] = useState<RefugeSlug>("aubepine");
-  const [arrivee, setArrivee] = useState("");
-  const [depart, setDepart] = useState("");
-  const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
+  const [refuge, setRefuge] = useState<RefugeSlug>("galets");
+  const [arrivee, setArrivee] = useState(() => isoDate(0));
+  const [depart, setDepart] = useState(() => isoDate(DEFAULT_STAY_NIGHTS));
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
@@ -52,6 +58,7 @@ export default function ReservePanel() {
     if (backdropRef.current) gsap.set(backdropRef.current, { opacity: 0, pointerEvents: "none" });
     if (bottomBarRef.current) gsap.set(bottomBarRef.current, { scaleX: 0, transformOrigin: "right center" });
     if (bottomBarContentRef.current) gsap.set(bottomBarContentRef.current, { opacity: 0 });
+    if (contentRef.current) gsap.set(contentRef.current, { opacity: 0 });
   }, []);
 
   // Animate panel + backdrop on open/close
@@ -59,6 +66,7 @@ export default function ReservePanel() {
     () => {
       const backdrop = backdropRef.current;
       const panel = panelRef.current;
+      const content = contentRef.current;
       const bar = bottomBarRef.current;
       const barContent = bottomBarContentRef.current;
       if (!backdrop || !panel) return;
@@ -92,8 +100,24 @@ export default function ReservePanel() {
             delay: 0.95,
           });
         }
+        // Form content reveals AFTER the bar has grown — feels like the bar
+        // "pulls in" the panel content rather than everything appearing at once.
+        if (content) {
+          gsap.to(content, {
+            opacity: 1,
+            duration: 0.55,
+            ease: PANEL.ease,
+            delay: 0.7,
+          });
+        }
       } else {
-        // Reverse: content fades, then bar shrinks, then panel rolls back
+        if (content) {
+          gsap.to(content, {
+            opacity: 0,
+            duration: 0.2,
+            ease: PANEL.closeEase,
+          });
+        }
         if (barContent) {
           gsap.to(barContent, {
             opacity: 0,
@@ -183,15 +207,15 @@ export default function ReservePanel() {
         // panel-offscreen-right: CSS class → off-screen on SSR/initial paint.
         // GSAP's inline-style transforms (xPercent) override the class without
         // React reverting on re-render (which an inline style prop would suffer).
-        className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[560px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
+        className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
-        <div className="flex flex-col min-h-full p-6 md:p-8 pb-32">
-          {/* Close */}
+        <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">
+          {/* Close — circular black, larger */}
           <button
             type="button"
             onClick={close}
             aria-label="Fermer la réservation"
-            className="self-start inline-flex h-9 w-9 items-center justify-center rounded-pill border border-creme/30 text-creme hover:border-creme transition-colors"
+            className="self-start inline-flex h-12 w-12 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
               <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -199,25 +223,25 @@ export default function ReservePanel() {
           </button>
 
           {/* Heading */}
-          <div className="mt-10">
-            <p className="text-creme-dim text-[10px] uppercase tracking-[0.3em] mb-4">
+          <div className="mt-12">
+            <p className="text-creme-dim text-[10px] uppercase tracking-[0.3em] font-semibold mb-4">
               Réservation
             </p>
-            <h2 className="text-creme text-3xl md:text-4xl font-semibold leading-[1.05] tracking-tight">
+            <h2 className="text-creme text-4xl md:text-5xl font-semibold leading-[1.05] tracking-tight whitespace-pre-line">
               {"Choisir un refuge,\nune date."}
             </h2>
-            <p className="text-creme-dim mt-4 text-sm leading-relaxed max-w-md">
+            <p className="text-creme-dim mt-5 text-base leading-relaxed max-w-md font-semibold">
               Une demande, pas un panier. Nous répondons dans les vingt-quatre heures.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-10 flex flex-col gap-10 flex-1">
+          <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-12 flex-1">
             {/* (1) Refuge selection */}
-            <fieldset className="flex flex-col gap-4">
-              <legend className="text-creme/90 text-sm">
-                <span className="text-creme-dim/60 mr-2">(1)</span>Quel refuge ?
+            <fieldset className="flex flex-col gap-5">
+              <legend className="text-creme/90 text-base font-semibold">
+                <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Quel refuge aimeriez-vous réserver ?
               </legend>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-3">
                 {UNITES.map((unite) => {
                   const selected = refuge === unite.slug;
                   return (
@@ -235,11 +259,11 @@ export default function ReservePanel() {
                         src={unite.image}
                         alt={unite.nom}
                         fill
-                        sizes="120px"
+                        sizes="160px"
                         className="object-cover"
                       />
                       <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-base-noir/85 to-transparent px-2 pt-6 pb-2">
-                        <span className="block text-creme text-xs font-medium tracking-tight">
+                        <span className="block text-creme text-sm font-medium tracking-tight">
                           {unite.nom}
                         </span>
                       </span>
@@ -250,7 +274,7 @@ export default function ReservePanel() {
               <button
                 type="button"
                 onClick={() => setRefuge("trois")}
-                className={`text-left text-xs px-4 py-3 rounded-soft transition-colors ${
+                className={`text-left text-sm px-5 py-4 rounded-soft transition-colors ${
                   refuge === "trois"
                     ? "bg-creme text-base-noir"
                     : "border border-creme/15 text-creme/80 hover:border-creme/40"
@@ -261,9 +285,9 @@ export default function ReservePanel() {
             </fieldset>
 
             {/* (2) Dates */}
-            <fieldset className="flex flex-col gap-4">
-              <legend className="text-creme/90 text-sm">
-                <span className="text-creme-dim/60 mr-2">(2)</span>Combien de temps ?
+            <fieldset className="flex flex-col gap-5">
+              <legend className="text-creme/90 text-base font-semibold">
+                <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Combien de temps ?
               </legend>
               <div className="grid grid-cols-2 gap-3">
                 <DateInput label="Arrivée" name="arrivee" value={arrivee} onChange={setArrivee} />
@@ -309,9 +333,7 @@ export default function ReservePanel() {
             </div>
             <button
               type="submit"
-              form=""
               onClick={(e) => {
-                // Find form and submit
                 const form = (e.currentTarget.closest("aside") as HTMLElement)?.querySelector("form");
                 if (form) (form as HTMLFormElement).requestSubmit();
               }}
@@ -343,7 +365,7 @@ function DateInput({
 }) {
   return (
     <label className="flex flex-col gap-2">
-      <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em]">{label}</span>
+      <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em] font-semibold">{label}</span>
       <input
         type="date"
         name={name}

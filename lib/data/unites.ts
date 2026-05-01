@@ -25,7 +25,7 @@ export const UNITES: Unite[] = [
     surface: "32 m²",
     particularite: "Sauna nordique extérieur",
     image: "/images/unite-aubepine.avif",
-    tarifParNuit: 380,
+    tarifParNuit: 540,
   },
   {
     slug: "galets",
@@ -39,7 +39,7 @@ export const UNITES: Unite[] = [
     surface: "38 m²",
     particularite: "Bain à remous extérieur face au fleuve",
     image: "/images/unite-galets.avif",
-    tarifParNuit: 420,
+    tarifParNuit: 600,
   },
   {
     slug: "brume",
@@ -53,6 +53,6 @@ export const UNITES: Unite[] = [
     surface: "46 m²",
     particularite: "Foyer extérieur sur terrasse panoramique",
     image: "/images/unite-brume.avif",
-    tarifParNuit: 480,
+    tarifParNuit: 680,
   },
 ];
