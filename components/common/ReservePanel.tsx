@@ -51,6 +51,7 @@ export default function ReservePanel() {
   const [depart, setDepart] = useState(() => isoDate(DEFAULT_STAY_NIGHTS));
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
   // xPercent 105 (not 100): the panel sits at right-4, so translating by
   // exactly its own width leaves a 16px sliver visible. The extra 5% clears
@@ -174,6 +175,7 @@ export default function ReservePanel() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setFeedback(null);
+    setFieldErrors({});
     setSubmitting(true);
     const formData = new FormData(e.currentTarget);
     formData.set("refuge", refuge);
@@ -182,6 +184,7 @@ export default function ReservePanel() {
     const result = await submitReservation({ ok: false, message: "" }, formData);
     setSubmitting(false);
     setFeedback({ ok: result.ok, message: result.message });
+    setFieldErrors(result.errors ?? {});
   }
 
   return (
@@ -208,7 +211,7 @@ export default function ReservePanel() {
             type="button"
             onClick={close}
             aria-label="Fermer la réservation"
-            className="self-start inline-flex h-12 w-12 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80"
+            className="self-start inline-flex h-12 w-12 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
               <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -228,9 +231,29 @@ export default function ReservePanel() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-14 flex-1">
+            <fieldset className="flex flex-col gap-6">
+              <legend className="text-creme/90 text-base font-semibold">
+                <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Vos coordonnées
+              </legend>
+              <TextInput
+                label="Nom"
+                name="nom"
+                type="text"
+                autoComplete="name"
+                error={fieldErrors.nom?.[0]}
+              />
+              <TextInput
+                label="Courriel"
+                name="email"
+                type="email"
+                autoComplete="email"
+                error={fieldErrors.email?.[0]}
+              />
+            </fieldset>
+
             <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
-                <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Quel refuge aimeriez-vous réserver ?
+                <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Quel refuge aimeriez-vous réserver ?
               </legend>
               <div className="grid grid-cols-3 gap-3">
                 {UNITES.map((unite) => {
@@ -240,7 +263,7 @@ export default function ReservePanel() {
                       key={unite.slug}
                       type="button"
                       onClick={() => setRefuge(unite.slug as RefugeSlug)}
-                      className={`group relative flex flex-col overflow-hidden rounded-[20px] transition-all ${
+                      className={`group relative flex flex-col overflow-hidden rounded-[20px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan ${
                         selected
                           ? "bg-creme text-base-noir"
                           : "bg-base-noir/50 text-creme hover:bg-base-noir/70"
@@ -266,7 +289,7 @@ export default function ReservePanel() {
 
             <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
-                <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Combien de temps ?
+                <span className="text-creme-dim/60 mr-2 font-normal">(3)</span>Combien de temps ?
               </legend>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <DateInput label="Arrivée" name="arrivee" value={arrivee} onChange={setArrivee} />
@@ -317,7 +340,7 @@ export default function ReservePanel() {
                 if (form) (form as HTMLFormElement).requestSubmit();
               }}
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
             >
               {submitting ? "Envoi…" : "Suivant"}
               <ArrowDiagonalIcon size={12} />
@@ -351,6 +374,39 @@ function DateInput({
         onChange={(e) => onChange(e.target.value)}
         className="bg-transparent border border-creme/20 rounded-soft px-4 py-3 text-creme text-sm focus:outline-none focus:border-creme transition-colors"
       />
+    </label>
+  );
+}
+
+function TextInput({
+  label,
+  name,
+  type,
+  autoComplete,
+  error,
+}: {
+  label: string;
+  name: string;
+  type: "text" | "email";
+  autoComplete?: string;
+  error?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-2">
+      <span className="text-creme-dim/60 text-[10px] uppercase tracking-[0.2em] font-semibold">
+        {label}
+      </span>
+      <input
+        type={type}
+        name={name}
+        autoComplete={autoComplete}
+        required
+        aria-invalid={error ? "true" : undefined}
+        className={`bg-transparent border rounded-soft px-4 py-3 text-creme text-sm focus:outline-none transition-colors ${
+          error ? "border-orange-sunset focus:border-orange-sunset" : "border-creme/20 focus:border-creme"
+        }`}
+      />
+      {error ? <span className="text-orange-sunset text-xs">{error}</span> : null}
     </label>
   );
 }

@@ -15,35 +15,39 @@ export default function Medaillons() {
     () => {
       if (!ref.current) return;
 
-      gsap.fromTo(
-        med1.current,
-        { y: -80 },
-        {
-          y: 80,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ref.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.fromTo(
+          med1.current,
+          { y: -80 },
+          {
+            y: 80,
+            ease: "none",
+            scrollTrigger: {
+              trigger: ref.current,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 1,
+            },
           },
-        },
-      );
+        );
 
-      gsap.fromTo(
-        med2.current,
-        { y: 80 },
-        {
-          y: -80,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ref.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: 1,
+        gsap.fromTo(
+          med2.current,
+          { y: 80 },
+          {
+            y: -80,
+            ease: "none",
+            scrollTrigger: {
+              trigger: ref.current,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: 1,
+            },
           },
-        },
-      );
+        );
+      });
+      return () => mm.revert();
     },
     { scope: ref },
   );

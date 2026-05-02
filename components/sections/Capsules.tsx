@@ -28,100 +28,113 @@ export default function Capsules() {
       const cards = cardRefs.current.filter((c): c is HTMLDivElement => !!c);
       if (!section || cards.length !== 3) return;
 
-      gsap.set(cards[0], { scale: 0.42, yPercent: 0, opacity: 1, zIndex: 1 });
-      gsap.set(cards[1], { yPercent: 110, scale: 1, opacity: 1, zIndex: 2 });
-      gsap.set(cards[2], { yPercent: 110, scale: 1, opacity: 1, zIndex: 3 });
+      const mm = gsap.matchMedia();
 
-      // 540px = browser cap (50% of short side) on common 1080p viewports.
-      // Starting at the cap means any tween value below 540 immediately
-      // shrinks the visible radius — no plateau before the cap is crossed.
-      const card0Article = cards[0].querySelector("article") as HTMLElement | null;
-      if (card0Article) gsap.set(card0Article, { borderRadius: "540px" });
-
-      // Dolly-zoom: image starts at 1.35 inside its card, eases to 1.0 as
-      // the card lands fullscreen. The image "pulls back" while the frame widens.
-      cardImageRefs.current.forEach((img) => {
-        if (img) gsap.set(img, { scale: 1.35 });
-      });
-
-      if (marqueeWrapRef.current) gsap.set(marqueeWrapRef.current, { opacity: 1 });
-      if (loadingBarRef.current) gsap.set(loadingBarRef.current, { opacity: 0 });
-
-      // Timeline layout — total duration 5.5 units (no-op tween at pos 4
-      // extends past phase 3 so card 3 gets a 1.5-unit sticky hold).
-      //   0    → 1    : phase 1  — card 0 grows + marquee dims
-      //   1    → 1.5  : hold 1
-      //   1.5  → 2.5  : phase 2  — card 1 slides up + card 0 scales down
-      //   2.5  → 3    : hold 2
-      //   3    → 4    : phase 3  — card 2 slides up + prior cards scale down
-      //   4    → 5.5  : hold 3
-      const PHASE_STARTS = [0, 1.5, 3] as const;
-      const STACK_FINAL_SCALES = [
-        1 - CAPSULES.scaleStep * 2,
-        1 - CAPSULES.scaleStep,
-        1,
-      ] as const;
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top top",
-          end: CAPSULES.stickyDuration,
-          pin: true,
-          scrub: 1,
-          onUpdate: (self) => {
-            const p = self.progress;
-            const idx = p < 0.36 ? 0 : p < 0.64 ? 1 : 2;
-            setActiveIdx(idx);
-
-            const dir = self.direction;
-            setRevealActive((prev) => {
-              const next: boolean[] = [...prev] as boolean[];
-              if (dir === 1) {
-                if (p >= 0.20 && !next[0]) next[0] = true;
-                if (p >= 0.47 && !next[1]) next[1] = true;
-                if (p >= 0.74 && !next[2]) next[2] = true;
-              } else {
-                if (p < 0.95 && next[2]) next[2] = false;
-                if (p < 0.52 && next[1]) next[1] = false;
-                if (p < 0.25 && next[0]) next[0] = false;
-              }
-              if (next[0] === prev[0] && next[1] === prev[1] && next[2] === prev[2]) return prev;
-              return next;
-            });
-
-            setProgressPct(Math.round(p * 100));
-          },
+      // Mobile pin range is halved (3 viewports vs 6) — the full 6-viewport
+      // scroll is exhausting on touch and the cards are still readable.
+      mm.add(
+        {
+          isDesktop: "(prefers-reduced-motion: no-preference) and (min-width: 769px)",
+          isMobile: "(prefers-reduced-motion: no-preference) and (max-width: 768px)",
         },
+        (ctx) => {
+          const { isMobile } = ctx.conditions as { isDesktop: boolean; isMobile: boolean };
+          const stickyDuration = isMobile ? "+=300%" : CAPSULES.stickyDuration;
+
+          gsap.set(cards[0], { scale: 0.42, yPercent: 0, opacity: 1, zIndex: 1 });
+          gsap.set(cards[1], { yPercent: 110, scale: 1, opacity: 1, zIndex: 2 });
+          gsap.set(cards[2], { yPercent: 110, scale: 1, opacity: 1, zIndex: 3 });
+
+          // 540px = browser cap (50% of short side) on common 1080p viewports.
+          const card0Article = cards[0].querySelector("article") as HTMLElement | null;
+          if (card0Article) gsap.set(card0Article, { borderRadius: "540px" });
+
+          cardImageRefs.current.forEach((img) => {
+            if (img) gsap.set(img, { scale: 1.35 });
+          });
+
+          if (marqueeWrapRef.current) gsap.set(marqueeWrapRef.current, { opacity: 1 });
+          if (loadingBarRef.current) gsap.set(loadingBarRef.current, { opacity: 0 });
+
+          // Timeline layout — total duration 5.5 units (no-op tween at pos 4
+          // extends past phase 3 so card 3 gets a 1.5-unit sticky hold).
+          const PHASE_STARTS = [0, 1.5, 3] as const;
+          const STACK_FINAL_SCALES = [
+            1 - CAPSULES.scaleStep * 2,
+            1 - CAPSULES.scaleStep,
+            1,
+          ] as const;
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: section,
+              start: "top top",
+              end: stickyDuration,
+              pin: true,
+              scrub: 1,
+              onUpdate: (self) => {
+                const p = self.progress;
+                const idx = p < 0.36 ? 0 : p < 0.64 ? 1 : 2;
+                setActiveIdx(idx);
+
+                const dir = self.direction;
+                setRevealActive((prev) => {
+                  const next: boolean[] = [...prev] as boolean[];
+                  if (dir === 1) {
+                    if (p >= 0.20 && !next[0]) next[0] = true;
+                    if (p >= 0.47 && !next[1]) next[1] = true;
+                    if (p >= 0.74 && !next[2]) next[2] = true;
+                  } else {
+                    if (p < 0.95 && next[2]) next[2] = false;
+                    if (p < 0.52 && next[1]) next[1] = false;
+                    if (p < 0.25 && next[0]) next[0] = false;
+                  }
+                  if (next[0] === prev[0] && next[1] === prev[1] && next[2] === prev[2]) return prev;
+                  return next;
+                });
+
+                setProgressPct(Math.round(p * 100));
+              },
+            },
+          });
+
+          cardImageRefs.current.forEach((img, i) => {
+            if (img) tl.to(img, { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[i]);
+          });
+
+          tl.to(cards[0], { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[0]);
+          if (card0Article) {
+            tl.to(card0Article, { borderRadius: "60px", duration: 1, ease: "power1.out" }, PHASE_STARTS[0]);
+          }
+          if (marqueeWrapRef.current) {
+            // power2.out front-loads the fade so the wordmark dims BEFORE the
+            // growing card masks it. Linear hid the change behind the card.
+            tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, PHASE_STARTS[0]);
+          }
+
+          tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[1])
+            .to(cards[0], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[1])
+            .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, PHASE_STARTS[1]);
+
+          tl.to(cards[2], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[2])
+            .to(cards[1], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[2])
+            .to(cards[0], { scale: STACK_FINAL_SCALES[0], duration: 1, ease: "none" }, PHASE_STARTS[2]);
+
+          tl.to({}, { duration: 1.5 }, 4);
+        },
+      );
+
+      // Reduced-motion: skip the pinned scrub entirely. Show the three cards
+      // stacked at their final state so the content is still reachable.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        cards.forEach((card) => gsap.set(card, { scale: 1, yPercent: 0, opacity: 1 }));
+        cardImageRefs.current.forEach((img) => {
+          if (img) gsap.set(img, { scale: 1 });
+        });
+        setRevealActive([true, true, true]);
       });
-
-      cardImageRefs.current.forEach((img, i) => {
-        if (img) tl.to(img, { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[i]);
-      });
-
-      tl.to(cards[0], { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[0]);
-      if (card0Article) {
-        tl.to(card0Article, { borderRadius: "60px", duration: 1, ease: "power1.out" }, PHASE_STARTS[0]);
-      }
-      if (marqueeWrapRef.current) {
-        // power2.out front-loads the fade so the wordmark dims BEFORE the
-        // growing card masks it. Linear hid the change behind the card.
-        tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, PHASE_STARTS[0]);
-      }
-
-      tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[1])
-        .to(cards[0], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[1])
-        .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, PHASE_STARTS[1]);
-
-      tl.to(cards[2], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[2])
-        .to(cards[1], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[2])
-        .to(cards[0], { scale: STACK_FINAL_SCALES[0], duration: 1, ease: "none" }, PHASE_STARTS[2]);
-
-      // No-op tween extends timeline to 5.5 — without it, scrub would map
-      // the full pin range onto a 4-unit timeline and card 3 would never
-      // hold sticky.
-      tl.to({}, { duration: 1.5 }, 4);
 
       return () => {
+        mm.revert();
         ScrollTrigger.getAll().forEach((t) => {
           if (t.trigger === section) t.kill();
         });
@@ -266,7 +279,7 @@ function UniteCardContent({
       />
       <div className="max-w-3xl">
         <p
-          className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-[900ms] ease-out will-change-transform"
+          className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
           style={{
             opacity: play ? 1 : 0,
             transform: play ? "translateX(0)" : "translateX(40px)",
@@ -286,7 +299,7 @@ function UniteCardContent({
           <button
             type="button"
             onClick={onReserve}
-            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90"
+            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
           >
             Réserver {unite.nom}
             <ArrowDiagonalIcon />

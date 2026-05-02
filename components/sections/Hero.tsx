@@ -15,39 +15,37 @@ export default function Hero() {
 
   useGSAP(
     () => {
-      gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
-        opacity: 0,
-        y: 14,
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
+          opacity: 0,
+          y: 14,
+        });
+
+        const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
+        tl.to(wordmarkRef.current, { opacity: 1, y: 0, duration: 1.1, delay: 0.15 })
+          .to(taglineRef.current, { opacity: 1, y: 0, duration: 0.9 }, "-=0.55")
+          .to(subcopyRef.current, { opacity: 1, y: 0, duration: 0.8 }, "-=0.45");
+
+        if (mediaRef.current && sectionRef.current) {
+          gsap.fromTo(
+            mediaRef.current,
+            { scale: 1.1 },
+            {
+              scale: 1.0,
+              ease: "none",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top top",
+                end: "bottom top",
+                scrub: 1,
+              },
+            },
+          );
+        }
       });
-
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.to(wordmarkRef.current, { opacity: 1, y: 0, duration: 1.1, delay: 0.15 })
-        .to(taglineRef.current, { opacity: 1, y: 0, duration: 0.9 }, "-=0.55")
-        .to(subcopyRef.current, { opacity: 1, y: 0, duration: 0.8 }, "-=0.45");
-    },
-    { scope: sectionRef },
-  );
-
-  // Scroll-driven dolly. Range 1.10 → 1.0 (never below 1) so the video
-  // always covers the rounded frame edges.
-  useGSAP(
-    () => {
-      if (!mediaRef.current || !sectionRef.current) return;
-      gsap.fromTo(
-        mediaRef.current,
-        { scale: 1.1 },
-        {
-          scale: 1.0,
-          ease: "none",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top top",
-            end: "bottom top",
-            scrub: 1,
-          },
-        },
-      );
       return () => {
+        mm.revert();
         ScrollTrigger.getAll().forEach((t) => {
           if (t.trigger === sectionRef.current) t.kill();
         });
@@ -70,6 +68,7 @@ export default function Hero() {
             muted
             loop
             playsInline
+            aria-hidden="true"
             poster="/images/hero-shape.avif"
           >
             <source src="/videos/hero-loop.mp4?v=5" type="video/mp4" />

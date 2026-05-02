@@ -32,7 +32,7 @@ export default function MenuOverlay() {
   const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
 
   const socialIconCls =
-    "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300";
+    "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan";
 
   useGSAP(() => {
     if (containerRef.current) {
@@ -187,7 +187,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block text-creme-terre/70 text-4xl md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight leading-[1.1] hover:text-creme transition-colors duration-500 ease-out"
+                    className="block text-creme-terre/70 text-4xl md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight leading-[1.1] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
                   >
                     {item.label}
                   </a>

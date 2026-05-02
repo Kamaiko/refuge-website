@@ -5,7 +5,7 @@ import { z } from "zod";
 const ReservationSchema = z.object({
   nom: z.string().min(2, "Veuillez indiquer votre nom."),
   email: z.email("Adresse courriel invalide."),
-  refuge: z.enum(["aubepine", "galets", "brume", "trois"]),
+  refuge: z.enum(["aubepine", "galets", "brume"]),
   arrivee: z.string().min(1, "Veuillez indiquer la date d'arrivée."),
   depart: z.string().min(1, "Veuillez indiquer la date de départ."),
   message: z.string().max(500).optional(),

@@ -32,27 +32,29 @@ export default function CustomCursor() {
       yToRing(e.clientY);
     };
 
-    const onEnter = () => gsap.to(ring, { scale: 1.8, duration: 0.4, ease: "expo.out" });
-    const onLeave = () => gsap.to(ring, { scale: 1, duration: 0.4, ease: "expo.out" });
+    // Delegated hover detection — works for elements mounted after this
+    // effect runs (Menu items, refuge cards inside the Reserve panel, etc.).
+    const INTERACTIVE = "a, button, [role='button'], input, textarea, select, [data-cursor='hover']";
+    const onOver = (e: MouseEvent) => {
+      if ((e.target as Element)?.closest?.(INTERACTIVE)) {
+        gsap.to(ring, { scale: 1.8, duration: 0.4, ease: "expo.out" });
+      }
+    };
+    const onOut = (e: MouseEvent) => {
+      if ((e.target as Element)?.closest?.(INTERACTIVE)) {
+        gsap.to(ring, { scale: 1, duration: 0.4, ease: "expo.out" });
+      }
+    };
 
     window.addEventListener("mousemove", onMove);
-
-    const interactive = document.querySelectorAll(
-      "a, button, [role='button'], input, textarea, select, [data-cursor='hover']",
-    );
-    interactive.forEach((el) => {
-      el.addEventListener("mouseenter", onEnter);
-      el.addEventListener("mouseleave", onLeave);
-    });
-
+    document.addEventListener("mouseover", onOver);
+    document.addEventListener("mouseout", onOut);
     document.documentElement.classList.add("has-custom-cursor");
 
     return () => {
       window.removeEventListener("mousemove", onMove);
-      interactive.forEach((el) => {
-        el.removeEventListener("mouseenter", onEnter);
-        el.removeEventListener("mouseleave", onLeave);
-      });
+      document.removeEventListener("mouseover", onOver);
+      document.removeEventListener("mouseout", onOut);
       document.documentElement.classList.remove("has-custom-cursor");
     };
   }, []);

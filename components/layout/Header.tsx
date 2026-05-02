@@ -141,7 +141,7 @@ export default function Header() {
         <Link
           href="/"
           aria-label={SITE_CONFIG.name}
-          className="group pointer-events-auto relative inline-flex h-9 w-9 items-center justify-center mt-1"
+          className="group pointer-events-auto relative inline-flex h-9 w-9 items-center justify-center mt-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="absolute inset-0 rounded-full border border-creme/30 transition-colors group-hover:border-creme/80" />
           <span className="relative text-creme font-semibold tracking-tight text-sm">
@@ -155,7 +155,7 @@ export default function Header() {
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
           style={{ height: PILL_H, paddingRight: PILL_PR }}
-          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme will-change-transform"
+          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="pl-7 pr-5 text-lg font-medium text-base-noir whitespace-nowrap">
             Réserver
@@ -184,7 +184,7 @@ export default function Header() {
         onClick={handleMenuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform"
+        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
       >
         {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}
         <span

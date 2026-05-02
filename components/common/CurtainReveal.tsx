@@ -32,22 +32,33 @@ export default function CurtainReveal({
     () => {
       if (!wrapRef.current || !filterRef.current || !creamRef.current) return;
 
-      const tl = gsap.timeline({
-        scrollTrigger: { trigger: wrapRef.current, start, end, scrub: true },
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: wrapRef.current, start, end, scrub: true },
+        });
+
+        tl.fromTo(
+          creamRef.current,
+          { clipPath: "inset(0% 0% 100% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
+          0,
+        );
+        tl.fromTo(
+          filterRef.current,
+          { clipPath: "inset(0% 0% 0% 0%)" },
+          { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
+          0,
+        );
       });
 
-      tl.fromTo(
-        creamRef.current,
-        { clipPath: "inset(0% 0% 100% 0%)" },
-        { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
-        0,
-      );
-      tl.fromTo(
-        filterRef.current,
-        { clipPath: "inset(0% 0% 0% 0%)" },
-        { clipPath: "inset(100% 0% 0% 0%)", ease: "none" },
-        0,
-      );
+      // Reduced-motion: hide the filter copy outright so the cream copy
+      // remains fully readable without animation.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        if (filterRef.current) gsap.set(filterRef.current, { autoAlpha: 0 });
+      });
+
+      return () => mm.revert();
     },
     { scope: wrapRef, dependencies: [start, end] },
   );

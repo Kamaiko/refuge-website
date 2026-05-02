@@ -16,64 +16,39 @@ export default function Choisir() {
     () => {
       if (!titleWrapRef.current) return;
 
-      // Sync GSAP cache with the SSR clip-path start state and reveal the
-      // wrapper. Lines are SSR-hidden via visibility:hidden to avoid a flash
-      // before GSAP's first scrub frame.
-      lineRefs.current.forEach((line) => {
-        if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
-      });
+      const mm = gsap.matchMedia();
 
-      // Three scroll-driven effects, all sync-end at "top 25%":
-      //   1. Depth   — scale + opacity ramp over the full approach.
-      //   2. Parallax — y drift over the reveal window so the title rises
-      //                 slower than page-scroll without overlapping the
-      //                 description below.
-      //   3. Curtain — per-line clip-path retraction (mask lifts upward).
-      // Depth (subtle visual recession) — runs over the full approach.
-      gsap.fromTo(
-        titleWrapRef.current,
-        { scale: 0.94, opacity: 0.5 },
-        {
-          scale: 1,
-          opacity: 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: titleWrapRef.current,
-            start: "top bottom",
-            end: "top 25%",
-            scrub: true,
-          },
-        },
-      );
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        // Three scroll-driven effects, all sync-end at "top 25%":
+        //   1. Depth   — scale + opacity ramp over the full approach.
+        //   2. Parallax — y drift, ~1.7× slower than page-scroll (negative y
+        //                 avoids overlapping the description below).
+        //   3. Curtain — per-line clip-path retraction (mask lifts upward).
+        lineRefs.current.forEach((line) => {
+          if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
+        });
 
-      // Parallax — text rises at ~58% of page-scroll speed (= 1.7× slower)
-      // during the reveal window. Starts above its natural position and
-      // drifts down to 0 as the user scrolls; net visible movement is
-      // smaller than the page scroll, so the text appears to lag behind.
-      // Negative y avoids overlapping the description below.
-      gsap.fromTo(
-        titleWrapRef.current,
-        { y: -200 },
-        {
-          y: 0,
-          ease: "none",
-          scrollTrigger: {
-            trigger: titleWrapRef.current,
-            start: "top 70%",
-            end: "top 25%",
-            scrub: true,
-          },
-        },
-      );
-
-      // Curtain reveal — sync-ends at "top 25%" with the depth + parallax.
-      lineRefs.current.forEach((line) => {
-        if (!line) return;
         gsap.fromTo(
-          line,
-          { clipPath: "inset(100% 0 0 0)" },
+          titleWrapRef.current,
+          { scale: 0.94, opacity: 0.5 },
           {
-            clipPath: "inset(0% 0 0 0)",
+            scale: 1,
+            opacity: 1,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: titleWrapRef.current,
+              start: "top bottom",
+              end: "top 25%",
+              scrub: true,
+            },
+          },
+        );
+
+        gsap.fromTo(
+          titleWrapRef.current,
+          { y: -200 },
+          {
+            y: 0,
             ease: "none",
             scrollTrigger: {
               trigger: titleWrapRef.current,
@@ -83,7 +58,35 @@ export default function Choisir() {
             },
           },
         );
+
+        lineRefs.current.forEach((line) => {
+          if (!line) return;
+          gsap.fromTo(
+            line,
+            { clipPath: "inset(100% 0 0 0)" },
+            {
+              clipPath: "inset(0% 0 0 0)",
+              ease: "none",
+              scrollTrigger: {
+                trigger: titleWrapRef.current,
+                start: "top 70%",
+                end: "top 25%",
+                scrub: true,
+              },
+            },
+          );
+        });
       });
+
+      // Reduced-motion fallback: skip every scroll-driven effect, just
+      // reveal the lines instantly so the copy stays readable.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        lineRefs.current.forEach((line) => {
+          if (line) gsap.set(line, { clipPath: "inset(0% 0 0 0)", visibility: "visible" });
+        });
+      });
+
+      return () => mm.revert();
     },
     { scope: sectionRef },
   );
