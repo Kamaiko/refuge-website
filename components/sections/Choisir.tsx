@@ -1,22 +1,16 @@
 import ScrollLinesScrub from "@/components/common/ScrollLinesScrub";
+import { BgGradient } from "@/components/common/BgTransition";
 
 export default function Choisir() {
   return (
     <section id="choisir" className="relative w-full bg-gris-tan">
-      {/* Whole-section gradient noir → transparent (transparent reveals the
-          section's gris-tan bg below). Simple 2-stop linear interpolation —
-          fewer color stops = no visible quantization between intermediate
-          colors. SVG noise overlay at 7% opacity dithers the residual banding. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-base-noir to-transparent"
-      />
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.07]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        }}
+      {/* Whole-section noir → gris-tan transition, OKLAB-interpolated to
+          eliminate banding on dark colors. Default 4% noise dither for any
+          residual quantization on low-end 8-bit panels. */}
+      <BgGradient
+        from="var(--color-base-noir)"
+        to="var(--color-gris-tan)"
+        direction="down"
       />
 
       <div className="relative px-5 md:px-8 py-32 md:py-48">

@@ -9,6 +9,7 @@ import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
+import { BgFadeOverlay } from "@/components/common/BgTransition";
 
 export default function Capsules() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -16,7 +17,6 @@ export default function Capsules() {
   const cardImageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const marqueeWrapRef = useRef<HTMLDivElement>(null);
   const loadingBarRef = useRef<HTMLDivElement>(null);
-  const exitOverlayRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [revealActive, setRevealActive] = useState<boolean[]>([false, false, false]);
   const [progressPct, setProgressPct] = useState(0);
@@ -57,13 +57,9 @@ export default function Capsules() {
         gsap.set(loadingBarRef.current, { opacity: 0 });
       }
 
-      // Exit overlay starts invisible — fades in across the final hold so the
-      // viewport is fully noir before the section unpins and MarqueeBrand
-      // (also noir) takes over. Mirror of the Choisir gradient (noir → tan)
-      // but reversed (tan → noir).
-      if (exitOverlayRef.current) {
-        gsap.set(exitOverlayRef.current, { opacity: 0 });
-      }
+      // Exit-to-noir overlay is owned by <BgFadeOverlay /> below — its own
+      // useGSAP wires the ScrollTrigger and initial opacity, so nothing to
+      // set here.
 
       // Timeline layout (6 units total)
       //   0    → 1    : Phase 1  — card 1 grows fullscreen + marquee dims
@@ -122,8 +118,12 @@ export default function Capsules() {
         tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "none" }, 0);
       }
       // Phase 2 (1.5 → 2.5): card 2 slides in + image dolly, card 1 scales down
+      // Section bg also fades from gris-tan → base-noir during this phase, so
+      // the visible slivers around the cards (rounded corners, p-3/p-4 gutter)
+      // smoothly recede to noir between Aubépine and Galets.
       tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, 1.5)
-        .to(cards[0], { scale: 1 - CAPSULES.scaleStep, duration: 1, ease: "none" }, 1.5);
+        .to(cards[0], { scale: 1 - CAPSULES.scaleStep, duration: 1, ease: "none" }, 1.5)
+        .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, 1.5);
       if (cardImageRefs.current[1]) {
         tl.to(cardImageRefs.current[1], { scale: 1, duration: 1, ease: "none" }, 1.5);
       }
@@ -139,31 +139,11 @@ export default function Capsules() {
       // scroll range (pin 6 viewports) onto a 4-unit timeline — card 3 would
       // only land fullscreen near scroll progress 1.0, killing the sticky hold.
       tl.to({}, { duration: 1.5 }, 4);
-      // Exit overlay is NOT in the main timeline. It fades in via a SEPARATE
-      // ScrollTrigger during the post-pin scroll — i.e., once the section
-      // unpins and starts scrolling out naturally, the overlay (which lives
-      // inside the section so it scrolls with it) builds up to 100% noir.
-      // By the time the section is fully past the viewport, both halves of
-      // the screen are noir (overlay below + MarqueeBrand bg above), giving
-      // a seamless handoff.
-      const exitTrigger = ScrollTrigger.create({
-        trigger: section,
-        // Fade starts ~20vh after the pin ends (section already moving up)
-        // and reaches 100% noir when the section's bottom is in the upper
-        // third of the viewport — i.e., card 3 is mostly out of view by the
-        // top, smooth handoff to the noir MarqueeBrand below.
-        start: "bottom 80%",
-        end: "bottom 33%",
-        scrub: 0.5,
-        onUpdate: (self) => {
-          if (exitOverlayRef.current) {
-            gsap.set(exitOverlayRef.current, { opacity: self.progress });
-          }
-        },
-      });
+      // Exit-to-noir overlay is rendered as <BgFadeOverlay triggerRef={sectionRef} ... />
+      // below — its own useGSAP wires the ScrollTrigger anchored to the same
+      // section element. No need to manage that trigger from this timeline.
 
       return () => {
-        exitTrigger.kill();
         ScrollTrigger.getAll().forEach((t) => {
           if (t.trigger === section) t.kill();
         });
@@ -303,16 +283,14 @@ export default function Capsules() {
         </div>
       </div>
 
-      {/* Exit overlay — solid base-noir, opacity scrubbed by a separate
-          ScrollTrigger that fires only after the pin ends (= section starts
-          scrolling out). Reaches 100% noir as the section bottom leaves the
-          viewport top, providing a seamless handoff to the noir MarqueeBrand
-          section above it. */}
-      <div
-        ref={exitOverlayRef}
-        aria-hidden
-        className="absolute inset-0 z-50 pointer-events-none bg-base-noir"
-        style={{ opacity: 0 }}
+      {/* Exit-to-noir overlay — fades in as the section unpins and scrolls
+          out, reaching full noir as card 3 leaves the upper third. Seamless
+          handoff to the noir MarqueeBrand below. */}
+      <BgFadeOverlay
+        color="var(--color-base-noir)"
+        triggerRef={sectionRef}
+        start="bottom 80%"
+        end="bottom 33%"
       />
 
       {/* Loading bar — centered in the lower-right quadrant (≈25vh from
