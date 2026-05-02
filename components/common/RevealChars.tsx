@@ -4,13 +4,9 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
 /**
- * Reveals text character-by-character via clip-path inset right→left.
- * Each char appears "from the right" — as if a vertical line slides leftward
- * exposing the glyph. Triggered imperatively via the `play` prop.
- *
- * The text is split into words first (each word wrapped in an inline-block,
- * whitespace:nowrap span) so chars within a word never break across lines.
- * Spaces between words remain regular whitespace so the line CAN break there.
+ * Per-character text reveal via clip-path right→left wipe. Triggered by `play`.
+ * Words are kept atomic (inline-block, whitespace:nowrap) so a char never
+ * breaks mid-word; only spaces between words allow line breaks.
  */
 type Props = {
   text: string;
@@ -47,8 +43,7 @@ export default function RevealChars({
         overwrite: true,
       });
     } else {
-      // Reverse: chars fade back to right→left clipped, in reverse stagger
-      // (the rightmost char hides first, like un-typing).
+      // Reverse stagger from end — rightmost char hides first, like un-typing.
       gsap.to(chars, {
         clipPath: "inset(0 0 0 100%)",
         duration: duration * 0.6,
@@ -59,9 +54,6 @@ export default function RevealChars({
     }
   }, [play, duration, stagger, delay, text]);
 
-  // Split into runs of [word, space, word, space, ...]. Words are wrapped in
-  // an inline-block span with whitespace:nowrap so chars within them never
-  // break across lines. Spaces stay as regular whitespace so wrapping works.
   const segments: { type: "word" | "space"; value: string }[] = [];
   const re = /(\S+|\s+)/g;
   let m: RegExpExecArray | null;

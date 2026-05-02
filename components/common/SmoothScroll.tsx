@@ -35,9 +35,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     };
   }, []);
 
-  // Pause Lenis (and lock native body scroll as a belt-and-braces fallback)
-  // whenever a full-screen panel is open. Prevents background scroll under
-  // the Reserve panel and Menu overlay.
+  // Lock background scroll while any panel is open.
   useEffect(() => {
     const anyOpen = menuIsOpen || reserveIsOpen;
     const lenis = lenisRef.current;

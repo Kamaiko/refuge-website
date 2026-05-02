@@ -6,14 +6,10 @@ import { gsap } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 /**
- * Sharp-edged "curtain" reveal: a darker filter sits on top of the cream text
- * and recedes upward as the user scrolls through the section. The cut between
- * the filtered (top) and revealed (bottom) portion is a hard line — no gradient.
- * Scroll-driven scrub.
- *
- * Both layers are clipped complementarily so only ONE layer is visible at any
- * pixel — eliminates subpixel-antialiasing halos that would otherwise show as
- * a faint white outline around the dim text.
+ * Scroll-scrubbed sharp-edged curtain. A darker copy of the text sits on top
+ * of the cream copy; both are clipped complementarily as you scroll, so only
+ * one layer paints at any pixel — avoids the subpixel-antialiasing halo a
+ * naive overlay would produce.
  */
 export default function CurtainReveal({
   children,
@@ -24,11 +20,8 @@ export default function CurtainReveal({
 }: {
   children: ReactNode;
   className?: string;
-  /** Tailwind text-color class for the dim "filter" overlay. */
   filterColorClass?: string;
-  /** ScrollTrigger start position (default 'top 80%'). */
   start?: string;
-  /** ScrollTrigger end position (default 'center 55%' — curtain finishes earlier so cream is fully revealed higher in viewport). */
   end?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -40,25 +33,15 @@ export default function CurtainReveal({
       if (!wrapRef.current || !filterRef.current || !creamRef.current) return;
 
       const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: wrapRef.current,
-          start,
-          end,
-          // scrub: true = follows scroll exactly (no lag, no bounce). The
-          // curtain glides up the entire scroll range of the section.
-          scrub: true,
-        },
+        scrollTrigger: { trigger: wrapRef.current, start, end, scrub: true },
       });
 
-      // Cream is revealed FROM THE TOP: starts hidden (clipped at bottom),
-      // unclips downward as filter recedes.
       tl.fromTo(
         creamRef.current,
         { clipPath: "inset(0% 0% 100% 0%)" },
         { clipPath: "inset(0% 0% 0% 0%)", ease: "none" },
         0,
       );
-      // Filter recedes from the top: starts visible, clips downward to nothing.
       tl.fromTo(
         filterRef.current,
         { clipPath: "inset(0% 0% 0% 0%)" },
@@ -71,9 +54,7 @@ export default function CurtainReveal({
 
   return (
     <div ref={wrapRef} className={cn("relative", className)}>
-      {/* Bottom layer: creme text — clipped FROM the bottom up, revealed in sync */}
       <div ref={creamRef} className="text-creme">{children}</div>
-      {/* Top layer: dark filter — same text, clipped from bottom upward */}
       <div
         ref={filterRef}
         aria-hidden

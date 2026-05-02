@@ -24,23 +24,14 @@ export default function MenuOverlay() {
   const socialsRef = useRef<HTMLDivElement>(null);
   const conceptRef = useRef<HTMLParagraphElement>(null);
 
-  // Sync initial state with GSAP cache.
-  // Initial clip-path: a rounded rectangle hugging the Menu CTA position
-  // (bottom-center) so the overlay appears to EMERGE from the button's
-  // footprint and grow to cover the viewport. Cleaner than a circle clip —
-  // no concentric-circles artifact, matches the rounded-[60px] language
-  // used by Hero/Capsules cards.
-  // Numbers below approximate the Menu CTA's box: 132px tall (≈ Header
-  // PILL_H 84 + an 48px visual buffer above), 160px wide (≈ pill width with
-  // the "Menu" label), 48px from bottom (= Header `bottom-12`). Hardcoded
-  // here rather than imported from Header constants because clip-path is
-  // visual-only and minor drift is acceptable; revisit if the CTA grows.
+  // Initial clip hugs the Menu CTA's footprint (bottom-center, ~160×132,
+  // 48px from bottom) so the overlay appears to grow OUT of the button.
+  // Hardcoded rather than derived from Header constants — clip-path is
+  // visual-only and minor drift is fine.
   const INITIAL_CLIP =
     "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 50px)";
   const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
 
-  // Shared class for the social icon anchors (Instagram + LinkedIn).
-  // Identical pill-style hover affordance — single source of truth.
   const socialIconCls =
     "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300";
 
@@ -98,7 +89,6 @@ export default function MenuOverlay() {
           ease: PANEL.ease,
         });
         if (socialIcons && socialIcons.length) {
-          // Social icons rise after the nav items finish staggering in
           gsap.to(socialIcons, {
             yPercent: 0,
             opacity: 1,
@@ -109,7 +99,6 @@ export default function MenuOverlay() {
           });
         }
         if (concept) {
-          // Concept disclaimer slides in from the left, just after the icons
           gsap.to(concept, {
             x: 0,
             opacity: 1,
@@ -180,20 +169,15 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      // opacity-0 + pointer-events-none baked into the className so the
-      // overlay is hidden on the FIRST PAINT (SSR + hydration) before
-      // useGSAP fires its initial gsap.set. Without this, the menu content
-      // flashes for a frame on hard reloads. GSAP's autoAlpha tween will
-      // override these inline once it kicks in.
+      // opacity-0 + pointer-events-none on the className hide the overlay
+      // on first paint (before useGSAP fires) so the menu content doesn't
+      // flash on hard reload.
       className="fixed inset-0 z-[290] p-3 md:p-4 opacity-0 pointer-events-none"
       style={{ clipPath: INITIAL_CLIP }}
       aria-hidden={!isOpen}
     >
-      {/* Inner frame — rounded corners matching Hero, sits inside outer padding */}
       <div className="relative h-full w-full overflow-hidden rounded-[60px] bg-gris-tan">
-        {/* Layout split — nav left + image right */}
         <div className="relative z-[2] flex h-full">
-          {/* LEFT — nav vertical, anchored TOP (not centered) */}
           <div className="flex-1 md:basis-[75%] flex flex-col px-6 md:px-12 pt-32 md:pt-40 pb-10">
             <ul ref={navRef} className="w-full space-y-1 md:space-y-2">
               {NAV.map((item) => (
@@ -209,7 +193,6 @@ export default function MenuOverlay() {
               ))}
             </ul>
 
-            {/* Bottom — social icons LEFT, concept disclaimer RIGHT (bigger, bold) */}
             <div className="mt-auto flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
               <div ref={socialsRef} className="flex items-center gap-4 shrink-0">
                 <a
@@ -244,7 +227,6 @@ export default function MenuOverlay() {
             </div>
           </div>
 
-          {/* RIGHT — cropped image with the wordmark marquee inside, centered vertically */}
           <div
             ref={imagePanelRef}
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"

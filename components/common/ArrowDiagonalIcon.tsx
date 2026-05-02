@@ -1,7 +1,4 @@
-/**
- * Diagonal arrow (NE direction) used on Reserve / external CTAs.
- * Single-line stroke arrow with arrowhead — standard hairline style.
- */
+/** Diagonal NE arrow used on Reserve / external CTAs. */
 export default function ArrowDiagonalIcon({
   size = 14,
   className,

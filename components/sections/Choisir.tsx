@@ -4,9 +4,6 @@ import { BgGradient } from "@/components/common/BgTransition";
 export default function Choisir() {
   return (
     <section id="choisir" className="relative w-full bg-gris-tan">
-      {/* Whole-section noir → gris-tan transition, OKLAB-interpolated to
-          eliminate banding on dark colors. Default 4% noise dither for any
-          residual quantization on low-end 8-bit panels. */}
       <BgGradient
         from="var(--color-base-noir)"
         to="var(--color-gris-tan)"

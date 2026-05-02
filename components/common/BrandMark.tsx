@@ -1,9 +1,6 @@
 import { SITE_CONFIG } from "@/lib/constants";
 
-/**
- * Renders the brand wordmark with a small registered-mark, anchored low on the
- * baseline (subtle, not obtrusive). Use anywhere "Brume" appears as the brand.
- */
+/** Brand wordmark with a small registered-mark anchored low on the baseline. */
 export default function BrandMark({ className }: { className?: string }) {
   return (
     <span className={className}>

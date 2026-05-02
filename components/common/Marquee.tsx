@@ -7,15 +7,11 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   text: string;
-  /** Pixels per second. Constant — no scroll-driven acceleration. */
+  /** Pixels per second (constant — no scroll-driven acceleration). */
   speed?: number;
   className?: string;
   separator?: string;
-  /**
-   * If true, the marquee reverses direction based on the user's scroll direction.
-   * Scrolling down → drifts forward. Scrolling up → drifts backward.
-   * No parallax, no Y motion — just a direction toggle following scroll sense.
-   */
+  /** If true, scroll direction flips the marquee direction. */
   directional?: boolean;
 };
 

@@ -53,11 +53,9 @@ export default function ReservePanel() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // Sync initial state with GSAP cache.
-  // xPercent: 105 (not 100) — the panel sits at right-4 (16px from viewport
-  // edge), so translating by exactly its own width still leaves a 16px sliver
-  // of its left edge inside the viewport. The extra 5% (32px on a 640px panel)
-  // clears the right-4 offset and pushes the panel fully off-screen.
+  // xPercent 105 (not 100): the panel sits at right-4, so translating by
+  // exactly its own width leaves a 16px sliver visible. The extra 5% clears
+  // the offset.
   useGSAP(() => {
     if (panelRef.current) gsap.set(panelRef.current, { xPercent: 105 });
     if (backdropRef.current) gsap.set(backdropRef.current, { opacity: 0, pointerEvents: "none" });
@@ -66,7 +64,6 @@ export default function ReservePanel() {
     if (contentRef.current) gsap.set(contentRef.current, { opacity: 0 });
   }, []);
 
-  // Animate panel + backdrop on open/close
   useGSAP(
     () => {
       const backdrop = backdropRef.current;
@@ -153,13 +150,10 @@ export default function ReservePanel() {
     { dependencies: [isOpen] },
   );
 
-  // Body scroll lock is owned by SmoothScroll, which already pauses Lenis +
-  // sets body.overflow = "hidden" whenever any panel is open. A duplicate
-  // lock here was racing with SmoothScroll: this effect cached a "previous"
-  // overflow value of "hidden" (already set by SmoothScroll) and would then
-  // restore "hidden" on close instead of "" — leaving the page non-scrollable.
+  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow).
+  // Duplicating it here previously caused a restore race that left the page
+  // non-scrollable after closing.
 
-  // Escape closes
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -202,14 +196,11 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        // panel-offscreen-right CSS class hides the panel during SSR/hydration
-        // before useGSAP fires. GSAP's inline transform overrides the class
-        // on mount, and the className stays static so React reconciliation
-        // can't revert GSAP's transform on re-render.
+        // CSS class hides the panel during SSR before useGSAP fires —
+        // GSAP's inline transform takes over on mount.
         className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">
-          {/* Close — circular black, larger */}
           <button
             type="button"
             onClick={close}
@@ -221,7 +212,6 @@ export default function ReservePanel() {
             </svg>
           </button>
 
-          {/* Heading */}
           <div className="mt-12">
             <p className="text-creme-dim text-[10px] uppercase tracking-[0.3em] font-semibold mb-4">
               Réservation
@@ -235,7 +225,6 @@ export default function ReservePanel() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-14 flex-1">
-            {/* (1) Refuge selection */}
             <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
                 <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Quel refuge aimeriez-vous réserver ?
@@ -283,7 +272,6 @@ export default function ReservePanel() {
               </button>
             </fieldset>
 
-            {/* (2) Dates */}
             <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
                 <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Combien de temps ?

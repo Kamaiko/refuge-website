@@ -22,10 +22,9 @@ export default function Header() {
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Initial entrance.
-  // Reserve: simple fade-in at full size (label always visible, no grow).
-  // Menu: cream pill grows around the inner circle as label widens — keeps
-  // the playful "unrolling" entrance only on the Menu CTA.
+  // Entrance: Reserve fades in at full size; Menu's cream pill grows around
+  // the inner circle (height + paddingRight + label width all start at 0
+  // so the cream only appears once the pill expands).
   useGSAP(() => {
     if (reserveRef.current) {
       gsap.fromTo(
@@ -36,23 +35,33 @@ export default function Header() {
     }
 
     if (menuBtnRef.current && labelAreaRef.current) {
-      // Initial state: button is exactly the inner circle's footprint —
-      // no paddingRight cream sliver, no extra height. The cream pill
-      // appears AROUND the circle as the button grows + label widens.
-      gsap.set(menuBtnRef.current, { height: CIRCLE_H, opacity: 0, scale: 0.6, paddingRight: 0 });
+      // backgroundColor starts transparent so the cream pill doesn't leak a
+      // 1px subpixel halo around the gris-tan circle before the pill grows
+      // wider than the circle.
+      gsap.set(menuBtnRef.current, {
+        height: CIRCLE_H,
+        opacity: 0,
+        scale: 0.6,
+        paddingRight: 0,
+        backgroundColor: "transparent",
+      });
       gsap.set(labelAreaRef.current, { width: 0 });
       if (wheelRef.current) gsap.set(wheelRef.current, { yPercent: 0 });
 
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
       tl
         .to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
-        .to(menuBtnRef.current, { height: PILL_H, paddingRight: PILL_PR, duration: 0.55 }, "+=0.05")
+        .to(menuBtnRef.current, {
+          height: PILL_H,
+          paddingRight: PILL_PR,
+          backgroundColor: "var(--color-creme)",
+          duration: 0.55,
+        }, "+=0.05")
         .to(labelAreaRef.current, { width: "auto", duration: 0.85 }, "<");
     }
   });
 
-  // iOS-wheel: only one word visible. yPercent 0 → -50 to switch.
-  // overwrite: true so rapid menu toggles don't queue up multiple tweens.
+  // Menu↔Close iOS wheel. overwrite prevents tween queueing on rapid toggle.
   useGSAP(
     () => {
       if (!wheelRef.current) return;
@@ -66,14 +75,13 @@ export default function Header() {
     { dependencies: [menuIsOpen] },
   );
 
-  // Reserve scroll-out — simple direction-based logic. Scrolling DOWN past a
-  // small threshold hides it after a soft delay; scrolling UP shows it again.
-  // Not anchored to any section, just listens to window scroll direction.
+  // Reserve scroll-out: hide on scroll-down (after a soft delay), show on
+  // scroll-up. Pure scroll-direction logic, not tied to any section.
   useEffect(() => {
     const btn = reserveRef.current;
     if (!btn) return;
-    const HIDE_AT = 80; // px from top before hide kicks in
-    const SENSITIVITY = 4; // min |dy| to register a direction change
+    const HIDE_AT = 80;
+    const SENSITIVITY = 4;
     let lastY = window.scrollY;
     let hidden = false;
 
@@ -111,30 +119,21 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Coordination — opening Menu always closes Reserve so Menu is visible
-  // (no z-index conflict). Closing Menu also closes Reserve so the user
-  // returns to a clean baseline after dismissing Menu.
+  // Menu opening or closing always dismisses Reserve — keeps the two
+  // panels mutually exclusive.
   const handleMenuToggle = () => {
-    if (!menuIsOpen) {
-      // about to OPEN menu
-      if (reserveIsOpen) closeReservePanel();
-    }
+    if (!menuIsOpen && reserveIsOpen) closeReservePanel();
     menuToggle();
   };
   useEffect(() => {
-    if (!menuIsOpen && reserveIsOpen) {
-      // closing menu while reserve was up: close reserve too
-      closeReservePanel();
-    }
-    // Intentionally only depend on menuIsOpen — reserveIsOpen + closeReservePanel
-    // are stable from context and including them would re-fire this effect on
-    // every reserve toggle, defeating the "react to menu close only" intent.
+    if (!menuIsOpen && reserveIsOpen) closeReservePanel();
+    // Only react to menuIsOpen flips; reserveIsOpen + closeReservePanel are
+    // stable from context.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuIsOpen]);
 
   return (
     <>
-      {/* Brand mark — top-left of header */}
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between p-7 md:p-10 pointer-events-none">
         <Link
           href="/"
@@ -147,9 +146,6 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Reserve CTA — top-right. Static layout (no entry grow); just a
-            simple opacity/y fade-in handled by the useGSAP above. The Menu
-            CTA keeps the unrolling entry — Reserve doesn't. */}
         <button
           ref={reserveRef}
           type="button"
@@ -170,29 +166,24 @@ export default function Header() {
         </button>
       </header>
 
-      {/* Side badge */}
       <div className="fixed right-0 top-1/2 -translate-y-1/2 z-[90] pointer-events-none">
         <div className="rounded-l-md bg-base-noir/80 backdrop-blur-sm px-2 py-4 text-creme/80 text-[10px] uppercase tracking-[0.3em] [writing-mode:vertical-rl]">
           Concept · 2026
         </div>
       </div>
 
-      {/* Menu CTA — fixed bottom-CENTER. Z-index higher than Reserve panel
-          (210) so opening Menu visually takes the foreground. The handleMenuToggle
-          also forcibly closes Reserve to avoid layered confusion. */}
+      {/* z-[300] sits above ReservePanel (z-210) so Menu wins when both open.
+          height + paddingRight live in GSAP, not JSX style — otherwise React
+          re-renders would clobber GSAP's tweened values. */}
       <button
         ref={menuBtnRef}
         type="button"
         onClick={handleMenuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        // No paddingRight in JSX style — GSAP manages it (0 → PILL_PR
-        // synced with the cream pill grow) so React can't reapply on
-        // re-render and create the asymmetric cream sliver before entry.
         className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
       >
-        {/* items-start so the wheel children stack at the top of the clipped
-            area — only "Menu" is visible at rest. */}
+        {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}
         <span
           ref={labelAreaRef}
           style={{ width: 0, height: CIRCLE_H }}

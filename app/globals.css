@@ -44,8 +44,7 @@
 html, body {
   background: var(--color-base-noir);
   color: var(--color-creme);
-  /* Belt-and-braces against horizontal overflow leaks (Reserve CTA reveal,
-     marquee tracks, etc. occasionally extend a few px past the viewport). */
+  /* Clip horizontal overflow leaks from marquee tracks + entry tweens. */
   overflow-x: hidden;
 }
 
@@ -72,9 +71,8 @@ html.has-custom-cursor * {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
-/* Hide native scrollbars site-wide. Lenis handles smooth scrolling and the
-   page is design-driven. !important + universal selector to defeat Lenis's
-   internal styling and any browser default. */
+/* Hide native scrollbars site-wide — Lenis handles smooth scrolling and
+   the page is design-driven. */
 html, body, * {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
@@ -88,10 +86,8 @@ body::-webkit-scrollbar,
   background: transparent !important;
 }
 
-/* SSR initial state for the Reserve panel — translated 105% off-screen so
-   nothing is visible during hydration, before useGSAP's first gsap.set fires.
-   GSAP's inline transform overrides this on mount; the className stays static
-   so React reconciliation can never revert GSAP's transform on re-render. */
+/* Hides the Reserve panel during SSR before useGSAP fires. GSAP's inline
+   transform overrides on mount; the static class can't be reverted by React. */
 .panel-offscreen-right { transform: translateX(105%); }
 
 @media (prefers-reduced-motion: reduce) {
