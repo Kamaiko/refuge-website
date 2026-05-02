@@ -7,7 +7,7 @@ export default function MarqueeBrand() {
       className="relative w-full overflow-hidden py-24 md:py-32 select-none bg-base-noir"
     >
       <Marquee
-        text="Pourquoi Brume® ?"
+        text="Pourquoi Aquilon® ?"
         speed={140}
         separator="·"
         directional

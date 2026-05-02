@@ -1,7 +1,7 @@
 import CurtainReveal from "@/components/common/CurtainReveal";
 
 const MANIFESTE =
-  "Charlevoix garde encore quelque chose de pur. Brume s’y pose sans bruit — trois refuges où ralentir devient une évidence.";
+  "Charlevoix garde encore quelque chose de pur. Aquilon s’y pose sans bruit — trois refuges où ralentir devient une évidence.";
 
 export default function Manifeste() {
   return (

@@ -16,7 +16,7 @@ const hostGrotesk = Host_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Brume — Refuges Charlevoix",
+  title: "Aquilon — Refuges Charlevoix",
   description:
     "Trois refuges contemporains posés dans la forêt boréale de Charlevoix, ouverts sur le Saint-Laurent.",
 };

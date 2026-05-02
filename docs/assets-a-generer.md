@@ -1,4 +1,4 @@
-# Assets à générer — Refuges Brume
+# Assets à générer — Refuges Aquilon
 
 > Liste consolidée des assets manquants pour finaliser le site. Tous les prompts sont prêts à coller dans Nano Banana Pro / Kling / Seedance. Chaque section indique la priorité et le path final attendu.
 

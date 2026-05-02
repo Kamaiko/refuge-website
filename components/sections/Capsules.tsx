@@ -170,7 +170,7 @@ export default function Capsules() {
         className="absolute inset-0 flex items-center pointer-events-none select-none z-0"
       >
         <Marquee
-          text="Brume®"
+          text="Aquilon®"
           speed={140}
           separator="·"
           className="text-creme text-[14vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em]"

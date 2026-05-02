@@ -1,4 +1,4 @@
-# Design System — Refuges Charlevoix (Brume®)
+# Design System — Refuges Charlevoix (Aquilon®)
 
 Source de vérité pour les tokens, la typographie, les radii, le motion et le spacing du site. Tout nouveau composant doit puiser dans ces valeurs (importées depuis `app/globals.css` et `lib/motion.ts`) plutôt que de hardcoder.
 
@@ -55,7 +55,7 @@ Une seule famille : **Host Grotesk** (variable, chargée via `next/font` dans `a
 
 | Niveau | Tailwind class | Usage |
 |---|---|---|
-| Display | `text-[12vw] md:text-[15vw]` | Wordmark "Brume®" derrière Capsules, titre Choisir |
+| Display | `text-[12vw] md:text-[15vw]` | Wordmark "Aquilon®" derrière Capsules, titre Choisir |
 | H1 (hero tagline) | `text-4xl md:text-6xl` | Hero principal |
 | H2 (section headline) | `text-3xl md:text-4xl lg:text-5xl` | Manifeste, Feedback testimonial |
 | H3 (sous-section) | `text-2xl md:text-3xl` | Cards, sous-titres internes |

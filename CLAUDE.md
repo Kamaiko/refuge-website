@@ -246,7 +246,7 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 
 ⏳ **Phase 4 — Polish** (post-assets) :
 
-- [ ] Décision finale du **nom de marque** (Brume = placeholder, voir note ci-dessous)
+- [x] Décision finale du **nom de marque** : Aquilon (vent du nord en latin/littéraire)
 - [ ] Wordmark / logo SVG (à dessiner ou générer)
 - [ ] Raffinage du copy après validation des visuels
 - [ ] Detail panel par unité (overlay click-to-open avec galerie)
@@ -258,14 +258,11 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 - [ ] Lighthouse audit (cible : desktop ≥ 95, mobile ≥ 80)
 - [ ] Case study README avec breakdown technique
 
-## Note sur le nom "Brume"
+## Note sur le nom de marque
 
-Brume est un **placeholder** dans `lib/constants.ts`. Le mot évoque un feel moody/dark qui peut entrer en tension avec le moodboard sunset+turquoise (couleurs chaudes). À reconsidérer après les premiers visuels :
+**Aquilon** — vent du nord en latin/littéraire (de l'antiquité romaine). Choisi pour son registre érudit, sa rareté en hospitalité, et l'écho avec le contexte maritime nordique du St-Laurent. À noter : l'un des trois refuges s'appelle quand même "Brume" (slug `brume` dans `lib/data/unites.ts`) — c'est intentionnel, le mot reste utilisé comme nom de produit, pas comme nom de marque.
 
-- Si l'esthétique finale est **moody/forêt sombre** → Brume va bien
-- Si l'esthétique finale tire vers **sunset chaud + turquoise eau** → considérer : Aubépine, Saulaie, Lichen, Sève, Galets, Fjord, Or, Aube, Terre…
-
-**Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `lib/constants.ts`. Le changement se propage à toute l'app (header, footer, menu, marquee, metadata).
+**Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `lib/constants.ts`. Les chaînes affichées (eyebrow, marquee, manifeste, feedback) sont actuellement hardcoded — chercher littéralement "Aquilon" pour les retrouver.
 
 ## Verification locale (Wave 1+2 testées)
 

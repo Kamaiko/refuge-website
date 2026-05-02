@@ -102,7 +102,7 @@ export default function Choisir() {
       <div className="relative py-32 md:py-48">
         <div className="px-5 md:px-8 mx-auto w-full max-w-[1800px]">
           <p className="text-gris-secondaire text-xs uppercase tracking-[0.3em] mb-12">
-            Découvrir les refuges Brume<sup className="text-[0.65em]">®</sup>
+            Découvrir les refuges Aquilon<sup className="text-[0.65em]">®</sup>
           </p>
         </div>
 
