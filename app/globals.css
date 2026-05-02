@@ -86,10 +86,6 @@ body::-webkit-scrollbar,
   background: transparent !important;
 }
 
-/* Hides the Reserve panel during SSR before useGSAP fires. GSAP's inline
-   transform overrides on mount; the static class can't be reverted by React. */
-.panel-offscreen-right { transform: translateX(105%); }
-
 @media (prefers-reduced-motion: reduce) {
   html.has-custom-cursor,
   html.has-custom-cursor * { cursor: auto !important; }

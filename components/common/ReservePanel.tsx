@@ -56,8 +56,10 @@ export default function ReservePanel() {
   // xPercent 105 (not 100): the panel sits at right-4, so translating by
   // exactly its own width leaves a 16px sliver visible. The extra 5% clears
   // the offset.
+  // visibility: hidden → visible avoids the SSR flash without adding a CSS
+  // class whose `transform` could interfere with GSAP's inline tween parsing.
   useGSAP(() => {
-    if (panelRef.current) gsap.set(panelRef.current, { xPercent: 105 });
+    if (panelRef.current) gsap.set(panelRef.current, { xPercent: 105, visibility: "visible" });
     if (backdropRef.current) gsap.set(backdropRef.current, { opacity: 0, pointerEvents: "none" });
     if (bottomBarRef.current) gsap.set(bottomBarRef.current, { scaleX: 0, transformOrigin: "right center" });
     if (bottomBarContentRef.current) gsap.set(bottomBarContentRef.current, { opacity: 0 });
@@ -196,9 +198,11 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        // CSS class hides the panel during SSR before useGSAP fires —
-        // GSAP's inline transform takes over on mount.
-        className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
+        // visibility: hidden on SSR; useGSAP flips to visible alongside
+        // setting xPercent: 105. A static CSS class with transform was
+        // interfering with GSAP's tween parsing on re-open.
+        style={{ visibility: "hidden" }}
+        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">
           <button
