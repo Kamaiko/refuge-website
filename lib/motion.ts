@@ -2,8 +2,6 @@
  *  --ease-soft in globals.css; keep both sides in sync. */
 
 export const PANEL = {
-  open: 0.9,
-  close: 0.6,
   ease: "expo.out",
   closeEase: "expo.in",
 } as const;

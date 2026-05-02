@@ -55,7 +55,7 @@ Une seule famille : **Host Grotesk** (variable, chargée via `next/font` dans `a
 
 | Niveau | Tailwind class | Usage |
 |---|---|---|
-| Display | `text-[12vw] md:text-[15vw]` | Wordmark "Brume®" derrière Capsules, ScrollLinesScrub Choisir |
+| Display | `text-[12vw] md:text-[15vw]` | Wordmark "Brume®" derrière Capsules, titre Choisir |
 | H1 (hero tagline) | `text-4xl md:text-6xl` | Hero principal |
 | H2 (section headline) | `text-3xl md:text-4xl lg:text-5xl` | Manifeste, Feedback testimonial |
 | H3 (sous-section) | `text-2xl md:text-3xl` | Cards, sous-titres internes |
@@ -113,46 +113,26 @@ Toutes les valeurs JS dans `lib/motion.ts`. Les easings CSS dans `globals.css` (
 
 | Constante | Valeur | Usage |
 |---|---|---|
-| `REVEAL.duration` | `1.1s` | Reveal-style (fade-in, lines stagger, eyebrow + headline entrance) |
-| `PANEL.open` | `0.9s` | Slide-in side panels (Reserve, Menu) |
-| `PANEL.close` | `0.6s` | Slide-out side panels |
 | `SCROLL_OUT.duration` | `0.5s` | Header buttons hide/show on scroll |
 | `SCROLL_OUT.delay` | `0.35s` | Delay avant qu'un scroll-out commence (anti-jitter) |
+
+Reveal-style durations (1.1s / 0.85s / 0.55s) restent inline dans les composants — pas extraites tant qu'on ne les réutilise pas à plusieurs endroits.
 
 ### Easings
 
 | Constante | Valeur | Usage |
 |---|---|---|
-| `REVEAL.ease` / `PANEL.ease` | `expo.out` | Tous les "in" (entrance, slide-in) — feel cinématique |
-| `PANEL.closeEase` | `expo.in` | Tous les "out" (exit, slide-out) — feel snap |
+| `PANEL.ease` | `expo.out` | Slide-in panels (Reserve, Menu) — feel cinématique |
+| `PANEL.closeEase` | `expo.in` | Slide-out panels — feel snap |
 | CSS `--ease-cinematic` | `cubic-bezier(0.65, 0, 0.35, 1)` | Transitions Tailwind (`transition-*`) |
 | CSS `--ease-soft` | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | Hover smooth, slow fades |
-
-### Stagger
-
-| Constante | Valeur | Usage |
-|---|---|---|
-| `REVEAL.stagger` | `0.06s` | Entre items reveal (lines, words, cards) |
-
-### Scrub
-
-| Constante | Valeur | Usage |
-|---|---|---|
-| `SCRUB_DEFAULT` | `1` | Scroll-driven scrub (smooth lag d'1 frame ScrollTrigger) |
-
-### Marquee
-
-| Constante | Valeur | Usage |
-|---|---|---|
-| `MARQUEE.speedBase` | `80` | Vitesse constante du marquee (pixels/s) |
-| `MARQUEE.threshold` | `0.2` | Trigger pour direction switch (20% in viewport) |
 
 ### Capsules section
 
 | Constante | Valeur | Usage |
 |---|---|---|
-| `CAPSULES.stickyDuration` | `+=300%` | Durée scroll de la section pinnée (3 viewports) |
-| `CAPSULES.scaleStep` | `0.07` | Réduction de scale par card stackée (5-10%) |
+| `CAPSULES.stickyDuration` | `+=600%` | Durée scroll de la section pinnée (~6 viewports) |
+| `CAPSULES.scaleStep` | `0.07` | Réduction de scale par card stackée |
 
 ---
 
@@ -222,7 +202,7 @@ Toutes les valeurs JS dans `lib/motion.ts`. Les easings CSS dans `globals.css` (
 
 ```tsx
 // JS motion constants
-import { REVEAL, PANEL, SCRUB_DEFAULT, SCROLL_OUT, MARQUEE, CAPSULES } from "@/lib/motion";
+import { PANEL, SCROLL_OUT, CAPSULES } from "@/lib/motion";
 
 // Tailwind classes (auto-generated from globals.css @theme)
 className="bg-base-noir text-creme rounded-card"

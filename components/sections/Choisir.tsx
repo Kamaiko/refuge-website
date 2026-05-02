@@ -16,14 +16,12 @@ export default function Choisir() {
     () => {
       if (!titleWrapRef.current) return;
 
-      // Two ScrollTriggers with separate ranges so the curtain doesn't fire
-      // while the second line is still scrolling into view from below:
-      //  1. Parallax — title shifts up 120px → 0 over the full approach,
-      //     giving the slower-than-page feel.
-      //  2. Curtain rise — clip-path inset(100%) → inset(0%) on each line.
-      //     Starts only at "bottom 85%" (title's bottom 15% above viewport
-      //     bottom = entire 2-line block fully visible with clearance for
-      //     the parallax offset). Bottom of glyphs appears first, tops last.
+      // Three scroll-driven effects, all sync-end at "top 25%":
+      //   1. Depth   — scale + opacity ramp over the full approach.
+      //   2. Parallax — y drift over the reveal window so the title rises
+      //                 slower than page-scroll without overlapping the
+      //                 description below.
+      //   3. Curtain — per-line clip-path retraction (mask lifts upward).
       // Depth (subtle visual recession) — runs over the full approach.
       gsap.fromTo(
         titleWrapRef.current,
@@ -41,9 +39,9 @@ export default function Choisir() {
         },
       );
 
-      // Parallax — text rises at ~71% of page-scroll speed (= 1.4× slower)
-      // during the reveal window. Starts at y:-140 (above natural position)
-      // and drifts down to 0 as the user scrolls; net visible movement is
+      // Parallax — text rises at ~58% of page-scroll speed (= 1.7× slower)
+      // during the reveal window. Starts above its natural position and
+      // drifts down to 0 as the user scrolls; net visible movement is
       // smaller than the page scroll, so the text appears to lag behind.
       // Negative y avoids overlapping the description below.
       gsap.fromTo(

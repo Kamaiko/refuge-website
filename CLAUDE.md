@@ -226,14 +226,12 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 - **Composants common/ actuels** :
   - `SmoothScroll` (Lenis + GSAP sync, panel-aware lock)
   - `MenuContext` + `MenuOverlay`, `ReservePanelContext` + `ReservePanel`
-  - `RevealText` (4 modes : lines, words, chars, clip)
-  - `RevealChars` (per-char clip-path right→left wipe, word-aware splitting)
-  - `ScrollLinesScrub` (scrub-driven line opacity reveal)
-  - `ScrollTextReveal` (scrub-based per-word opacity)
+  - `RevealText` (2 modes : lines, words)
+  - `RevealChars` (per-char slide right→left, word-aware splitting)
   - `CurtainReveal` (sharp horizontal cut, dual-clipped layers, anti-fringe)
   - `Marquee` (directional scroll-aware wordmark loop)
   - `BrandMark` (wordmark + ® subscript)
-  - `BgTransition` (named exports `<BgGradient>` OKLAB + `<BgFadeOverlay>` scroll-driven solid)
+  - `BgTransition` (named export `<BgGradient>` OKLAB inline gradient + SVG noise)
   - `CustomCursor`
 
 ⏳ **Phase 2 — Assets AI** (à faire par Patrick) :
@@ -294,15 +292,12 @@ Console clean — seuls 404 attendus sur `/videos/hero-loop.mp4` (résolu : tag 
 3. ✅ Custom cursor (point + cercle, mix-blend-difference, scale au hover)
 
 ### B — Reveals texte
-- `<RevealText mode="lines | words | chars | clip">` — primitive 4-modes (entrance one-shot)
-- `<RevealChars play>` — per-char clip-path inset right→left, word-aware splitting (no mid-word breaks). Imperative play prop. Used in Capsules.
-- `<ScrollLinesScrub>` — per-line scrub-driven opacity reveal (each line is its own ScrollTrigger). Used in Choisir.
-- `<ScrollTextReveal>` — scrub-based per-word opacity (Apple keynote style)
+- `<RevealText mode="lines | words">` — primitive 2-modes (entrance one-shot)
+- `<RevealChars play>` — per-char slide right→left inside per-glyph mask, word-aware splitting (no mid-word breaks). Imperative play prop. Used in Capsules.
 - `<CurtainReveal>` — sharp horizontal cut, complementary clip-path on cream + filter layers (eliminates antialiasing fringe). Used in Manifeste.
 
 ### C — Backgrounds & transitions
 - `<BgGradient from to direction noiseOpacity>` — static linear gradient overlay, OKLAB-interpolated via inline `linear-gradient(in oklab, ...)` (Tailwind v4 default OKLAB doesn't apply to var()-backed stops at runtime). SVG turbulence noise dither.
-- `<BgFadeOverlay color triggerRef start end>` — solid color overlay whose opacity is scrubbed by a ScrollTrigger anchored to a parent ref. useGSAP for React 19 Strict Mode safety.
 
 ### D — Marquee
 - `<Marquee text speed directional>` — directional flag toggles scroll-direction-aware reverse
