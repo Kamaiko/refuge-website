@@ -1,15 +1,22 @@
-import WordmarkMaskReveal from "@/components/common/WordmarkMaskReveal";
 import ScrollLinesScrub from "@/components/common/ScrollLinesScrub";
 
 export default function Choisir() {
   return (
     <section id="choisir" className="relative w-full bg-gris-tan">
-      {/* Soft gradient at the bottom — transition from this gris-tan section
-          into the base-noir section that follows (Capsules / MarqueeBrand).
-          Begins ~65% down, fully noir at the bottom edge. */}
+      {/* Whole-section gradient noir → transparent (transparent reveals the
+          section's gris-tan bg below). Simple 2-stop linear interpolation —
+          fewer color stops = no visible quantization between intermediate
+          colors. SVG noise overlay at 7% opacity dithers the residual banding. */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-[35vh] pointer-events-none bg-gradient-to-t from-base-noir to-transparent"
+        className="absolute inset-0 pointer-events-none bg-gradient-to-b from-base-noir to-transparent"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.07]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        }}
       />
 
       <div className="relative px-5 md:px-8 py-32 md:py-48">
@@ -18,8 +25,6 @@ export default function Choisir() {
             Découvrir les refuges Brume<sup className="text-[0.65em]">®</sup>
           </p>
 
-          {/* Headline — scroll-driven scrub: lines reveal continuously with
-              scroll, un-reveal in reverse on scroll-up. */}
           <ScrollLinesScrub
             baseOpacity={0.15}
             className="text-creme text-[15vw] md:text-[13vw] font-semibold leading-[0.86] tracking-[-0.045em]"
@@ -27,18 +32,11 @@ export default function Choisir() {
             {"Trois refuges.\nUn seul, le vôtre."}
           </ScrollLinesScrub>
 
-          {/* Body — present, NOT animated, lighter warm-grey weight-medium */}
           <p className="text-creme-dim mt-12 max-w-2xl text-base md:text-lg leading-relaxed font-medium">
             On les a posés à des distances précises. Chacun ouvre sur quelque chose qu’aucun autre ne voit.
           </p>
         </div>
       </div>
-
-      <WordmarkMaskReveal
-        word="Brume"
-        imageSrc="/images/hero-shape.avif"
-        imageAlt="Un refuge Brume au bord du lac, terrasse en walnut et spa cèdre"
-      />
     </section>
   );
 }

@@ -1,5 +1,4 @@
 import Marquee from "@/components/common/Marquee";
-import { MARQUEE } from "@/lib/motion";
 
 export default function MarqueeBrand() {
   return (
@@ -9,9 +8,9 @@ export default function MarqueeBrand() {
     >
       <Marquee
         text="Pourquoi Brume® ?"
-        speed={MARQUEE.speedBase}
+        speed={140}
         separator="·"
-        flipAt={MARQUEE.threshold}
+        directional
         className="text-creme/90 text-[24vw] md:text-[14vw] font-semibold leading-none tracking-[-0.04em]"
       />
     </section>

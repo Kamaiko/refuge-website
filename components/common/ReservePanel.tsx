@@ -75,76 +75,73 @@ export default function ReservePanel() {
         gsap.to(backdrop, {
           opacity: 1,
           pointerEvents: "auto",
-          duration: 0.35,
+          duration: 0.6,
           ease: PANEL.ease,
         });
         gsap.to(panel, {
           xPercent: 0,
-          duration: PANEL.open,
+          duration: 1.1,
           ease: PANEL.ease,
         });
-        // Bottom bar grows from right after the panel has mostly settled
         if (bar) {
           gsap.to(bar, {
             scaleX: 1,
-            duration: 0.7,
+            duration: 0.85,
             ease: PANEL.ease,
-            delay: 0.45,
+            delay: 0.55,
           });
         }
         if (barContent) {
           gsap.to(barContent, {
             opacity: 1,
-            duration: 0.5,
+            duration: 0.7,
             ease: PANEL.ease,
-            delay: 0.95,
+            delay: 1.1,
           });
         }
-        // Form content reveals AFTER the bar has grown — feels like the bar
-        // "pulls in" the panel content rather than everything appearing at once.
         if (content) {
           gsap.to(content, {
             opacity: 1,
-            duration: 0.55,
+            duration: 0.8,
             ease: PANEL.ease,
-            delay: 0.7,
+            delay: 0.85,
           });
         }
       } else {
         if (content) {
           gsap.to(content, {
             opacity: 0,
-            duration: 0.2,
+            duration: 0.4,
             ease: PANEL.closeEase,
           });
         }
         if (barContent) {
           gsap.to(barContent, {
             opacity: 0,
-            duration: 0.25,
+            duration: 0.4,
             ease: PANEL.closeEase,
           });
         }
         if (bar) {
           gsap.to(bar, {
             scaleX: 0,
-            duration: 0.4,
+            duration: 0.55,
             ease: PANEL.closeEase,
-            delay: 0.15,
+            delay: 0.2,
           });
         }
         gsap.to(panel, {
           xPercent: 100,
-          duration: PANEL.close,
+          duration: 0.85,
           ease: PANEL.closeEase,
-          delay: 0.35,
+          delay: 0.45,
         });
         gsap.to(backdrop, {
           opacity: 0,
           pointerEvents: "none",
-          duration: 0.35,
+          duration: 0.55,
           ease: PANEL.closeEase,
-          delay: 0.45,
+          delay: 0.6,
         });
       }
     },
@@ -235,9 +232,9 @@ export default function ReservePanel() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-12 flex-1">
+          <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-14 flex-1">
             {/* (1) Refuge selection */}
-            <fieldset className="flex flex-col gap-5">
+            <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
                 <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Quel refuge aimeriez-vous réserver ?
               </legend>
@@ -249,23 +246,23 @@ export default function ReservePanel() {
                       key={unite.slug}
                       type="button"
                       onClick={() => setRefuge(unite.slug as RefugeSlug)}
-                      className={`group relative aspect-[3/4] overflow-hidden rounded-soft transition-all ${
+                      className={`group relative flex flex-col overflow-hidden rounded-[20px] transition-all ${
                         selected
-                          ? "ring-2 ring-creme ring-offset-2 ring-offset-gris-tan"
-                          : "ring-1 ring-creme/15 hover:ring-creme/40"
+                          ? "bg-creme text-base-noir"
+                          : "bg-base-noir/50 text-creme hover:bg-base-noir/70"
                       }`}
                     >
-                      <Image
-                        src={unite.image}
-                        alt={unite.nom}
-                        fill
-                        sizes="160px"
-                        className="object-cover"
-                      />
-                      <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-base-noir/85 to-transparent px-2 pt-6 pb-2">
-                        <span className="block text-creme text-sm font-medium tracking-tight">
-                          {unite.nom}
-                        </span>
+                      <span className="relative block aspect-[4/3] overflow-hidden rounded-[16px] m-2 mb-0 bg-base-noir-soft">
+                        <Image
+                          src={unite.image}
+                          alt={unite.nom}
+                          fill
+                          sizes="180px"
+                          className="object-cover"
+                        />
+                      </span>
+                      <span className="block px-3 py-3 text-center text-sm font-medium tracking-tight">
+                        {unite.nom}
                       </span>
                     </button>
                   );
@@ -285,11 +282,11 @@ export default function ReservePanel() {
             </fieldset>
 
             {/* (2) Dates */}
-            <fieldset className="flex flex-col gap-5">
+            <fieldset className="flex flex-col gap-8">
               <legend className="text-creme/90 text-base font-semibold">
                 <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Combien de temps ?
               </legend>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-4">
                 <DateInput label="Arrivée" name="arrivee" value={arrivee} onChange={setArrivee} />
                 <DateInput label="Départ" name="depart" value={depart} onChange={setDepart} />
               </div>

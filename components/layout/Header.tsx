@@ -1,28 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
 
-const PILL_H = 72; // px — outer cream pill height
-const CIRCLE_H = 56; // px — inner gris-tan circle height (h-14)
+const PILL_H = 84; // px — outer cream pill height
+const CIRCLE_H = 74; // px — inner gris-tan circle height (tighter cream halo)
+const PILL_PR = 4; // px — cream margin past the inner circle on the right
 
 export default function Header() {
-  const { toggle, isOpen } = useMenu();
-  const { open: openReservePanel } = useReservePanel();
+  const { toggle: menuToggle, isOpen: menuIsOpen } = useMenu();
+  const { open: openReservePanel, close: closeReservePanel, isOpen: reserveIsOpen } = useReservePanel();
   const reserveRef = useRef<HTMLButtonElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Initial entrance — Reserve fades in. Menu starts as a centered gris-tan circle
-  // (cream pill collapsed to circle width), then the cream pill unrolls leftward
-  // and the circle drifts to the right edge.
+  // Initial entrance.
+  // Reserve: simple fade-in at full size (label always visible, no grow).
+  // Menu: cream pill grows around the inner circle as label widens — keeps
+  // the playful "unrolling" entrance only on the Menu CTA.
   useGSAP(() => {
     if (reserveRef.current) {
       gsap.fromTo(
@@ -33,15 +35,15 @@ export default function Header() {
     }
 
     if (menuBtnRef.current && labelAreaRef.current) {
-      gsap.set(menuBtnRef.current, { opacity: 0, scale: 0.6 });
+      gsap.set(menuBtnRef.current, { height: CIRCLE_H, opacity: 0, scale: 0.6 });
       gsap.set(labelAreaRef.current, { width: 0 });
-      // Force the wheel to its initial position so only "Menu" is visible
-      // before any switch animation runs.
       if (wheelRef.current) gsap.set(wheelRef.current, { yPercent: 0 });
 
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl.to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
-        .to(labelAreaRef.current, { width: "auto", duration: 0.85, delay: 0.45 });
+      tl
+        .to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
+        .to(menuBtnRef.current, { height: PILL_H, duration: 0.55 }, "+=0.05")
+        .to(labelAreaRef.current, { width: "auto", duration: 0.85 }, "<");
     }
   });
 
@@ -50,60 +52,85 @@ export default function Header() {
     () => {
       if (!wheelRef.current) return;
       gsap.to(wheelRef.current, {
-        yPercent: isOpen ? -50 : 0,
+        yPercent: menuIsOpen ? -50 : 0,
         duration: 0.55,
         ease: "expo.inOut",
       });
     },
-    { dependencies: [isOpen] },
+    { dependencies: [menuIsOpen] },
   );
 
-  // Reserve scroll-out — hidden ONLY during the hero past 40%, visible elsewhere.
-  // ScrollTrigger anchored to the hero element so the behavior is declarative,
-  // not threshold-based. Past the hero (Manifeste etc.), Reserve is back.
-  useGSAP(() => {
+  // Reserve scroll-out — simple direction-based logic. Scrolling DOWN past a
+  // small threshold hides it after a soft delay; scrolling UP shows it again.
+  // Not anchored to any section, just listens to window scroll direction.
+  useEffect(() => {
     const btn = reserveRef.current;
-    const heroEl = document.querySelector<HTMLElement>("[data-hero]");
-    if (!btn || !heroEl) return;
+    if (!btn) return;
+    const HIDE_AT = 80; // px from top before hide kicks in
+    const SENSITIVITY = 4; // min |dy| to register a direction change
+    let lastY = window.scrollY;
+    let hidden = false;
 
-    const hide = () =>
-      gsap.to(btn, {
-        yPercent: -120,
-        opacity: 0,
-        duration: SCROLL_OUT.duration,
-        delay: SCROLL_OUT.delay,
-        ease: "expo.in",
-        pointerEvents: "none" as unknown as number,
-      });
-    const show = () =>
-      gsap.to(btn, {
-        yPercent: 0,
-        opacity: 1,
-        duration: SCROLL_OUT.duration,
-        delay: SCROLL_OUT.delay,
-        ease: "expo.out",
-        pointerEvents: "auto" as unknown as number,
-      });
+    const onScroll = () => {
+      const y = Math.max(0, window.scrollY);
+      const dy = y - lastY;
+      if (Math.abs(dy) < SENSITIVITY) return;
+      if (dy > 0 && y > HIDE_AT && !hidden) {
+        gsap.to(btn, {
+          yPercent: -140,
+          opacity: 0,
+          duration: SCROLL_OUT.duration,
+          delay: SCROLL_OUT.delay,
+          ease: "expo.in",
+          pointerEvents: "none" as unknown as number,
+          overwrite: true,
+        });
+        hidden = true;
+      } else if (dy < 0 && hidden) {
+        gsap.to(btn, {
+          yPercent: 0,
+          opacity: 1,
+          duration: SCROLL_OUT.duration,
+          delay: SCROLL_OUT.delay,
+          ease: "expo.out",
+          pointerEvents: "auto" as unknown as number,
+          overwrite: true,
+        });
+        hidden = false;
+      }
+      lastY = y;
+    };
 
-    const trigger = ScrollTrigger.create({
-      trigger: heroEl,
-      start: "40% top",
-      end: "bottom top",
-      onEnter: hide,
-      onLeave: show,
-      onEnterBack: hide,
-      onLeaveBack: show,
-    });
-    return () => trigger.kill();
-  });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Coordination — opening Menu always closes Reserve so Menu is visible
+  // (no z-index conflict). Closing Menu also closes Reserve so the user
+  // returns to a clean baseline after dismissing Menu.
+  const handleMenuToggle = () => {
+    if (!menuIsOpen) {
+      // about to OPEN menu
+      if (reserveIsOpen) closeReservePanel();
+    }
+    menuToggle();
+  };
+  useEffect(() => {
+    if (!menuIsOpen && reserveIsOpen) {
+      // closing menu while reserve was up: close reserve too
+      closeReservePanel();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuIsOpen]);
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-7 md:p-10 pointer-events-none">
+      {/* Brand mark — top-left of header */}
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between p-7 md:p-10 pointer-events-none">
         <Link
           href="/"
           aria-label={SITE_CONFIG.name}
-          className="group pointer-events-auto relative inline-flex h-9 w-9 items-center justify-center"
+          className="group pointer-events-auto relative inline-flex h-9 w-9 items-center justify-center mt-1"
         >
           <span className="absolute inset-0 rounded-full border border-creme/30 transition-colors group-hover:border-creme/80" />
           <span className="relative text-creme font-semibold tracking-tight text-sm">
@@ -111,23 +138,27 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* Reserve CTA — cream pill EXTENDS beyond the inner gris-tan circle */}
+        {/* Reserve CTA — top-right. Static layout (no entry grow); just a
+            simple opacity/y fade-in handled by the useGSAP above. The Menu
+            CTA keeps the unrolling entry — Reserve doesn't. */}
         <button
           ref={reserveRef}
           type="button"
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
-          style={{ height: PILL_H }}
-          className="pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme pl-7 pr-2"
+          style={{ height: PILL_H, paddingRight: PILL_PR }}
+          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme will-change-transform"
         >
-          <span className="pr-5">Réserver</span>
+          <span className="pl-7 pr-5 text-lg font-medium text-base-noir whitespace-nowrap">
+            Réserver
+          </span>
           <span
             style={{ height: CIRCLE_H, width: CIRCLE_H }}
             className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
           >
             <svg
-              width="16"
-              height="16"
+              width="20"
+              height="20"
               viewBox="0 0 14 14"
               fill="none"
               className="text-creme/85"
@@ -152,26 +183,24 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Menu CTA — cream pill EXTENDS beyond the inner gris-tan circle. Initial:
-          label width 0 → parent width = circle area only (with the cream ring
-          around). Entrance: label widens, parent grows leftward, gris-tan circle
-          drifts to the right of the pill. iOS wheel for Menu↔Close. */}
+      {/* Menu CTA — fixed bottom-CENTER. Z-index higher than Reserve panel
+          (210) so opening Menu visually takes the foreground. The handleMenuToggle
+          also forcibly closes Reserve to avoid layered confusion. */}
       <button
         ref={menuBtnRef}
         type="button"
-        onClick={toggle}
-        aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
-        aria-expanded={isOpen}
-        style={{ height: PILL_H, opacity: 0 }}
-        className="menu-cta fixed bottom-7 left-1/2 z-[210] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme pr-2 will-change-transform"
+        onClick={handleMenuToggle}
+        aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
+        aria-expanded={menuIsOpen}
+        style={{ paddingRight: PILL_PR }}
+        className="menu-cta h-[68px] opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
       >
-        {/* Label area — width animates 0 → auto on initial entrance.
-            Strict overflow-hidden + matched height ensures only one wheel item
-            is ever visible (no double-render on initial paint). */}
+        {/* items-start so the wheel children stack at the top of the clipped
+            area — only "Menu" is visible at rest. */}
         <span
           ref={labelAreaRef}
           style={{ width: 0, height: CIRCLE_H }}
-          className="inline-flex items-center text-lg font-medium text-base-noir overflow-hidden will-change-[width]"
+          className="inline-flex items-start text-lg font-medium text-base-noir overflow-hidden will-change-[width]"
         >
           <span className="block pl-7 pr-5 whitespace-nowrap">
             <span ref={wheelRef} className="block will-change-transform">
@@ -181,16 +210,14 @@ export default function Header() {
           </span>
         </span>
 
-        {/* Gris-tan circle — smaller than the cream pill (cream visible around).
-            Hamburger: 3 lines, 1.5px stroke, creme/85 to read on the gris-tan. */}
         <span
           style={{ height: CIRCLE_H, width: CIRCLE_H }}
           className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
         >
-          <span className="flex flex-col gap-1.5">
-            <span className="block h-[1.5px] w-6 bg-creme/85 rounded-full" />
-            <span className="block h-[1.5px] w-6 bg-creme/85 rounded-full" />
-            <span className="block h-[1.5px] w-6 bg-creme/85 rounded-full" />
+          <span className="flex flex-col gap-[5px]">
+            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
+            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
+            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
           </span>
         </span>
       </button>

@@ -69,6 +69,22 @@ html.has-custom-cursor * {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* Hide native scrollbars site-wide. Lenis handles smooth scrolling and the
+   page is design-driven. !important + universal selector to defeat Lenis's
+   internal styling and any browser default. */
+html, body, * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
 /* Initial off-screen position for slide-in panels — defined as a CSS class so
    GSAP's inline-style transforms (xPercent) can override it without React's
    re-render reverting the inline style on every state change. */

@@ -114,7 +114,7 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[200] p-3 md:p-4"
+      className="fixed inset-0 z-[290] p-3 md:p-4"
       aria-hidden={!isOpen}
     >
       {/* Inner frame — rounded corners matching Hero, sits inside outer padding */}
@@ -129,7 +129,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block text-creme-terre/70 text-6xl md:text-7xl lg:text-[9vw] font-semibold tracking-tight leading-[1.05] hover:text-creme transition-colors duration-500 ease-out"
+                    className="block text-creme-terre/70 text-4xl md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight leading-[1.1] hover:text-creme transition-colors duration-500 ease-out"
                   >
                     {item.label}
                   </a>
@@ -137,14 +137,14 @@ export default function MenuOverlay() {
               ))}
             </ul>
 
-            {/* Bottom — social icons + concept disclaimer, pushed to bottom */}
-            <div className="mt-auto flex flex-col gap-6">
-              <div className="flex items-center gap-4">
+            {/* Bottom — social icons LEFT, concept disclaimer RIGHT (bigger, bold) */}
+            <div className="mt-auto flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+              <div className="flex items-center gap-4 shrink-0">
                 <a
-                  href="https://www.instagram.com/kamaiko/"
+                  href="https://www.instagram.com/patrickpatenaude/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Instagram — Kamaiko"
+                  aria-label="Instagram — Patrick Patenaude"
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -166,7 +166,7 @@ export default function MenuOverlay() {
                   </svg>
                 </a>
               </div>
-              <p className="text-creme-dim/60 text-xs max-w-md leading-relaxed">
+              <p className="text-creme-dim text-sm md:text-base font-semibold max-w-xl leading-relaxed">
                 Ce site web est juste un concept de projet réalisé par moi pour démontrer mes capacités.
               </p>
             </div>
@@ -197,19 +197,6 @@ export default function MenuOverlay() {
           </div>
         </div>
 
-        {/* Close pill — bottom center, mirrors Menu CTA */}
-        <button
-          type="button"
-          onClick={close}
-          aria-label="Fermer le menu"
-          className="absolute bottom-6 left-1/2 z-[3] -translate-x-1/2 inline-flex items-center gap-3 rounded-pill bg-creme/95 px-5 py-3 text-sm font-medium text-base-noir backdrop-blur-sm transition-colors hover:bg-creme"
-        >
-          Fermer
-          <span className="relative h-3 w-3">
-            <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 rotate-45 bg-current" />
-            <span className="absolute left-1/2 top-1/2 block h-px w-full -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-current" />
-          </span>
-        </button>
       </div>
     </div>
   );

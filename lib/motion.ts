@@ -46,8 +46,10 @@ export const MARQUEE = {
 
 /** Capsules section pin behavior. */
 export const CAPSULES = {
-  /** Total scroll length while pinned (3 viewports). */
-  stickyDuration: "+=300%",
+  /** Total scroll length while pinned (~6 viewports). Card 3 (the last) gets
+   *  a full 1.5-unit hold so it sits clearly sticky before the noir handoff,
+   *  while cards 1 and 2 get short half-unit holds (~4 ticks) per user spec. */
+  stickyDuration: "+=600%",
   /** Scale reduction per stacked card (5-10%). */
   scaleStep: 0.07,
 } as const;

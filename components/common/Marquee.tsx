@@ -12,12 +12,11 @@ type Props = {
   className?: string;
   separator?: string;
   /**
-   * If set (0-1), the marquee flips direction ONCE when the section reaches
-   * that viewport threshold (e.g. 0.2 = section is ≥20% in view). Reverts to
-   * its original direction when scrolled back above the threshold.
-   * Use for a deliberate "section recognition" beat, not continuous coupling.
+   * If true, the marquee reverses direction based on the user's scroll direction.
+   * Scrolling down → drifts forward. Scrolling up → drifts backward.
+   * No parallax, no Y motion — just a direction toggle following scroll sense.
    */
-  flipAt?: number;
+  directional?: boolean;
 };
 
 export default function Marquee({
@@ -25,7 +24,7 @@ export default function Marquee({
   speed = 60,
   className,
   separator = " — ",
-  flipAt,
+  directional = false,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
@@ -45,21 +44,23 @@ export default function Marquee({
         repeat: -1,
       });
 
-      if (typeof flipAt !== "number" || !wrap.current) return;
+      if (!directional || !wrap.current) return;
 
-      // start position string: "top XX%" where XX = (1 - threshold) * 100
-      // e.g. flipAt 0.2 → "top 80%" (section top reaches 80% down viewport,
-      // meaning 20% of section is now visible).
-      const startPct = Math.round((1 - flipAt) * 100);
+      let currentDir = 1;
       const st = ScrollTrigger.create({
         trigger: wrap.current,
-        start: `top ${startPct}%`,
+        start: "top bottom",
         end: "bottom top",
-        onEnter: () => {
-          gsap.to(tween, { timeScale: -1, duration: 0.6, ease: "power2.out", overwrite: true });
-        },
-        onLeaveBack: () => {
-          gsap.to(tween, { timeScale: 1, duration: 0.6, ease: "power2.out", overwrite: true });
+        onUpdate: (self) => {
+          if (self.direction !== currentDir) {
+            currentDir = self.direction;
+            gsap.to(tween, {
+              timeScale: currentDir,
+              duration: 0.6,
+              ease: "power2.out",
+              overwrite: true,
+            });
+          }
         },
       });
 
@@ -68,7 +69,7 @@ export default function Marquee({
         tween.kill();
       };
     },
-    { scope: wrap, dependencies: [flipAt] },
+    { scope: wrap, dependencies: [directional] },
   );
 
   return (
