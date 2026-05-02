@@ -28,7 +28,24 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     gsap.ticker.add(tickerHandler);
     gsap.ticker.lagSmoothing(0);
 
+    // Lenis virtualises scroll, so the browser's native "auto-scroll to a
+    // focused element when Tab moves focus offscreen" never fires. Forward
+    // focusin events to Lenis explicitly so keyboard navigation works.
+    const onFocusIn = (e: FocusEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el || typeof el.getBoundingClientRect !== "function") return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // Only scroll when the focused element is genuinely off-screen, with
+      // a small margin so headers / pinned sections don't fight the scroll.
+      const margin = 80;
+      if (rect.top >= margin && rect.bottom <= vh - margin) return;
+      lenis.scrollTo(el, { offset: -vh / 3 });
+    };
+    document.addEventListener("focusin", onFocusIn);
+
     return () => {
+      document.removeEventListener("focusin", onFocusIn);
       gsap.ticker.remove(tickerHandler);
       lenis.destroy();
       lenisRef.current = null;

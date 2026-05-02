@@ -296,10 +296,16 @@ function UniteCardContent({
             transitionDelay: play ? "0.6s" : "0s",
           }}
         >
+          {/* tabIndex={-1}: visual flourish CTAs are skipped by Tab. The
+              same reservation flow is reachable via the Header "Réserver"
+              CTA, which opens the panel with refuge selection. Avoids
+              keyboard users having to scroll through the pinned scrub
+              just to focus a duplicate button. Mouse + AT activation work. */}
           <button
             type="button"
             onClick={onReserve}
-            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+            tabIndex={-1}
+            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90"
           >
             Réserver {unite.nom}
             <ArrowDiagonalIcon />
