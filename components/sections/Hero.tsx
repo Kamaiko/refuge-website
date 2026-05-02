@@ -30,15 +30,19 @@ export default function Hero() {
   );
 
   // Subtle scroll-driven zoom-out on the video — gives the hero a sense of
-  // recession as the page begins. Scrub-tied so it stays glued to scroll.
+  // recession as the page begins. Range is 1.10 → 1.0 (never below 1.0) so
+  // the video always fully covers the rounded-[60px] inner frame; below 1.0
+  // it would shrink off the edges and reveal the noir behind. The 10%
+  // upscale at rest is imperceptible on a moving video (motion masks the
+  // interpolation artifacts of static images).
   useGSAP(
     () => {
       if (!mediaRef.current || !sectionRef.current) return;
       gsap.fromTo(
         mediaRef.current,
-        { scale: 1.05 },
+        { scale: 1.1 },
         {
-          scale: 0.92,
+          scale: 1.0,
           ease: "none",
           scrollTrigger: {
             trigger: sectionRef.current,

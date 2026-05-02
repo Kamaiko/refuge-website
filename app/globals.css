@@ -88,6 +88,12 @@ body::-webkit-scrollbar,
   background: transparent !important;
 }
 
+/* SSR initial state for the Reserve panel — translated 105% off-screen so
+   nothing is visible during hydration, before useGSAP's first gsap.set fires.
+   GSAP's inline transform overrides this on mount; the className stays static
+   so React reconciliation can never revert GSAP's transform on re-render. */
+.panel-offscreen-right { transform: translateX(105%); }
+
 @media (prefers-reduced-motion: reduce) {
   html.has-custom-cursor,
   html.has-custom-cursor * { cursor: auto !important; }

@@ -35,14 +35,17 @@ export default function Header() {
     }
 
     if (menuBtnRef.current && labelAreaRef.current) {
-      gsap.set(menuBtnRef.current, { height: CIRCLE_H, opacity: 0, scale: 0.6 });
+      // Initial state: button is exactly the inner circle's footprint —
+      // no paddingRight cream sliver, no extra height. The cream pill
+      // appears AROUND the circle as the button grows + label widens.
+      gsap.set(menuBtnRef.current, { height: CIRCLE_H, opacity: 0, scale: 0.6, paddingRight: 0 });
       gsap.set(labelAreaRef.current, { width: 0 });
       if (wheelRef.current) gsap.set(wheelRef.current, { yPercent: 0 });
 
       const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
       tl
         .to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
-        .to(menuBtnRef.current, { height: PILL_H, duration: 0.55 }, "+=0.05")
+        .to(menuBtnRef.current, { height: PILL_H, paddingRight: PILL_PR, duration: 0.55 }, "+=0.05")
         .to(labelAreaRef.current, { width: "auto", duration: 0.85 }, "<");
     }
   });
@@ -192,7 +195,9 @@ export default function Header() {
         onClick={handleMenuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        style={{ paddingRight: PILL_PR }}
+        // No paddingRight in JSX style — GSAP manages it (0 → PILL_PR
+        // synced with the cream pill grow) so React can't reapply on
+        // re-render and create the asymmetric cream sliver before entry.
         className="menu-cta h-[68px] opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
       >
         {/* items-start so the wheel children stack at the top of the clipped

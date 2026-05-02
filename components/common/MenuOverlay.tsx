@@ -123,7 +123,13 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-[290] p-3 md:p-4"
+      // opacity-0 + pointer-events-none baked into the className so the
+      // overlay is hidden on the FIRST PAINT (SSR + hydration) before
+      // useGSAP fires its initial gsap.set. Without this, the menu content
+      // flashes for a frame on hard reloads. GSAP's autoAlpha tween will
+      // override these inline once it kicks in.
+      className="fixed inset-0 z-[290] p-3 md:p-4 opacity-0 pointer-events-none"
+      style={{ clipPath: INITIAL_CLIP }}
       aria-hidden={!isOpen}
     >
       {/* Inner frame — rounded corners matching Hero, sits inside outer padding */}

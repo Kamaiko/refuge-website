@@ -9,7 +9,6 @@ import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
-import { BgFadeOverlay } from "@/components/common/BgTransition";
 
 export default function Capsules() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -28,12 +27,25 @@ export default function Capsules() {
       const cards = cardRefs.current.filter((c): c is HTMLDivElement => !!c);
       if (!section || cards.length !== 3) return;
 
-      // Initial state: card 1 sits centered, very small with extra-rounded
-      // corners (rounded-[100px]) so the bg marquee text passes BEHIND the
-      // image. Cards 2 & 3 below the fold.
-      gsap.set(cards[0], { scale: 0.32, yPercent: 0, opacity: 1, zIndex: 1 });
+      // Initial state: card 1 sits centered as a stadium pill (border-radius
+      // managed below). Scale 0.42 — large enough to read as a presence on
+      // its own, not just a tiny thumbnail floating in the bg marquee. Cards
+      // 2 & 3 below the fold, ready to slide up.
+      gsap.set(cards[0], { scale: 0.42, yPercent: 0, opacity: 1, zIndex: 1 });
       gsap.set(cards[1], { yPercent: 110, scale: 1, opacity: 1, zIndex: 2 });
       gsap.set(cards[2], { yPercent: 110, scale: 1, opacity: 1, zIndex: 3 });
+
+      // Card 0's article (the visible rounded frame): stadium pill at rest,
+      // tweened to a regular card radius as it grows to fullscreen.
+      // Start value 540px = the browser's 50%-of-short-side cap on common
+      // 1080p viewports, so any tween value below 540 is immediately
+      // visible (no "plateau" while we wait to drop below the cap).
+      // power1.out gives a gentle accelerating decrease — more uniform
+      // perceptually than power2.out which front-loaded the change.
+      const card0Article = cards[0].querySelector("article") as HTMLElement | null;
+      if (card0Article) {
+        gsap.set(card0Article, { borderRadius: "540px" });
+      }
 
       // Dolly-zoom framing: each card image starts strongly zoomed-in (scale
       // 1.35) so the small initial capsule reveals only a tight crop. As the
@@ -109,13 +121,21 @@ export default function Capsules() {
         },
       });
 
-      // Phase 1 (0 → 1): card 1 grows + image dolly + marquee dims
+      // Phase 1 (0 → 1): card 1 grows + image dolly + marquee dims +
+      // article border-radius transitions stadium pill → regular card radius
       tl.to(cards[0], { scale: 1, duration: 1, ease: "none" }, 0);
+      if (card0Article) {
+        tl.to(card0Article, { borderRadius: "60px", duration: 1, ease: "power1.out" }, 0);
+      }
       if (cardImageRefs.current[0]) {
         tl.to(cardImageRefs.current[0], { scale: 1, duration: 1, ease: "none" }, 0);
       }
       if (marqueeWrapRef.current) {
-        tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "none" }, 0);
+        // power2.out — opacity drops fast in the first half of the grow so
+        // the marquee fade is clearly visible BEFORE card 1 covers most of
+        // it. Linear (ease: "none") hid the change because the growing card
+        // physically masked the marquee at the same rate the opacity dropped.
+        tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, 0);
       }
       // Phase 2 (1.5 → 2.5): card 2 slides in + image dolly, card 1 scales down
       // Section bg also fades from gris-tan → base-noir during this phase, so
@@ -200,8 +220,11 @@ export default function Capsules() {
               className="absolute inset-0 will-change-transform"
             >
               <article
+                // Card 0's border-radius is managed by GSAP (stadium pill at
+                // rest → 60px when fullscreen). Cards 1 & 2 keep static
+                // rounded-card radius via Tailwind class.
                 className={`relative h-full w-full overflow-hidden bg-base-noir-soft ${
-                  i === 0 ? "rounded-[100px] md:rounded-[120px]" : "rounded-[40px] md:rounded-[60px]"
+                  i === 0 ? "" : "rounded-[40px] md:rounded-[60px]"
                 }`}
               >
                 <div
@@ -233,27 +256,31 @@ export default function Capsules() {
                       duration={0.42}
                       className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
                     />
-                    {/* Title — all chars reveal at the SAME TIME (stagger 0).
-                        Each char still uses the right→left clip-path wipe so
-                        the word looks like it's "lifting a vertical veil"
-                        across every glyph in unison. */}
-                    <RevealChars
-                      text={unite.nom}
-                      play={revealActive[i] ?? false}
-                      delay={0.1}
-                      stagger={0}
-                      duration={0.65}
-                      className="block whitespace-nowrap text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
-                    />
+                  </div>
+                  {/* Title broken out of the max-w-3xl wrapper — at 8vw
+                      "Aubépine" + tracking-[-0.04em] needs more horizontal
+                      room than 768px allows on wide viewports, otherwise
+                      whitespace-nowrap pushes the trailing glyphs into the
+                      card's overflow-hidden clip. pr-4 reserves a hair of
+                      breathing room past the last glyph. */}
+                  <RevealChars
+                    text={unite.nom}
+                    play={revealActive[i] ?? false}
+                    delay={0.1}
+                    stagger={0}
+                    duration={0.95}
+                    className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
+                  />
+                  <div className="max-w-3xl">
                     {/* Description — slides in as ONE block from the right
-                        (no per-char stagger). Calmer counterpoint to the
-                        title's per-char wipe. */}
+                        AT THE SAME TIME as the title (no extra delay). Calmer
+                        counterpoint to the title's per-char wipe. */}
                     <p
-                      className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-700 ease-out will-change-transform"
+                      className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-[900ms] ease-out will-change-transform"
                       style={{
                         opacity: revealActive[i] ? 1 : 0,
                         transform: revealActive[i] ? "translateX(0)" : "translateX(40px)",
-                        transitionDelay: revealActive[i] ? "0.35s" : "0s",
+                        transitionDelay: revealActive[i] ? "0.1s" : "0s",
                       }}
                     >
                       {unite.description}
@@ -292,15 +319,11 @@ export default function Capsules() {
         </div>
       </div>
 
-      {/* Exit-to-noir overlay — fades in as the section unpins and scrolls
-          out, reaching full noir as card 3 leaves the upper third. Seamless
-          handoff to the noir MarqueeBrand below. */}
-      <BgFadeOverlay
-        color="var(--color-base-noir)"
-        triggerRef={sectionRef}
-        start="bottom 80%"
-        end="bottom 33%"
-      />
+      {/* Exit-to-noir overlay was removed — redundant once the section's
+          backgroundColor tween (during phase 2) takes the bg to base-noir
+          before card 3 even lands, so a noir overlay over a noir bg was
+          invisible anyway. The handoff to MarqueeBrand stays seamless via
+          the section bg color alone. */}
 
       {/* Loading bar — centered in the lower-right quadrant (≈25vh from
           bottom, ≈12vw from right). 2.5x wider than before so the progress

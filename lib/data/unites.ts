@@ -11,8 +11,19 @@ export type Unite = {
 };
 
 // Order is significant — Capsules.tsx relies on indexes 0/1/2 for z-index
-// stacking and slide-up sequencing. Reordering here will break the slideshow.
+// stacking and slide-up sequencing. Reordering here will reorder the slideshow.
 export const UNITES: Unite[] = [
+  {
+    slug: "brume",
+    nom: "Brume",
+    surnom: "Sur le promontoire",
+    description:
+      "Le plus haut, le plus exposé au ciel. Aux premières heures, la brume s’élève du fleuve et passe sous le refuge. Aurores boréales possibles l’hiver.",
+    capacite: "2-4 personnes",
+    surface: "46 m²",
+    image: "/images/unite-brume.avif",
+    tarifParNuit: 680,
+  },
   {
     slug: "aubepine",
     nom: "Aubépine",
@@ -34,16 +45,5 @@ export const UNITES: Unite[] = [
     surface: "38 m²",
     image: "/images/unite-galets.avif",
     tarifParNuit: 600,
-  },
-  {
-    slug: "brume",
-    nom: "Brume",
-    surnom: "Sur le promontoire",
-    description:
-      "Le plus haut, le plus exposé au ciel. Aux premières heures, la brume s’élève du fleuve et passe sous le refuge. Aurores boréales possibles l’hiver.",
-    capacite: "2-4 personnes",
-    surface: "46 m²",
-    image: "/images/unite-brume.avif",
-    tarifParNuit: 680,
   },
 ];

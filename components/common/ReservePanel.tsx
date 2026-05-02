@@ -52,9 +52,13 @@ export default function ReservePanel() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
-  // Sync initial state with GSAP cache (avoid CSS transform / xPercent drift)
+  // Sync initial state with GSAP cache.
+  // xPercent: 105 (not 100) — the panel sits at right-4 (16px from viewport
+  // edge), so translating by exactly its own width still leaves a 16px sliver
+  // of its left edge inside the viewport. The extra 5% (32px on a 640px panel)
+  // clears the right-4 offset and pushes the panel fully off-screen.
   useGSAP(() => {
-    if (panelRef.current) gsap.set(panelRef.current, { xPercent: 100 });
+    if (panelRef.current) gsap.set(panelRef.current, { xPercent: 105 });
     if (backdropRef.current) gsap.set(backdropRef.current, { opacity: 0, pointerEvents: "none" });
     if (bottomBarRef.current) gsap.set(bottomBarRef.current, { scaleX: 0, transformOrigin: "right center" });
     if (bottomBarContentRef.current) gsap.set(bottomBarContentRef.current, { opacity: 0 });
@@ -131,7 +135,7 @@ export default function ReservePanel() {
           });
         }
         gsap.to(panel, {
-          xPercent: 100,
+          xPercent: 105,
           duration: 0.85,
           ease: PANEL.closeEase,
           delay: 0.45,
@@ -201,11 +205,11 @@ export default function ReservePanel() {
         role="dialog"
         aria-modal="true"
         aria-label="Réservation"
-        // No initial transform here. useGSAP runs synchronously via
-        // useLayoutEffect on mount and writes xPercent: 100 inline before
-        // first paint, so the panel is hidden off-screen without a CSS class
-        // that could conflict with GSAP's tween parsing of the starting value.
-        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
+        // panel-offscreen-right CSS class hides the panel during SSR/hydration
+        // before useGSAP fires. GSAP's inline transform overrides the class
+        // on mount, and the className stays static so React reconciliation
+        // can't revert GSAP's transform on re-render.
+        className="panel-offscreen-right fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">
           {/* Close — circular black, larger */}
