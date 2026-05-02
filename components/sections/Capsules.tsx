@@ -233,22 +233,31 @@ export default function Capsules() {
                       duration={0.42}
                       className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
                     />
+                    {/* Title — all chars reveal at the SAME TIME (stagger 0).
+                        Each char still uses the right→left clip-path wipe so
+                        the word looks like it's "lifting a vertical veil"
+                        across every glyph in unison. */}
                     <RevealChars
                       text={unite.nom}
                       play={revealActive[i] ?? false}
                       delay={0.1}
-                      stagger={0.034}
-                      duration={0.55}
+                      stagger={0}
+                      duration={0.65}
                       className="block whitespace-nowrap text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
                     />
-                    <RevealChars
-                      text={unite.description}
-                      play={revealActive[i] ?? false}
-                      delay={0.2}
-                      stagger={0.005}
-                      duration={0.4}
-                      className="block text-creme-dim mt-6 max-w-xl text-base md:text-lg leading-relaxed"
-                    />
+                    {/* Description — slides in as ONE block from the right
+                        (no per-char stagger). Calmer counterpoint to the
+                        title's per-char wipe. */}
+                    <p
+                      className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-700 ease-out will-change-transform"
+                      style={{
+                        opacity: revealActive[i] ? 1 : 0,
+                        transform: revealActive[i] ? "translateX(0)" : "translateX(40px)",
+                        transitionDelay: revealActive[i] ? "0.35s" : "0s",
+                      }}
+                    >
+                      {unite.description}
+                    </p>
 
                     {/* Reserve CTA + meta — fade in WITH the text reveal so
                         the whole content lands as a coherent block. */}

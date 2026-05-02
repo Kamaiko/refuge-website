@@ -217,23 +217,24 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 - Dev server tourne sur http://localhost:3001
 
 ✅ **Phase 3 (avancée) — Sections + Animations** complète :
-- 11 sections : Hero, Manifeste, Lieu, Concept, MarqueeBrand, Unites, Activites, Galerie, Journal, FAQ, Reservation
-- Header (Réserver top-right + Menu bottom-center qui apparaît après hero)
-- Footer (Brume wordmark + nav + mention concept fictif)
-- MenuOverlay (clip-path circle expand fullscreen)
+**Sections actuelles** (7, post-refactor) : Hero, Manifeste, Médaillons, Choisir, Capsules, MarqueeBrand, Feedback. Suppression définitive de Lieu, Concept, Unites (ancien), Activites, Galerie, Journal, FAQ, Reservation, Footer.
+- Header : Reserve top-right (simple fade-in, scroll-out direction-based) + Menu bottom-center (cream pill grows around inner gris-tan circle, iOS wheel Menu↔Close)
+- MenuOverlay (clip-path **inset arrondi** expand depuis bouton — pas de cercles)
+- ReservePanel (slide-in from right, OKLAB transitions via `<BgGradient>`)
 - CustomCursor (point + cercle, mix-blend-difference, hover scale)
 - Form Réservation avec Server Action + Zod
-- Toutes les animations primitives implémentées (12 composants common/) :
-  - SmoothScroll (Lenis + GSAP sync)
-  - RevealText (4 modes : lines, words, chars, clip)
-  - ScrollTextReveal (scrub-based per-word opacity, type Apple keynote)
-  - RevealOnScroll (générique fade + stagger)
-  - ScrollScaleImage (image qui se "détend" au scroll)
-  - PinScaleImage (carte arrondie qui grandit pour fullscreen)
-  - Marquee (wordmark défilant horizontal infini)
-  - AtmosphericVideo (layer vidéo bg)
-  - MenuContext + MenuOverlay (provider + clip-path circle expand)
-  - CustomCursor
+- **Composants common/ actuels** :
+  - `SmoothScroll` (Lenis + GSAP sync, panel-aware lock)
+  - `MenuContext` + `MenuOverlay`, `ReservePanelContext` + `ReservePanel`
+  - `RevealText` (4 modes : lines, words, chars, clip)
+  - `RevealChars` (per-char clip-path right→left wipe, word-aware splitting)
+  - `ScrollLinesScrub` (scrub-driven line opacity reveal)
+  - `ScrollTextReveal` (scrub-based per-word opacity)
+  - `CurtainReveal` (sharp horizontal cut, dual-clipped layers, anti-fringe)
+  - `Marquee` (directional scroll-aware wordmark loop)
+  - `BrandMark` (wordmark + ® subscript)
+  - `BgTransition` (named exports `<BgGradient>` OKLAB + `<BgFadeOverlay>` scroll-driven solid)
+  - `CustomCursor`
 
 ⏳ **Phase 2 — Assets AI** (à faire par Patrick) :
 
@@ -292,36 +293,31 @@ Console clean — seuls 404 attendus sur `/videos/hero-loop.mp4` (résolu : tag 
 2. ✅ GSAP + ScrollTrigger
 3. ✅ Custom cursor (point + cercle, mix-blend-difference, scale au hover)
 
-### B — Reveals texte (3 modes)
-4. ✅ `<RevealText mode="lines">` — split par ligne, slide-up depuis overflow-hidden
-5. ✅ `<RevealText mode="words">` — split par mot, slide-up
-6. ✅ `<RevealText mode="chars">` — split par caractère, slide depuis la droite
-7. ✅ `<RevealText mode="clip">` — clip-path inset top→bottom
+### B — Reveals texte
+- `<RevealText mode="lines | words | chars | clip">` — primitive 4-modes (entrance one-shot)
+- `<RevealChars play>` — per-char clip-path inset right→left, word-aware splitting (no mid-word breaks). Imperative play prop. Used in Capsules.
+- `<ScrollLinesScrub>` — per-line scrub-driven opacity reveal (each line is its own ScrollTrigger). Used in Choisir.
+- `<ScrollTextReveal>` — scrub-based per-word opacity (Apple keynote style)
+- `<CurtainReveal>` — sharp horizontal cut, complementary clip-path on cream + filter layers (eliminates antialiasing fringe). Used in Manifeste.
 
-### C — Reveals image
-8. ✅ `<ScrollScaleImage>` — scrub-driven scale (1.4 → 1)
-9. ✅ `<PinScaleImage>` — pin + scale (carte arrondie petite → fullscreen)
+### C — Backgrounds & transitions
+- `<BgGradient from to direction noiseOpacity>` — static linear gradient overlay, OKLAB-interpolated via inline `linear-gradient(in oklab, ...)` (Tailwind v4 default OKLAB doesn't apply to var()-backed stops at runtime). SVG turbulence noise dither.
+- `<BgFadeOverlay color triggerRef start end>` — solid color overlay whose opacity is scrubbed by a ScrollTrigger anchored to a parent ref. useGSAP for React 19 Strict Mode safety.
 
 ### D — Marquee
-10. ✅ `<Marquee>` — wordmark/tagline qui défile horizontalement en boucle
+- `<Marquee text speed directional>` — directional flag toggles scroll-direction-aware reverse
 
 ### E — Floating UI
-11. ✅ Header CTA `Réserver` (top-right, persistent)
-12. ✅ Floating Menu CTA (bottom-center, scale-0 → scale-1 après hero)
-13. ✅ Side badge vertical (`Concept · 2026`)
+- Header CTA `Réserver` (top-right, simple fade-in, scroll-direction-driven hide/show with 0.35s anti-jitter delay)
+- Menu CTA (bottom-center, cream pill unrolls around gris-tan circle on entry)
+- Side badge vertical (`Concept · 2026`)
 
 ### F — Overlays
-14. ✅ Menu fullscreen overlay (clip-path circle expand depuis bottom)
-15. ✅ Reservation form Server Action (Zod)
-16. ⏳ Detail panel overlay par unité (click pour ouvrir détails — Phase 4)
+- Menu fullscreen overlay (clip-path **inset rounded rectangle** expand from button position — not a circle anymore)
+- Reservation form Server Action (Zod validation, no email delivery yet — TODO Resend)
 
-### G — Vidéos atmosphériques
-17. ✅ `<AtmosphericVideo>` — layer vidéo en bg avec opacity faible
-
-### H — Bonus (au-delà de Capsules)
-18. ✅ `useReducedMotion` hook + CSS fallback
-19. ⏳ Hover micro-interactions sur cards
-20. ⏳ Parallax léger paysages
+### G — Bonus
+- `useReducedMotion` hook + CSS fallback for prefers-reduced-motion
 
 ## Prompts Nano Banana — catalogue d'assets à générer
 
@@ -396,7 +392,7 @@ No people, no text, no logos, no birds, no animals. Ultra-realistic, hyper-detai
 - Feuille termine avant 7.5s → 0.5s d'ambiance pure pour rejoindre le loop
 - Sol/rochers statiques → zéro mismatch
 
-**Image hero pour WordmarkMaskReveal (`public/images/hero-shape.jpg`)** :
+**Image hero (`public/images/hero-shape.avif`, sert de poster + dérivé)** :
 Soit extraire un frame de la vidéo générée (`ffmpeg -i hero-loop.mp4 -ss 4 -frames:v 1 hero-shape.jpg`), soit regénérer une image statique avec le prompt Phase 2A correspondant (pour cohérence cadrage avec la vidéo loop).
 
 **Encodage final** :

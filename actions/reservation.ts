@@ -39,8 +39,8 @@ export async function submitReservation(
     };
   }
 
-  // TODO Phase 5 : brancher Resend (ou autre) pour envoyer la demande.
-  console.log("[reservation]", parsed.data);
+  // TODO: wire Resend (or another transactional email provider) to deliver
+  // the request. For now, the action only validates the payload server-side.
 
   return {
     ok: true,

@@ -26,7 +26,7 @@ export default function Choisir() {
             {"Trois refuges.\nUn seul, le vôtre."}
           </ScrollLinesScrub>
 
-          <p className="text-creme-dim mt-12 max-w-2xl text-base md:text-lg leading-relaxed font-medium">
+          <p className="text-creme-dim mt-12 max-w-2xl text-lg md:text-xl leading-relaxed font-medium">
             On les a posés à des distances précises. Chacun ouvre sur quelque chose qu’aucun autre ne voit.
           </p>
         </div>

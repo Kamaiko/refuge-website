@@ -22,13 +22,22 @@ export default function MenuOverlay() {
   const imagePanelRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLUListElement>(null);
 
-  // Sync initial state with GSAP cache
+  // Sync initial state with GSAP cache.
+  // Initial clip-path: a rounded rectangle hugging the Menu CTA position
+  // (bottom-center, ~150x80px, 48px from bottom) so the overlay appears to
+  // EMERGE from the button's footprint and grow to cover the viewport.
+  // Cleaner than a circle clip — no concentric-circles artifact, matches the
+  // rounded-[60px] language used by Hero/Capsules cards.
+  const INITIAL_CLIP =
+    "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 50px)";
+  const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
+
   useGSAP(() => {
     if (containerRef.current) {
       gsap.set(containerRef.current, {
         autoAlpha: 0,
         pointerEvents: "none",
-        clipPath: "circle(0% at 50% 100%)",
+        clipPath: INITIAL_CLIP,
       });
     }
     if (imagePanelRef.current) gsap.set(imagePanelRef.current, { xPercent: 110 });
@@ -49,7 +58,7 @@ export default function MenuOverlay() {
         gsap.to(container, {
           autoAlpha: 1,
           pointerEvents: "auto",
-          clipPath: "circle(150% at 50% 100%)",
+          clipPath: FINAL_CLIP,
           duration: 0.85,
           ease: PANEL.ease,
         });
@@ -88,7 +97,7 @@ export default function MenuOverlay() {
         gsap.to(container, {
           autoAlpha: 0,
           pointerEvents: "none",
-          clipPath: "circle(0% at 50% 100%)",
+          clipPath: INITIAL_CLIP,
           duration: 0.55,
           ease: PANEL.closeEase,
           delay: 0.25,

@@ -5,21 +5,7 @@
  * `expo.out` and the cinematic curve come from the design tokens already defined
  * in `app/globals.css` (`--ease-cinematic`, `--ease-soft`). Keep both sources in
  * sync if values change.
- *
- * See `docs/Design.md` § 4 for usage rules.
  */
-
-export const REVEAL = {
-  /** Default duration for reveal-style animations (entrance, fade-in). */
-  duration: 1.1,
-  /** Default easing — strong out-curve, signature of the site. */
-  ease: "expo.out",
-  /** Default stagger between sibling items (lines, words, cards). */
-  stagger: 0.06,
-} as const;
-
-/** Default scrub value for ScrollTrigger scrub-driven animations. */
-export const SCRUB_DEFAULT = 1;
 
 /** Standard panel slide duration for overlays (Reserve, Menu, etc.). */
 export const PANEL = {
@@ -34,14 +20,6 @@ export const SCROLL_OUT = {
   /** Anti-jitter delay before the tween starts. */
   delay: 0.35,
   duration: 0.5,
-} as const;
-
-/** Marquee behavior — constant speed, direction switch on viewport threshold. */
-export const MARQUEE = {
-  /** Pixels per second, constant (no scroll-driven acceleration). */
-  speedBase: 80,
-  /** Viewport threshold (0-1) for direction switch. 0.2 = section ≥20% in view. */
-  threshold: 0.2,
 } as const;
 
 /** Capsules section pin behavior. */
