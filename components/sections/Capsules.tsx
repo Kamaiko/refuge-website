@@ -242,8 +242,7 @@ function UniteCardContent({
         <RevealChars
           text={unite.surnom}
           play={play}
-          stagger={0.018}
-          duration={0.42}
+          duration={0.7}
           className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
         />
       </div>
@@ -253,8 +252,7 @@ function UniteCardContent({
         text={unite.nom}
         play={play}
         delay={0.1}
-        stagger={0}
-        duration={0.95}
+        duration={1.1}
         className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
       />
       <div className="max-w-3xl">

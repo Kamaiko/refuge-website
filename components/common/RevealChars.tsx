@@ -4,9 +4,9 @@ import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
 /**
- * Per-character text reveal via clip-path right→left wipe. Triggered by `play`.
- * Words are kept atomic (inline-block, whitespace:nowrap) so a char never
- * breaks mid-word; only spaces between words allow line breaks.
+ * Per-character slide-in. Each char sits inside its own fixed mask (box width
+ * = char width). The inner glyph starts at xPercent:100 (offscreen-right of
+ * its slot) and slides left into place. Mask never moves.
  */
 type Props = {
   text: string;
@@ -14,7 +14,6 @@ type Props = {
   className?: string;
   charClassName?: string;
   duration?: number;
-  stagger?: number;
   delay?: number;
 };
 
@@ -23,36 +22,34 @@ export default function RevealChars({
   play,
   className,
   charClassName,
-  duration = 0.5,
-  stagger = 0.025,
+  duration = 0.9,
   delay = 0,
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
+  // Sync GSAP's transform cache with the SSR offscreen state and reveal the
+  // wrapper. Without this, the first play tween reads xPercent=0 (default)
+  // and snaps the glyphs visible for a frame before tweening.
   useEffect(() => {
     if (!ref.current) return;
-    const chars = ref.current.querySelectorAll<HTMLElement>(".rc-char");
-    if (!chars.length) return;
-    if (play) {
-      gsap.to(chars, {
-        clipPath: "inset(0 0 0 0%)",
-        duration,
-        stagger,
-        delay,
-        ease: "expo.out",
-        overwrite: true,
-      });
-    } else {
-      // Reverse stagger from end — rightmost char hides first, like un-typing.
-      gsap.to(chars, {
-        clipPath: "inset(0 0 0 100%)",
-        duration: duration * 0.6,
-        stagger: { each: stagger, from: "end" },
-        ease: "expo.in",
-        overwrite: true,
-      });
-    }
-  }, [play, duration, stagger, delay, text]);
+    const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
+    if (!glyphs.length) return;
+    gsap.set(glyphs, { xPercent: 100 });
+    gsap.set(ref.current, { visibility: "visible" });
+  }, []);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
+    if (!glyphs.length) return;
+    gsap.to(glyphs, {
+      xPercent: play ? 0 : 100,
+      duration: play ? duration : duration * 0.5,
+      delay: play ? delay : 0,
+      ease: play ? "quint.out" : "quint.in",
+      overwrite: true,
+    });
+  }, [play, duration, delay, text]);
 
   const segments: { type: "word" | "space"; value: string }[] = [];
   const re = /(\S+|\s+)/g;
@@ -65,7 +62,12 @@ export default function RevealChars({
   }
 
   return (
-    <span ref={ref} className={className} aria-label={text}>
+    <span
+      ref={ref}
+      className={className}
+      aria-label={text}
+      style={{ visibility: "hidden" }}
+    >
       {segments.map((seg, si) => {
         if (seg.type === "space") {
           return <span key={`s-${si}`}>{seg.value}</span>;
@@ -79,10 +81,9 @@ export default function RevealChars({
             {Array.from(seg.value).map((ch, ci) => (
               <span
                 key={`c-${si}-${ci}`}
-                className={`rc-char inline-block ${charClassName ?? ""}`}
-                style={{ clipPath: "inset(0 0 0 100%)" }}
+                className={`inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
               >
-                {ch}
+                <span className="rc-glyph inline-block">{ch}</span>
               </span>
             ))}
           </span>
