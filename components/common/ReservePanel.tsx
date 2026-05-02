@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { PANEL } from "@/lib/motion";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
+import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { UNITES } from "@/lib/data/unites";
 import { submitReservation } from "@/actions/reservation";
 
@@ -152,15 +153,11 @@ export default function ReservePanel() {
     { dependencies: [isOpen] },
   );
 
-  // Lock body scroll when open
-  useEffect(() => {
-    if (!isOpen) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previous;
-    };
-  }, [isOpen]);
+  // Body scroll lock is owned by SmoothScroll, which already pauses Lenis +
+  // sets body.overflow = "hidden" whenever any panel is open. A duplicate
+  // lock here was racing with SmoothScroll: this effect cached a "previous"
+  // overflow value of "hidden" (already set by SmoothScroll) and would then
+  // restore "hidden" on close instead of "" — leaving the page non-scrollable.
 
   // Escape closes
   useEffect(() => {
@@ -343,9 +340,7 @@ export default function ReservePanel() {
               className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {submitting ? "Envoi…" : "Suivant"}
-              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path d="M3 11L11 3M11 3H4M11 3V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowDiagonalIcon size={12} />
             </button>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
+import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
 
@@ -51,6 +52,7 @@ export default function Header() {
   });
 
   // iOS-wheel: only one word visible. yPercent 0 → -50 to switch.
+  // overwrite: true so rapid menu toggles don't queue up multiple tweens.
   useGSAP(
     () => {
       if (!wheelRef.current) return;
@@ -58,6 +60,7 @@ export default function Header() {
         yPercent: menuIsOpen ? -50 : 0,
         duration: 0.55,
         ease: "expo.inOut",
+        overwrite: true,
       });
     },
     { dependencies: [menuIsOpen] },
@@ -123,6 +126,9 @@ export default function Header() {
       // closing menu while reserve was up: close reserve too
       closeReservePanel();
     }
+    // Intentionally only depend on menuIsOpen — reserveIsOpen + closeReservePanel
+    // are stable from context and including them would re-fire this effect on
+    // every reserve toggle, defeating the "react to menu close only" intent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menuIsOpen]);
 
@@ -159,22 +165,7 @@ export default function Header() {
             style={{ height: CIRCLE_H, width: CIRCLE_H }}
             className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 14 14"
-              fill="none"
-              className="text-creme/85"
-              aria-hidden
-            >
-              <path
-                d="M3 11L11 3M11 3H4M11 3V10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <ArrowDiagonalIcon size={20} className="text-creme/85" />
           </span>
         </button>
       </header>
@@ -198,7 +189,7 @@ export default function Header() {
         // No paddingRight in JSX style — GSAP manages it (0 → PILL_PR
         // synced with the cream pill grow) so React can't reapply on
         // re-render and create the asymmetric cream sliver before entry.
-        className="menu-cta h-[68px] opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
+        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
       >
         {/* items-start so the wheel children stack at the top of the clipped
             area — only "Menu" is visible at rest. */}

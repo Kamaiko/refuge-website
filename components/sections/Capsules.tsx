@@ -9,6 +9,7 @@ import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
+import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 
 export default function Capsules() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -69,25 +70,30 @@ export default function Capsules() {
         gsap.set(loadingBarRef.current, { opacity: 0 });
       }
 
-      // Exit-to-noir overlay is owned by <BgFadeOverlay /> below — its own
-      // useGSAP wires the ScrollTrigger and initial opacity, so nothing to
-      // set here.
-
-      // Timeline layout (6 units total)
+      // Timeline layout — total duration 5.5 units (extended via no-op tween
+      // at position 4 so card 3's hold gets a full 1.5 units of sticky scroll).
       //   0    → 1    : Phase 1  — card 1 grows fullscreen + marquee dims
       //   1    → 1.5  : HOLD 1   — card 1 immobile (text reveal plays)
       //   1.5  → 2.5  : Phase 2  — card 2 slides up, card 1 scales down
       //   2.5  → 3    : HOLD 2   — card 2 immobile (text reveal plays)
       //   3    → 4    : Phase 3  — card 3 slides up, prior cards scale down
-      //   4    → 5.5  : HOLD 3   — card 3 immobile, FULL 1.5 units (clearly
-      //                            sticky for ~10 ticks of scroll)
-      //   5.5  → 6    : EXIT     — overlay fades to noir for the unpin handoff
-      // Progress windows (6 units total):
-      // Timeline duration ends up at 5.5 (after the no-op tween below).
-      // Scroll progress windows when scrub maps scroll 0→1 to timeline 0→5.5:
+      //   4    → 5.5  : HOLD 3   — card 3 immobile, FULL 1.5 units (~10 ticks)
+      // Scroll progress windows (scrub maps scroll 0→1 onto timeline 0→5.5):
       //   card 1 fullscreen = 1/5.5 - 1.5/5.5 = 0.182 - 0.273
       //   card 2 fullscreen = 2.5/5.5 - 3/5.5 = 0.455 - 0.545
       //   card 3 fullscreen = 4/5.5 - 5.5/5.5 = 0.727 - 1.000
+
+      // Phase start positions for each card (used for image dolly + content tweens).
+      // Aligned with the layout above: card 0 grows from 0, card 1 enters at 1.5,
+      // card 2 enters at 3.
+      const PHASE_STARTS = [0, 1.5, 3] as const;
+      // Stack scale-down per card: card 0 ends 14% smaller (2 cards landed on
+      // top of it), card 1 ends 7% smaller (1 card on top), card 2 stays at 1.
+      const STACK_FINAL_SCALES = [
+        1 - CAPSULES.scaleStep * 2,
+        1 - CAPSULES.scaleStep,
+        1,
+      ] as const;
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: section,
@@ -121,47 +127,46 @@ export default function Capsules() {
         },
       });
 
-      // Phase 1 (0 → 1): card 1 grows + image dolly + marquee dims +
-      // article border-radius transitions stadium pill → regular card radius
-      tl.to(cards[0], { scale: 1, duration: 1, ease: "none" }, 0);
+      // Image dolly: each card image zooms 1.35 → 1.0 during its OWN phase
+      // (when its container is moving into position). One loop instead of
+      // three near-identical tween calls.
+      cardImageRefs.current.forEach((img, i) => {
+        if (img) tl.to(img, { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[i]);
+      });
+
+      // Phase 1 (0 → 1): card 0 grows + article border-radius transitions
+      // stadium pill → regular card radius + marquee dims hard.
+      tl.to(cards[0], { scale: 1, duration: 1, ease: "none" }, PHASE_STARTS[0]);
       if (card0Article) {
-        tl.to(card0Article, { borderRadius: "60px", duration: 1, ease: "power1.out" }, 0);
-      }
-      if (cardImageRefs.current[0]) {
-        tl.to(cardImageRefs.current[0], { scale: 1, duration: 1, ease: "none" }, 0);
+        tl.to(card0Article, { borderRadius: "60px", duration: 1, ease: "power1.out" }, PHASE_STARTS[0]);
       }
       if (marqueeWrapRef.current) {
         // power2.out — opacity drops fast in the first half of the grow so
         // the marquee fade is clearly visible BEFORE card 1 covers most of
         // it. Linear (ease: "none") hid the change because the growing card
         // physically masked the marquee at the same rate the opacity dropped.
-        tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, 0);
+        tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, PHASE_STARTS[0]);
       }
-      // Phase 2 (1.5 → 2.5): card 2 slides in + image dolly, card 1 scales down
-      // Section bg also fades from gris-tan → base-noir during this phase, so
-      // the visible slivers around the cards (rounded corners, p-3/p-4 gutter)
-      // smoothly recede to noir between Aubépine and Galets.
-      tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, 1.5)
-        .to(cards[0], { scale: 1 - CAPSULES.scaleStep, duration: 1, ease: "none" }, 1.5)
-        .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, 1.5);
-      if (cardImageRefs.current[1]) {
-        tl.to(cardImageRefs.current[1], { scale: 1, duration: 1, ease: "none" }, 1.5);
-      }
-      // Phase 3 (3 → 4): card 3 slides in + image dolly, prior cards scale down
-      tl.to(cards[2], { yPercent: 0, duration: 1, ease: "none" }, 3)
-        .to(cards[1], { scale: 1 - CAPSULES.scaleStep, duration: 1, ease: "none" }, 3)
-        .to(cards[0], { scale: 1 - CAPSULES.scaleStep * 2, duration: 1, ease: "none" }, 3);
-      if (cardImageRefs.current[2]) {
-        tl.to(cardImageRefs.current[2], { scale: 1, duration: 1, ease: "none" }, 3);
-      }
+
+      // Phase 2 (1.5 → 2.5): card 1 slides in, card 0 scales down to its
+      // stack-of-2 size. Section bg fades from gris-tan → base-noir so the
+      // visible slivers around the cards (rounded corners, p-3/p-4 gutter)
+      // smoothly recede to noir between cards.
+      tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[1])
+        .to(cards[0], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[1])
+        .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, PHASE_STARTS[1]);
+
+      // Phase 3 (3 → 4): card 2 slides in, prior cards scale down to their
+      // final stack positions.
+      tl.to(cards[2], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[2])
+        .to(cards[1], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[2])
+        .to(cards[0], { scale: STACK_FINAL_SCALES[0], duration: 1, ease: "none" }, PHASE_STARTS[2]);
+
       // Hold 3 (4 → 5.5): empty no-op tween that extends the timeline
       // duration to 5.5 units. Without this, GSAP's scrub would map the full
       // scroll range (pin 6 viewports) onto a 4-unit timeline — card 3 would
       // only land fullscreen near scroll progress 1.0, killing the sticky hold.
       tl.to({}, { duration: 1.5 }, 4);
-      // Exit-to-noir overlay is rendered as <BgFadeOverlay triggerRef={sectionRef} ... />
-      // below — its own useGSAP wires the ScrollTrigger anchored to the same
-      // section element. No need to manage that trigger from this timeline.
 
       return () => {
         ScrollTrigger.getAll().forEach((t) => {
@@ -239,80 +244,26 @@ export default function Capsules() {
                     fill
                     sizes="100vw"
                     priority={i === 0}
+                    // unoptimized — sources are 2400×1340 AVIF, already
+                    // small (~150KB each) and natively well-compressed.
+                    // Next's default optimizer would downscale to 1920w and
+                    // re-encode at quality 75, losing visible sharpness.
+                    // unoptimized serves the source as-is; same bandwidth,
+                    // full source sharpness preserved.
+                    unoptimized
                     className="object-cover"
                   />
                 </div>
-                {/* Bottom-only gradient for text legibility — leaves the upper
-                    image untouched so the photograph reads at its natural
-                    exposure (no global darkening). */}
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-base-noir/75 via-base-noir/30 to-transparent" />
+                {/* No darkening overlay — image is rendered at its natural
+                    exposure for maximum vibrance. If a particular photo's
+                    lower area becomes too bright to read text against, add
+                    a text-shadow on the labels rather than masking the image. */}
 
-                <div className="relative z-10 flex h-full flex-col justify-end p-8 md:p-14">
-                  <div className="max-w-3xl">
-                    <RevealChars
-                      text={unite.surnom}
-                      play={revealActive[i] ?? false}
-                      stagger={0.018}
-                      duration={0.42}
-                      className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
-                    />
-                  </div>
-                  {/* Title broken out of the max-w-3xl wrapper — at 8vw
-                      "Aubépine" + tracking-[-0.04em] needs more horizontal
-                      room than 768px allows on wide viewports, otherwise
-                      whitespace-nowrap pushes the trailing glyphs into the
-                      card's overflow-hidden clip. pr-4 reserves a hair of
-                      breathing room past the last glyph. */}
-                  <RevealChars
-                    text={unite.nom}
-                    play={revealActive[i] ?? false}
-                    delay={0.1}
-                    stagger={0}
-                    duration={0.95}
-                    className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
-                  />
-                  <div className="max-w-3xl">
-                    {/* Description — slides in as ONE block from the right
-                        AT THE SAME TIME as the title (no extra delay). Calmer
-                        counterpoint to the title's per-char wipe. */}
-                    <p
-                      className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-[900ms] ease-out will-change-transform"
-                      style={{
-                        opacity: revealActive[i] ? 1 : 0,
-                        transform: revealActive[i] ? "translateX(0)" : "translateX(40px)",
-                        transitionDelay: revealActive[i] ? "0.1s" : "0s",
-                      }}
-                    >
-                      {unite.description}
-                    </p>
-
-                    {/* Reserve CTA + meta — fade in WITH the text reveal so
-                        the whole content lands as a coherent block. */}
-                    <div
-                      className="mt-8 flex flex-wrap items-center gap-6 transition-opacity duration-700 ease-out"
-                      style={{
-                        opacity: revealActive[i] ? 1 : 0,
-                        transitionDelay: revealActive[i] ? "0.6s" : "0s",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={openReservePanel}
-                        className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90"
-                      >
-                        Réserver {unite.nom}
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                          <path d="M3 11L11 3M11 3H4M11 3V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      <div className="flex items-center gap-6 text-creme-dim text-xs">
-                        <span>{unite.capacite}</span>
-                        <span className="opacity-40">·</span>
-                        <span>{unite.surface}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <UniteCardContent
+                  unite={unite}
+                  play={revealActive[i] ?? false}
+                  onReserve={openReservePanel}
+                />
               </article>
             </div>
           ))}
@@ -342,5 +293,89 @@ export default function Capsules() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Card content overlay (eyebrow + title + description + Reserve CTA + meta)
+ * rendered above each card image. Animation timing is driven by `play` —
+ * RevealChars triggers char-wipe on title/eyebrow, the description block
+ * slides in from the right, the CTA + meta fade in last.
+ *
+ * File-local sub-component: tightly coupled to Capsules's reveal timing and
+ * design language; not meant to be reused outside this section.
+ */
+function UniteCardContent({
+  unite,
+  play,
+  onReserve,
+}: {
+  unite: (typeof UNITES)[number];
+  play: boolean;
+  onReserve: () => void;
+}) {
+  return (
+    <div className="relative z-10 flex h-full flex-col justify-end p-8 md:p-14">
+      <div className="max-w-3xl">
+        <RevealChars
+          text={unite.surnom}
+          play={play}
+          stagger={0.018}
+          duration={0.42}
+          className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
+        />
+      </div>
+      {/* Title broken out of the max-w-3xl wrapper — at 8vw + tracking-[-0.04em]
+          it needs more horizontal room than 768px allows on wide viewports,
+          otherwise whitespace-nowrap pushes the trailing glyphs into the
+          card's overflow-hidden clip. pr-8 reserves a hair of breathing room. */}
+      <RevealChars
+        text={unite.nom}
+        play={play}
+        delay={0.1}
+        stagger={0}
+        duration={0.95}
+        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
+      />
+      <div className="max-w-3xl">
+        {/* Description — slides in as ONE block from the right AT THE SAME
+            TIME as the title (no extra delay). Calmer counterpoint to the
+            title's per-char wipe. */}
+        <p
+          className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-all duration-[900ms] ease-out will-change-transform"
+          style={{
+            opacity: play ? 1 : 0,
+            transform: play ? "translateX(0)" : "translateX(40px)",
+            transitionDelay: play ? "0.1s" : "0s",
+          }}
+        >
+          {unite.description}
+        </p>
+
+        {/* Reserve CTA + meta — fade in WITH the text reveal so the whole
+            content lands as a coherent block. */}
+        <div
+          className="mt-8 flex flex-wrap items-center gap-6 transition-opacity duration-700 ease-out"
+          style={{
+            opacity: play ? 1 : 0,
+            transitionDelay: play ? "0.6s" : "0s",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onReserve}
+            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90"
+          >
+            Réserver {unite.nom}
+            <ArrowDiagonalIcon />
+          </button>
+          <div className="flex items-center gap-6 text-creme-dim text-xs">
+            <span>{unite.capacite}</span>
+            <span className="opacity-40">·</span>
+            <span>{unite.surface}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -80,7 +80,18 @@ export default function Hero() {
           >
             <source src="/videos/hero-loop.mp4?v=5" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-base-noir/40 via-transparent to-base-noir/70" />
+          {/* Asymmetric darkening overlay — top 25% fades to 55% noir
+              (wordmark contrast), middle 50% stays fully transparent so the
+              warm refuge interior lights are preserved at full vibrance,
+              bottom 25% fades to 30% noir (gentler than the previous 70%)
+              for tagline/subcopy contrast. */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(24,23,23,0.55) 0%, rgba(24,23,23,0) 25%, rgba(24,23,23,0) 75%, rgba(24,23,23,0.3) 100%)",
+            }}
+          />
         </div>
 
         <div className="relative z-10 flex h-full flex-col justify-between p-5 md:p-10">

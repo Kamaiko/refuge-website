@@ -21,16 +21,28 @@ export default function MenuOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const imagePanelRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLUListElement>(null);
+  const socialsRef = useRef<HTMLDivElement>(null);
+  const conceptRef = useRef<HTMLParagraphElement>(null);
 
   // Sync initial state with GSAP cache.
   // Initial clip-path: a rounded rectangle hugging the Menu CTA position
-  // (bottom-center, ~150x80px, 48px from bottom) so the overlay appears to
-  // EMERGE from the button's footprint and grow to cover the viewport.
-  // Cleaner than a circle clip — no concentric-circles artifact, matches the
-  // rounded-[60px] language used by Hero/Capsules cards.
+  // (bottom-center) so the overlay appears to EMERGE from the button's
+  // footprint and grow to cover the viewport. Cleaner than a circle clip —
+  // no concentric-circles artifact, matches the rounded-[60px] language
+  // used by Hero/Capsules cards.
+  // Numbers below approximate the Menu CTA's box: 132px tall (≈ Header
+  // PILL_H 84 + an 48px visual buffer above), 160px wide (≈ pill width with
+  // the "Menu" label), 48px from bottom (= Header `bottom-12`). Hardcoded
+  // here rather than imported from Header constants because clip-path is
+  // visual-only and minor drift is acceptable; revisit if the CTA grows.
   const INITIAL_CLIP =
     "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 50px)";
   const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
+
+  // Shared class for the social icon anchors (Instagram + LinkedIn).
+  // Identical pill-style hover affordance — single source of truth.
+  const socialIconCls =
+    "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300";
 
   useGSAP(() => {
     if (containerRef.current) {
@@ -45,6 +57,11 @@ export default function MenuOverlay() {
       const items = navRef.current.querySelectorAll("li > a");
       gsap.set(items, { yPercent: 110, opacity: 0 });
     }
+    if (socialsRef.current) {
+      const icons = socialsRef.current.querySelectorAll("a");
+      gsap.set(icons, { yPercent: 100, opacity: 0 });
+    }
+    if (conceptRef.current) gsap.set(conceptRef.current, { x: -16, opacity: 0 });
   }, []);
 
   useGSAP(
@@ -52,6 +69,8 @@ export default function MenuOverlay() {
       const container = containerRef.current;
       const imagePanel = imagePanelRef.current;
       const navItems = navRef.current?.querySelectorAll("li > a");
+      const socialIcons = socialsRef.current?.querySelectorAll("a");
+      const concept = conceptRef.current;
       if (!container || !navItems) return;
 
       if (isOpen) {
@@ -78,7 +97,45 @@ export default function MenuOverlay() {
           delay: 0.3,
           ease: PANEL.ease,
         });
+        if (socialIcons && socialIcons.length) {
+          // Social icons rise after the nav items finish staggering in
+          gsap.to(socialIcons, {
+            yPercent: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.08,
+            delay: 0.7,
+            ease: PANEL.ease,
+          });
+        }
+        if (concept) {
+          // Concept disclaimer slides in from the left, just after the icons
+          gsap.to(concept, {
+            x: 0,
+            opacity: 1,
+            duration: 0.7,
+            delay: 0.85,
+            ease: PANEL.ease,
+          });
+        }
       } else {
+        if (concept) {
+          gsap.to(concept, {
+            x: -16,
+            opacity: 0,
+            duration: 0.25,
+            ease: PANEL.closeEase,
+          });
+        }
+        if (socialIcons && socialIcons.length) {
+          gsap.to(socialIcons, {
+            yPercent: 100,
+            opacity: 0,
+            duration: 0.25,
+            stagger: 0.03,
+            ease: PANEL.closeEase,
+          });
+        }
         gsap.to(navItems, {
           yPercent: 110,
           opacity: 0,
@@ -154,15 +211,15 @@ export default function MenuOverlay() {
 
             {/* Bottom — social icons LEFT, concept disclaimer RIGHT (bigger, bold) */}
             <div className="mt-auto flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
-              <div className="flex items-center gap-4 shrink-0">
+              <div ref={socialsRef} className="flex items-center gap-4 shrink-0">
                 <a
                   href="https://www.instagram.com/patrickpatenaude/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram — Patrick Patenaude"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300"
+                  className={socialIconCls}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" />
                     <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
                     <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
@@ -173,15 +230,15 @@ export default function MenuOverlay() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="LinkedIn — Patrick Patenaude"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300"
+                  className={socialIconCls}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
                     <path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </a>
               </div>
-              <p className="text-creme-dim text-sm md:text-base font-semibold max-w-xl leading-relaxed">
+              <p ref={conceptRef} className="text-creme-dim text-sm md:text-base font-semibold max-w-xl leading-relaxed">
                 Ce site web est juste un concept de projet réalisé par moi pour démontrer mes capacités.
               </p>
             </div>

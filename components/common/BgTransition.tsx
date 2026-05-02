@@ -1,8 +1,3 @@
-"use client";
-
-import { useRef } from "react";
-import { useGSAP } from "@gsap/react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
@@ -23,7 +18,7 @@ export function BgGradient({
   from,
   to,
   direction = "down",
-  noiseOpacity = 0.04,
+  noiseOpacity = 0,
   className,
 }: {
   /** CSS color, e.g. "var(--color-base-noir)" */
@@ -32,7 +27,9 @@ export function BgGradient({
   to: string;
   /** Vertical direction of the gradient. */
   direction?: "down" | "up";
-  /** SVG turbulence noise opacity. 0 disables. Default 0.04 (subtle dither). */
+  /** SVG turbulence noise opacity. 0 disables (default — OKLAB interpolation
+   *  alone is enough on most displays). Bump to 0.04 only if banding
+   *  appears on a specific gradient. */
   noiseOpacity?: number;
   /** Override the default `absolute inset-0` positioning. */
   className?: string;
@@ -58,64 +55,5 @@ export function BgGradient({
         />
       ) : null}
     </>
-  );
-}
-
-/**
- * Solid-color overlay whose opacity scrubs from 0 to 1 across a scroll range
- * anchored to the consumer's section element. Used for "section X is fading
- * to noir as it scrolls out" patterns.
- *
- * useGSAP (not useEffect) so React 19 Strict Mode mount/unmount/remount in
- * development cleans up correctly via the GSAP context.
- */
-export function BgFadeOverlay({
-  color,
-  triggerRef,
-  start = "bottom 80%",
-  end = "bottom 33%",
-  scrub = 0.5,
-  z = 50,
-  className,
-}: {
-  /** CSS color, e.g. "var(--color-base-noir)" */
-  color: string;
-  /** Ref to the section element that drives the scroll progress. */
-  triggerRef: React.RefObject<HTMLElement | null>;
-  /** ScrollTrigger start position. */
-  start?: string;
-  /** ScrollTrigger end position. */
-  end?: string;
-  /** ScrollTrigger scrub value. */
-  scrub?: number | boolean;
-  /** z-index for the overlay (defaults to 50). */
-  z?: number;
-  /** Override the default `absolute inset-0` positioning. */
-  className?: string;
-}) {
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    const trigger = triggerRef.current;
-    const overlay = overlayRef.current;
-    if (!trigger || !overlay) return;
-
-    const st = ScrollTrigger.create({
-      trigger,
-      start,
-      end,
-      scrub,
-      onUpdate: (self) => gsap.set(overlay, { opacity: self.progress }),
-    });
-    return () => st.kill();
-  });
-
-  return (
-    <div
-      ref={overlayRef}
-      aria-hidden
-      style={{ backgroundColor: color, opacity: 0, zIndex: z }}
-      className={cn("absolute inset-0 pointer-events-none", className)}
-    />
   );
 }

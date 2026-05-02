@@ -3,7 +3,6 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
-import { cn } from "@/lib/utils";
 
 /**
  * Continuously scroll-driven line reveal: each line is its own ScrollTrigger,
@@ -57,7 +56,7 @@ export default function ScrollLinesScrub({
   const lines = children.split("\n");
 
   return (
-    <div ref={ref} className={cn(className)}>
+    <div ref={ref} className={className}>
       {lines.map((line, i) => (
         <span
           key={i}
