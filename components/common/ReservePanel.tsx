@@ -10,9 +10,8 @@ import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { UNITES } from "@/lib/data/unites";
 import { submitReservation } from "@/actions/reservation";
 
-type RefugeSlug = "aubepine" | "galets" | "brume" | "trois";
+type RefugeSlug = "aubepine" | "galets" | "brume";
 
-const TROIS_REFUGES_RATE = 1100; // bundle rate per night when picking the three together
 const DEFAULT_STAY_NIGHTS = 5;
 
 function formatCAD(value: number) {
@@ -166,10 +165,10 @@ export default function ReservePanel() {
   }, [isOpen, close]);
 
   const nights = useMemo(() => diffNights(arrivee, depart), [arrivee, depart]);
-  const dailyRate = useMemo(() => {
-    if (refuge === "trois") return TROIS_REFUGES_RATE;
-    return UNITES.find((u) => u.slug === refuge)?.tarifParNuit ?? 0;
-  }, [refuge]);
+  const dailyRate = useMemo(
+    () => UNITES.find((u) => u.slug === refuge)?.tarifParNuit ?? 0,
+    [refuge],
+  );
   const total = nights * dailyRate;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -263,17 +262,6 @@ export default function ReservePanel() {
                   );
                 })}
               </div>
-              <button
-                type="button"
-                onClick={() => setRefuge("trois")}
-                className={`text-left text-sm px-5 py-4 rounded-soft transition-colors ${
-                  refuge === "trois"
-                    ? "bg-creme text-base-noir"
-                    : "border border-creme/15 text-creme/80 hover:border-creme/40"
-                }`}
-              >
-                Les trois ensemble — privatisation complète
-              </button>
             </fieldset>
 
             <fieldset className="flex flex-col gap-8">

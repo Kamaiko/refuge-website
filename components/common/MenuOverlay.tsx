@@ -24,12 +24,11 @@ export default function MenuOverlay() {
   const socialsRef = useRef<HTMLDivElement>(null);
   const conceptRef = useRef<HTMLParagraphElement>(null);
 
-  // Initial clip hugs the Menu CTA's footprint (bottom-center, ~160×132,
-  // 48px from bottom) so the overlay appears to grow OUT of the button.
-  // Hardcoded rather than derived from Header constants — clip-path is
-  // visual-only and minor drift is fine.
+  // INITIAL hugs the Menu CTA's footprint; the asymmetric insets make width
+  // grow faster than height during the open/close tween — width-leading feel.
+  // INITIAL round is kept large so it caps into a clean pill at the small size.
   const INITIAL_CLIP =
-    "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 50px)";
+    "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 300px)";
   const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
 
   const socialIconCls =
@@ -38,7 +37,7 @@ export default function MenuOverlay() {
   useGSAP(() => {
     if (containerRef.current) {
       gsap.set(containerRef.current, {
-        autoAlpha: 0,
+        visibility: "hidden",
         pointerEvents: "none",
         clipPath: INITIAL_CLIP,
       });
@@ -65,9 +64,11 @@ export default function MenuOverlay() {
       if (!container || !navItems) return;
 
       if (isOpen) {
+        // visibility flips before the tween so the box appears at the Menu
+        // button footprint, then the single clip-path tween morphs to
+        // fullscreen — no fade.
+        gsap.set(container, { visibility: "visible", pointerEvents: "auto" });
         gsap.to(container, {
-          autoAlpha: 1,
-          pointerEvents: "auto",
           clipPath: FINAL_CLIP,
           duration: 0.85,
           ease: PANEL.ease,
@@ -140,13 +141,17 @@ export default function MenuOverlay() {
             delay: 0.1,
           });
         }
+        // Single clip-path tween (exact inverse of open). Visibility:hidden
+        // flips only on complete, so no fade obscures the final frames as
+        // the box retracts back into the Menu button position.
         gsap.to(container, {
-          autoAlpha: 0,
-          pointerEvents: "none",
           clipPath: INITIAL_CLIP,
-          duration: 0.55,
+          duration: 0.65,
           ease: PANEL.closeEase,
           delay: 0.25,
+          onComplete: () => {
+            gsap.set(container, { visibility: "hidden", pointerEvents: "none" });
+          },
         });
       }
     },
@@ -169,11 +174,8 @@ export default function MenuOverlay() {
   return (
     <div
       ref={containerRef}
-      // opacity-0 + pointer-events-none on the className hide the overlay
-      // on first paint (before useGSAP fires) so the menu content doesn't
-      // flash on hard reload.
-      className="fixed inset-0 z-[290] p-3 md:p-4 opacity-0 pointer-events-none"
-      style={{ clipPath: INITIAL_CLIP }}
+      // bg-base-noir backdrop covers the page beneath the rounded inner card.
+      className="fixed inset-0 z-[290] p-3 md:p-4 bg-base-noir invisible pointer-events-none"
       aria-hidden={!isOpen}
     >
       <div className="relative h-full w-full overflow-hidden rounded-[60px] bg-gris-tan">

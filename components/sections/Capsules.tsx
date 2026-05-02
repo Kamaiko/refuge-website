@@ -200,6 +200,15 @@ export default function Capsules() {
                   />
                 </div>
 
+                <div
+                  aria-hidden
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse 90% 65% at 0% 100%, rgba(24,23,23,0.92) 0%, rgba(24,23,23,0.5) 38%, rgba(24,23,23,0) 80%)",
+                  }}
+                />
+
                 <UniteCardContent
                   unite={unite}
                   play={revealActive[i] ?? false}

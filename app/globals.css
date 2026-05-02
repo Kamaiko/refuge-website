@@ -61,11 +61,7 @@ body {
   color: var(--color-creme);
 }
 
-/* Hide native cursor when custom cursor is active (desktop only) */
-html.has-custom-cursor,
-html.has-custom-cursor * {
-  cursor: none !important;
-}
+/* Native cursor stays visible alongside the custom dot+ring overlay. */
 
 /* Hide horizontal scrollbar inside marquee/scroll-x containers */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -87,8 +83,6 @@ body::-webkit-scrollbar,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html.has-custom-cursor,
-  html.has-custom-cursor * { cursor: auto !important; }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

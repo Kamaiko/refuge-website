@@ -38,7 +38,10 @@ export default function Header() {
       // backgroundColor starts transparent so the cream pill doesn't leak a
       // 1px subpixel halo around the gris-tan circle before the pill grows
       // wider than the circle.
+      // xPercent:-50 instead of -translate-x-1/2 — GSAP's scale tween below
+      // clobbers transform-based centering.
       gsap.set(menuBtnRef.current, {
+        xPercent: -50,
         height: CIRCLE_H,
         opacity: 0,
         scale: 0.6,
@@ -181,7 +184,7 @@ export default function Header() {
         onClick={handleMenuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] -translate-x-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform"
+        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform"
       >
         {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}
         <span

@@ -16,6 +16,13 @@ export default function Choisir() {
     () => {
       if (!titleWrapRef.current) return;
 
+      // Sync GSAP cache with the SSR clip-path start state and reveal the
+      // wrapper. Lines are SSR-hidden via visibility:hidden to avoid a flash
+      // before GSAP's first scrub frame.
+      lineRefs.current.forEach((line) => {
+        if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
+      });
+
       // Three scroll-driven effects, all sync-end at "top 25%":
       //   1. Depth   — scale + opacity ramp over the full approach.
       //   2. Parallax — y drift over the reveal window so the title rises
@@ -104,8 +111,11 @@ export default function Choisir() {
                 ref={(el) => {
                   lineRefs.current[i] = el;
                 }}
+                // clip-path owned by GSAP (fromTo `from` block sets it before
+                // first paint after hydration). visibility:hidden prevents an
+                // SSR flash without colliding with GSAP's transform/clip writes.
+                style={{ visibility: "hidden" }}
                 className="block"
-                style={{ clipPath: "inset(100% 0 0 0)" }}
               >
                 {line}
               </span>

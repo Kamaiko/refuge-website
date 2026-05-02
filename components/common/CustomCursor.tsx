@@ -15,6 +15,11 @@ export default function CustomCursor() {
     const ring = ringRef.current;
     if (!dot || !ring) return;
 
+    // Center the visuals on the pointer via GSAP (xPercent/yPercent: -50)
+    // instead of Tailwind's -translate-x-1/2 — the latter sets the same
+    // `transform` property that GSAP overwrites on every frame.
+    gsap.set([dot, ring], { xPercent: -50, yPercent: -50 });
+
     const xToDot = gsap.quickTo(dot, "x", { duration: 0.15, ease: "power3.out" });
     const yToDot = gsap.quickTo(dot, "y", { duration: 0.15, ease: "power3.out" });
     const xToRing = gsap.quickTo(ring, "x", { duration: 0.5, ease: "power3.out" });
@@ -56,11 +61,11 @@ export default function CustomCursor() {
     <>
       <div
         ref={dotRef}
-        className="pointer-events-none fixed top-0 left-0 z-[9999] h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-creme mix-blend-difference will-change-transform max-[640px]:hidden"
+        className="pointer-events-none fixed top-0 left-0 z-[9999] h-1.5 w-1.5 rounded-full bg-creme mix-blend-difference will-change-transform max-[640px]:hidden"
       />
       <div
         ref={ringRef}
-        className="pointer-events-none fixed top-0 left-0 z-[9999] h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full border border-creme/60 mix-blend-difference will-change-transform max-[640px]:hidden"
+        className="pointer-events-none fixed top-0 left-0 z-[9999] h-9 w-9 rounded-full border border-creme/60 mix-blend-difference will-change-transform max-[640px]:hidden"
       />
     </>
   );
