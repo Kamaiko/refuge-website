@@ -16,30 +16,51 @@ const NAV = [
   { label: "Feedback", href: "#feedback" },
 ];
 
+// Menu CTA pill footprint (matches Header.tsx) — anchors the closed state.
+const CTA_W = 160;
+const CTA_H = 84;
+const CTA_BOTTOM = 48;
+const GAP = 12; // 12px gap between box and viewport edges when fullscreen open
+const RADIUS_OPEN = 60;
+const RADIUS_CLOSED = 9999;
+
+function getClosedRect() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  return {
+    top: vh - CTA_H - CTA_BOTTOM,
+    left: vw / 2 - CTA_W / 2,
+    right: vw / 2 - CTA_W / 2,
+    bottom: CTA_BOTTOM,
+  };
+}
+
 export default function MenuOverlay() {
   const { isOpen, close } = useMenu();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const imagePanelRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLUListElement>(null);
   const socialsRef = useRef<HTMLDivElement>(null);
   const conceptRef = useRef<HTMLParagraphElement>(null);
 
-  // INITIAL hugs the Menu CTA's footprint; the asymmetric insets make width
-  // grow faster than height during the open/close tween — width-leading feel.
-  // INITIAL round is kept large so it caps into a clean pill at the small size.
-  const INITIAL_CLIP =
-    "inset(calc(100% - 132px) calc(50% - 80px) 48px calc(50% - 80px) round 300px)";
-  const FINAL_CLIP = "inset(0% 0% 0% 0% round 60px)";
-
   const socialIconCls =
     "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan";
 
   useGSAP(() => {
-    if (containerRef.current) {
-      gsap.set(containerRef.current, {
-        visibility: "hidden",
+    if (backdropRef.current) {
+      gsap.set(backdropRef.current, { autoAlpha: 0 });
+    }
+    if (boxRef.current) {
+      const r = getClosedRect();
+      gsap.set(boxRef.current, {
+        top: r.top,
+        left: r.left,
+        right: r.right,
+        bottom: r.bottom,
+        borderRadius: RADIUS_CLOSED,
+        autoAlpha: 0,
         pointerEvents: "none",
-        clipPath: INITIAL_CLIP,
       });
     }
     if (imagePanelRef.current) gsap.set(imagePanelRef.current, { xPercent: 110 });
@@ -56,23 +77,47 @@ export default function MenuOverlay() {
 
   useGSAP(
     () => {
-      const container = containerRef.current;
+      const backdrop = backdropRef.current;
+      const box = boxRef.current;
       const imagePanel = imagePanelRef.current;
       const navItems = navRef.current?.querySelectorAll("li > a");
       const socialIcons = socialsRef.current?.querySelectorAll("a");
       const concept = conceptRef.current;
-      if (!container || !navItems) return;
+      if (!backdrop || !box || !navItems) return;
 
       if (isOpen) {
-        // visibility flips before the tween so the box appears at the Menu
-        // button footprint, then the single clip-path tween morphs to
-        // fullscreen — no fade.
-        gsap.set(container, { visibility: "visible", pointerEvents: "auto" });
-        gsap.to(container, {
-          clipPath: FINAL_CLIP,
-          duration: 0.85,
+        // Backdrop fades in fast (under the box)
+        gsap.to(backdrop, {
+          autoAlpha: 1,
+          duration: 0.45,
           ease: PANEL.ease,
         });
+
+        // Box itself shrinks-out from the Menu CTA pill into a fullscreen
+        // rounded card. Real width/height/position animation — no clip-path,
+        // so the rounded corners are pixel-perfect at every frame.
+        gsap.set(box, { autoAlpha: 1, pointerEvents: "auto" });
+        // Single tween for size + radius. Radius is recomputed each
+        // frame as a blend between the current pill cap (min(w,h)/2)
+        // and the target RADIUS_OPEN, so corners shrink continuously
+        // from the start instead of "snapping" once the raw value
+        // finally drops under the cap.
+        gsap.to(box, {
+          top: GAP,
+          left: GAP,
+          right: GAP,
+          bottom: GAP,
+          duration: 0.85,
+          ease: PANEL.ease,
+          onUpdate: function () {
+            const p = this.progress();
+            const rect = box.getBoundingClientRect();
+            const cap = Math.min(rect.width, rect.height) / 2;
+            const target = cap + (RADIUS_OPEN - cap) * p;
+            box.style.borderRadius = `${Math.min(target, cap)}px`;
+          },
+        });
+
         if (imagePanel) {
           gsap.to(imagePanel, {
             xPercent: 0,
@@ -109,6 +154,7 @@ export default function MenuOverlay() {
           });
         }
       } else {
+        // Inner content exits first
         if (concept) {
           gsap.to(concept, {
             x: -16,
@@ -141,22 +187,68 @@ export default function MenuOverlay() {
             delay: 0.1,
           });
         }
-        // Single clip-path tween (exact inverse of open). Visibility:hidden
-        // flips only on complete, so no fade obscures the final frames as
-        // the box retracts back into the Menu button position.
-        gsap.to(container, {
-          clipPath: INITIAL_CLIP,
-          duration: 0.65,
+
+        // Then the box physically shrinks back to the Menu CTA pill.
+        // Border-radius morphs along the way — corners stay perfectly
+        // round at every intermediate size.
+        const r = getClosedRect();
+        gsap.to(box, {
+          top: r.top,
+          left: r.left,
+          right: r.right,
+          bottom: r.bottom,
+          duration: 0.7,
           ease: PANEL.closeEase,
           delay: 0.25,
-          onComplete: () => {
-            gsap.set(container, { visibility: "hidden", pointerEvents: "none" });
+          onUpdate: function () {
+            const p = this.progress();
+            const rect = box.getBoundingClientRect();
+            const cap = Math.min(rect.width, rect.height) / 2;
+            // Blend from current radius (≈ RADIUS_OPEN) toward the
+            // pill cap as the box shrinks — corners morph continuously
+            // instead of popping at the end.
+            const target = RADIUS_OPEN + (cap - RADIUS_OPEN) * p;
+            box.style.borderRadius = `${Math.min(target, cap)}px`;
           },
+          onComplete: () => {
+            gsap.set(box, {
+              autoAlpha: 0,
+              pointerEvents: "none",
+              borderRadius: RADIUS_CLOSED,
+            });
+          },
+        });
+
+        // Backdrop fades out slightly later so the box stays visible
+        // against it during its retraction.
+        gsap.to(backdrop, {
+          autoAlpha: 0,
+          duration: 0.5,
+          ease: PANEL.closeEase,
+          delay: 0.45,
         });
       }
     },
     { dependencies: [isOpen] },
   );
+
+  // Keep the closed-state coordinates in sync with viewport size, so a
+  // resize while the menu is closed doesn't leave the box at a stale spot
+  // for the next open animation.
+  useEffect(() => {
+    const onResize = () => {
+      if (isOpen || !boxRef.current) return;
+      const r = getClosedRect();
+      gsap.set(boxRef.current, {
+        top: r.top,
+        left: r.left,
+        right: r.right,
+        bottom: r.bottom,
+      });
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -172,13 +264,22 @@ export default function MenuOverlay() {
   }, [isOpen, close]);
 
   return (
-    <div
-      ref={containerRef}
-      // bg-base-noir backdrop covers the page beneath the rounded inner card.
-      className="fixed inset-0 z-[290] p-3 md:p-4 bg-base-noir invisible pointer-events-none"
-      aria-hidden={!isOpen}
-    >
-      <div className="relative h-full w-full overflow-hidden rounded-[60px] bg-gris-tan">
+    <>
+      {/* Backdrop noir plein écran derrière la boîte */}
+      <div
+        ref={backdropRef}
+        className="fixed inset-0 z-[289] bg-base-noir invisible pointer-events-none"
+        aria-hidden
+      />
+
+      {/* Boîte menu — vrai élément fixed qui s'anime en taille réelle.
+          Pas de clip-path : les coins arrondis sont sur l'élément lui-même
+          et restent pixel-perfect à chaque frame. */}
+      <div
+        ref={boxRef}
+        className="fixed z-[290] overflow-hidden bg-gris-tan invisible pointer-events-none"
+        aria-hidden={!isOpen}
+      >
         <div className="relative z-[2] flex h-full">
           <div className="flex-1 md:basis-[75%] flex flex-col px-6 md:px-12 pt-32 md:pt-40 pb-10">
             <ul ref={navRef} className="w-full space-y-1 md:space-y-2">
@@ -252,8 +353,7 @@ export default function MenuOverlay() {
             </div>
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }
