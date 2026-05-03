@@ -32,7 +32,7 @@ const PILL_PR = 4; // px — cream margin past the inner circle on the right
  */
 export default function Header() {
   const { toggle: menuToggle, isOpen: menuIsOpen } = useMenu();
-  const { open: openReservePanel, close: closeReservePanel, isOpen: reserveIsOpen } = useReservePanel();
+  const { open: openReservePanel, isOpen: reserveIsOpen } = useReservePanel();
   const reserveRef = useRef<HTMLButtonElement>(null);
   const brandRef = useRef<HTMLAnchorElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
@@ -175,18 +175,25 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Menu opening or closing always dismisses Reserve — keeps the two
-  // panels mutually exclusive.
-  const handleMenuToggle = () => {
-    if (!menuIsOpen && reserveIsOpen) closeReservePanel();
-    menuToggle();
-  };
+  // Mutual-exclusion is now handled by stacking order, not state coupling:
+  // - Reserve open → Menu CTA z-index drops below the Reserve backdrop and
+  //   is set pointer-events:none, so it's visually masked by the blur and
+  //   un-clickable.
+  // - Menu open → MenuOverlay (z-[290]) covers Reserve (z-[210]) naturally.
+  //
+  // `reserveMaskActive` holds the masked state for the full backdrop close
+  // animation (delay 0.4s + duration 0.4s in ReservePanel). Without this,
+  // the Menu pops to z-[300] the instant `reserveIsOpen` flips false, while
+  // the backdrop is still mid-fade — producing a one-tick reveal.
+  const [reserveMaskActive, setReserveMaskActive] = useState(false);
   useEffect(() => {
-    if (!menuIsOpen && reserveIsOpen) closeReservePanel();
-    // Only react to menuIsOpen flips; reserveIsOpen + closeReservePanel are
-    // stable from context.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menuIsOpen]);
+    if (reserveIsOpen) {
+      setReserveMaskActive(true);
+      return;
+    }
+    const t = setTimeout(() => setReserveMaskActive(false), 850);
+    return () => clearTimeout(t);
+  }, [reserveIsOpen]);
 
   return (
     <>
@@ -240,10 +247,16 @@ export default function Header() {
       <button
         ref={menuBtnRef}
         type="button"
-        onClick={handleMenuToggle}
+        onClick={menuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        className="menu-cta opacity-0 fixed bottom-12 md:bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+        // z-[300] normally so the Menu sits above ReservePanel (z-[210])
+        // and its backdrop (z-[200]). When Reserve is open, drop to z-[150]
+        // so the backdrop covers the Menu (visible through the blur but
+        // not clickable). Pointer-events disabled in the same condition.
+        className={`menu-cta opacity-0 fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
+          reserveMaskActive ? "z-[150] pointer-events-none" : "z-[300]"
+        }`}
       >
         {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}
         <span

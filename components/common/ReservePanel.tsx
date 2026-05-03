@@ -238,6 +238,11 @@ export default function ReservePanel() {
         // setting xPercent: 105. A static CSS class with transform was
         // interfering with GSAP's tween parsing on re-open.
         style={{ visibility: "hidden" }}
+        // data-lenis-prevent: Lenis intercepts wheel/touch on the document,
+        // which on small mobile prevents the panel's native overflow-y-auto
+        // from receiving touch-scroll. This attribute opts the subtree out
+        // of Lenis's interception so the panel scrolls natively.
+        data-lenis-prevent
         className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
       >
         <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">

@@ -201,7 +201,7 @@ export default function Choisir() {
               {FEATURES.map((f, i) => (
                 <li
                   key={f}
-                  className={`inline-flex items-center rounded-pill border-[3px] px-7 md:px-10 py-4 md:py-5 text-lg md:text-xl ${
+                  className={`inline-flex items-center rounded-pill border-[2px] md:border-[3px] px-5 md:px-10 py-2.5 md:py-5 text-sm md:text-xl ${
                     i % 2 === 0
                       ? "border-creme-terre/70 text-creme-terre"
                       : "border-white/50 text-white"
