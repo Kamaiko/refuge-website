@@ -8,6 +8,7 @@ import { gsap } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
+import HamburgerIcon from "@/components/common/HamburgerIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
 import { MQ } from "@/lib/breakpoints";
@@ -237,7 +238,7 @@ export default function Header() {
           // Hover scale is driven via gsap.to in the useEffect below — GSAP
           // owns the inline `transform` after entrance + scroll-hide, so a
           // Tailwind `hover:scale` would lose to it (inline wins over CSS).
-          className="reserve-cta group opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="reserve-cta group opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme font-medium text-base-noir will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-sm md:text-lg font-medium text-base-noir whitespace-nowrap">
             Réserver
@@ -293,11 +294,8 @@ export default function Header() {
           style={{ height: circleH, width: circleH }}
           className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
         >
-          <span className="flex flex-col gap-1 md:gap-[5px]">
-            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
-            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
-            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
-          </span>
+          <HamburgerIcon size={20} className="text-creme/85 md:hidden" />
+          <HamburgerIcon size={28} className="text-creme/85 hidden md:inline-flex" />
         </span>
       </button>
     </>

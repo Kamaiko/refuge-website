@@ -15,7 +15,7 @@ const NAV = [
   { label: "Accueil", href: "#" },
   { label: "Introduction", href: "#manifeste" },
   { label: "Refuges", href: "#refuges" },
-  { label: `Pourquoi ${SITE_CONFIG.brandMark}`, href: "#choisir" },
+  { label: `Pourquoi ${SITE_CONFIG.brandMark} ?`, href: "#choisir" },
   { label: "Feedback", href: "#feedback" },
 ];
 
