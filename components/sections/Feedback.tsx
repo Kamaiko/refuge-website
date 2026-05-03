@@ -1,5 +1,7 @@
 import RevealText from "@/components/common/RevealText";
 
+/** Closing testimonial section. Eyebrow, large quote, and author signature,
+ *  each fading in via {@link RevealText} as it scrolls into view. */
 export default function Feedback() {
   return (
     <section

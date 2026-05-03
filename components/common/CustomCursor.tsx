@@ -3,6 +3,19 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
+/**
+ * Site-wide custom cursor: a small filled dot tracking the pointer with a
+ * lagging outline ring. Both layers use `mix-blend-difference` so they read
+ * over both dark and light backgrounds without per-section theming.
+ *
+ * Rendered once at the root layout. Self-disables on touch / coarse
+ * pointers and is hidden under 640px. The native cursor is intentionally
+ * left visible — the dot+ring is an aesthetic overlay, not a replacement.
+ *
+ * Hover scaling on the ring is delegated from the document, so any anchor,
+ * button, or `[data-cursor='hover']` element added later (Menu items,
+ * Reserve refuge cards, etc.) gets the effect for free.
+ */
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);

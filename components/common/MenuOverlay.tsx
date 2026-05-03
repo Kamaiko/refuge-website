@@ -16,14 +16,22 @@ const NAV = [
   { label: "Feedback", href: "#feedback" },
 ];
 
-// Menu CTA pill footprint (matches Header.tsx) — anchors the closed state.
+/** Menu CTA pill footprint (matches Header.tsx). The box collapses back to
+ *  this exact rect at the end of the close animation, anchoring the visual
+ *  origin to the Menu button position. Keep in sync with Header constants. */
 const CTA_W = 160;
 const CTA_H = 84;
 const CTA_BOTTOM = 48;
-const GAP = 12; // 12px gap between box and viewport edges when fullscreen open
+/** Margin between the open box and the viewport edges. */
+const GAP = 12;
+/** Border-radius at the fully-open state. The closed state uses 9999 (cap)
+ *  so `min(width, height)/2` produces a perfect pill at the small size. */
 const RADIUS_OPEN = 60;
 const RADIUS_CLOSED = 9999;
 
+/** Computes the closed box rect (Menu CTA pill position) using the current
+ *  viewport size. Recomputed at every animation start and on resize so the
+ *  pill always lands exactly under the floating Menu button. */
 function getClosedRect() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
@@ -35,6 +43,18 @@ function getClosedRect() {
   };
 }
 
+/**
+ * Fullscreen Menu overlay. A black backdrop plus a `bg-gris-tan` rounded
+ * box that physically grows from the Menu CTA pill into a near-fullscreen
+ * card (no clip-path masking — actual `top/right/bottom/left` + radius
+ * animation, so corners stay pixel-perfect at every frame).
+ *
+ * Driven by {@link useMenu} — must sit inside a `MenuProvider`. Inner
+ * content (nav, image panel, social links, concept paragraph) staggers
+ * in after the box reaches its open state and out before the box retracts.
+ * Every tween uses `overwrite: true` so a re-toggle mid-animation gracefully
+ * reverses from the current value instead of stacking conflicting tweens.
+ */
 export default function MenuOverlay() {
   const { isOpen, close } = useMenu();
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -85,23 +105,23 @@ export default function MenuOverlay() {
       const concept = conceptRef.current;
       if (!backdrop || !box || !navItems) return;
 
+      // overwrite: true on every tween — a re-toggle mid-animation kills
+      // the in-flight tweens and starts the new direction from whatever
+      // value GSAP left them at, so a double-click never produces stacked
+      // / fighting tweens. No input lock needed.
       if (isOpen) {
-        // Backdrop fades in fast (under the box)
         gsap.to(backdrop, {
           autoAlpha: 1,
           duration: 0.45,
           ease: PANEL.ease,
+          overwrite: true,
         });
 
-        // Box itself shrinks-out from the Menu CTA pill into a fullscreen
-        // rounded card. Real width/height/position animation — no clip-path,
-        // so the rounded corners are pixel-perfect at every frame.
+        // Box grows from the Menu CTA pill footprint to a fullscreen
+        // rounded card. borderRadius is recomputed each frame as a blend
+        // of the current pill cap (min(w,h)/2) and RADIUS_OPEN so corners
+        // morph continuously from the first frame.
         gsap.set(box, { autoAlpha: 1, pointerEvents: "auto" });
-        // Single tween for size + radius. Radius is recomputed each
-        // frame as a blend between the current pill cap (min(w,h)/2)
-        // and the target RADIUS_OPEN, so corners shrink continuously
-        // from the start instead of "snapping" once the raw value
-        // finally drops under the cap.
         gsap.to(box, {
           top: GAP,
           left: GAP,
@@ -109,6 +129,7 @@ export default function MenuOverlay() {
           bottom: GAP,
           duration: 0.85,
           ease: PANEL.ease,
+          overwrite: true,
           onUpdate: function () {
             const p = this.progress();
             const rect = box.getBoundingClientRect();
@@ -124,6 +145,7 @@ export default function MenuOverlay() {
             duration: 0.8,
             ease: PANEL.ease,
             delay: 0.15,
+            overwrite: true,
           });
         }
         gsap.to(navItems, {
@@ -133,6 +155,7 @@ export default function MenuOverlay() {
           stagger: 0.05,
           delay: 0.3,
           ease: PANEL.ease,
+          overwrite: true,
         });
         if (socialIcons && socialIcons.length) {
           gsap.to(socialIcons, {
@@ -142,6 +165,7 @@ export default function MenuOverlay() {
             stagger: 0.08,
             delay: 0.7,
             ease: PANEL.ease,
+            overwrite: true,
           });
         }
         if (concept) {
@@ -151,16 +175,17 @@ export default function MenuOverlay() {
             duration: 0.7,
             delay: 0.85,
             ease: PANEL.ease,
+            overwrite: true,
           });
         }
       } else {
-        // Inner content exits first
         if (concept) {
           gsap.to(concept, {
             x: -16,
             opacity: 0,
             duration: 0.25,
             ease: PANEL.closeEase,
+            overwrite: true,
           });
         }
         if (socialIcons && socialIcons.length) {
@@ -170,6 +195,7 @@ export default function MenuOverlay() {
             duration: 0.25,
             stagger: 0.03,
             ease: PANEL.closeEase,
+            overwrite: true,
           });
         }
         gsap.to(navItems, {
@@ -178,6 +204,7 @@ export default function MenuOverlay() {
           duration: 0.35,
           stagger: 0.02,
           ease: PANEL.closeEase,
+          overwrite: true,
         });
         if (imagePanel) {
           gsap.to(imagePanel, {
@@ -185,12 +212,10 @@ export default function MenuOverlay() {
             duration: 0.5,
             ease: PANEL.closeEase,
             delay: 0.1,
+            overwrite: true,
           });
         }
 
-        // Then the box physically shrinks back to the Menu CTA pill.
-        // Border-radius morphs along the way — corners stay perfectly
-        // round at every intermediate size.
         const r = getClosedRect();
         gsap.to(box, {
           top: r.top,
@@ -200,13 +225,11 @@ export default function MenuOverlay() {
           duration: 0.7,
           ease: PANEL.closeEase,
           delay: 0.25,
+          overwrite: true,
           onUpdate: function () {
             const p = this.progress();
             const rect = box.getBoundingClientRect();
             const cap = Math.min(rect.width, rect.height) / 2;
-            // Blend from current radius (≈ RADIUS_OPEN) toward the
-            // pill cap as the box shrinks — corners morph continuously
-            // instead of popping at the end.
             const target = RADIUS_OPEN + (cap - RADIUS_OPEN) * p;
             box.style.borderRadius = `${Math.min(target, cap)}px`;
           },
@@ -219,13 +242,12 @@ export default function MenuOverlay() {
           },
         });
 
-        // Backdrop fades out slightly later so the box stays visible
-        // against it during its retraction.
         gsap.to(backdrop, {
           autoAlpha: 0,
           duration: 0.5,
           ease: PANEL.closeEase,
           delay: 0.45,
+          overwrite: true,
         });
       }
     },

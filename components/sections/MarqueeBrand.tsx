@@ -1,5 +1,7 @@
 import Marquee from "@/components/common/Marquee";
 
+/** Decorative banner between Capsules and Feedback: a giant directional
+ *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish. */
 export default function MarqueeBrand() {
   return (
     <section

@@ -3,11 +3,13 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 
-/**
- * Per-character slide-in. Each char sits inside its own fixed mask (box width
- * = char width). The inner glyph starts at xPercent:100 (offscreen-right of
- * its slot) and slides left into place. Mask never moves.
- */
+/** Configuration for {@link RevealChars}.
+ *  - `text`: the string to reveal — used both for rendering and as
+ *    `aria-label` on the wrapper (per-glyph spans are `aria-hidden`).
+ *  - `play`: imperative trigger. Flip from false → true to slide the
+ *    glyphs in; true → false plays a faster reverse-out.
+ *  - `charClassName`: applied to each per-glyph mask span if you need
+ *    extra alignment / leading control. */
 type Props = {
   text: string;
   play: boolean;
@@ -17,6 +19,16 @@ type Props = {
   delay?: number;
 };
 
+/**
+ * Per-character horizontal slide-in. Each char sits inside its own fixed
+ * mask (box width = char width). The inner glyph starts at `xPercent:100`
+ * (offscreen-right of its slot) and slides left into place. The mask
+ * never moves, so word spacing and line wrapping stay pixel-stable.
+ *
+ * Imperative — driven by the `play` prop, not a ScrollTrigger. Use when
+ * the reveal needs to fire on something other than scroll position
+ * (e.g. the active pinned card in the Capsules section).
+ */
 export default function RevealChars({
   text,
   play,

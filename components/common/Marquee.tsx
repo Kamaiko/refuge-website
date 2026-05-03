@@ -15,6 +15,10 @@ type Props = {
   directional?: boolean;
 };
 
+/** Infinite horizontal marquee. Duplicates `text` enough times to fill the
+ *  container twice, then translates the track by half its width on a
+ *  forever-looping linear tween. Set `directional` to flip the marquee's
+ *  travel direction whenever the page scroll direction changes. */
 export default function Marquee({
   text,
   speed = 60,

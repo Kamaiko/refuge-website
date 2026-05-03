@@ -6,6 +6,10 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import RevealText from "@/components/common/RevealText";
 
+/** Avant-goût section: two oval medallion images parallax in opposite
+ *  directions on scroll, paired with three staggered {@link RevealText}
+ *  blocks (eyebrow, headline, supporting copy). Reduced-motion: skips
+ *  parallax, medallions sit at rest. */
 export default function Medaillons() {
   const ref = useRef<HTMLDivElement>(null);
   const med1 = useRef<HTMLDivElement>(null);

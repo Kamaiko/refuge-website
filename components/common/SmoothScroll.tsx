@@ -6,6 +6,22 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useMenu } from "./MenuContext";
 import { useReservePanel } from "./ReservePanelContext";
 
+/**
+ * Owns the global Lenis smooth-scroll lifecycle and synchronises it with
+ * GSAP's ScrollTrigger ticker.
+ *
+ * Responsibilities:
+ * - Disabled entirely when `prefers-reduced-motion: reduce`.
+ * - Forwards `focusin` events to Lenis so keyboard navigation scrolls the
+ *   focused element into view (Lenis virtualises scroll, so the browser's
+ *   native auto-scroll doesn't fire). Skips elements inside a fixed/sticky
+ *   ancestor — they're already pinned to the viewport.
+ * - Locks background scroll while the Menu or Reserve panel is open
+ *   (single owner — duplicate locks elsewhere caused restore races).
+ *
+ * Must wrap any consumer of `useMenu` / `useReservePanel` because it reads
+ * those contexts to drive the scroll lock.
+ */
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
   const { isOpen: menuIsOpen } = useMenu();
@@ -34,6 +50,17 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target as HTMLElement | null;
       if (!el || typeof el.getBoundingClientRect !== "function") return;
+      // Skip elements pinned to the viewport (fixed/sticky CTAs like the
+      // Menu and Reserve buttons). They're always visible — scrolling the
+      // page can't bring them more into view and just causes jumpy focus.
+      for (
+        let node: HTMLElement | null = el;
+        node && node !== document.body;
+        node = node.parentElement
+      ) {
+        const pos = getComputedStyle(node).position;
+        if (pos === "fixed" || pos === "sticky") return;
+      }
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight;
       // Only scroll when the focused element is genuinely off-screen, with

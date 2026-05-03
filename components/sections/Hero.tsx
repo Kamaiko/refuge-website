@@ -6,6 +6,10 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
 import BrandMark from "@/components/common/BrandMark";
 
+/** Full-viewport hero. A muted looping video sits behind the brand
+ *  wordmark, tagline and subcopy (all GSAP fade-up on mount). The video
+ *  parallaxes (scale 1.1 → 1.0) on scroll via a scrubbed ScrollTrigger.
+ *  Reduced-motion: skips entrance + parallax tweens, copy lands at rest. */
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const wordmarkRef = useRef<HTMLHeadingElement>(null);

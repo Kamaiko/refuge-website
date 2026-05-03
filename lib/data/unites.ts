@@ -1,3 +1,12 @@
+/** A single refuge listed on the site.
+ *  - `slug`: stable id used by the Reserve form select and by URLs.
+ *  - `nom`: display name (e.g. "Brume").
+ *  - `surnom`: poetic subtitle shown above the name (e.g. "Sur le promontoire").
+ *  - `description`: 2-3 sentences describing the location and ambience.
+ *  - `capacite` / `surface`: human-readable specs ("2-4 personnes", "46 m²").
+ *  - `image`: `/public` path to the cover AVIF.
+ *  - `tarifParNuit`: indicative night rate in CAD, drives the Reserve cost
+ *    summary. */
 export type Unite = {
   slug: string;
   nom: string;
@@ -6,12 +15,12 @@ export type Unite = {
   capacite: string;
   surface: string;
   image: string;
-  /** Indicative night rate in CAD — used for the reservation cost summary. */
   tarifParNuit: number;
 };
 
-// Order is significant — Capsules.tsx relies on indexes 0/1/2 for z-index
-// stacking and slide-up sequencing. Reordering here will reorder the slideshow.
+/** All refuges shown on the site. **Order is significant** — the Capsules
+ *  section maps indexes 0/1/2 onto z-index stacking and slide-up sequencing,
+ *  so reordering this array will reorder the scroll-pinned slideshow. */
 export const UNITES: Unite[] = [
   {
     slug: "brume",

@@ -14,6 +14,19 @@ const PILL_H = 84; // px — outer cream pill height
 const CIRCLE_H = 74; // px — inner gris-tan circle height (tighter cream halo)
 const PILL_PR = 4; // px — cream margin past the inner circle on the right
 
+/**
+ * Persistent floating header. Renders three pinned UI surfaces:
+ * - Top-left: brand monogram link back to the home page.
+ * - Top-right: `Réserver` CTA — opens the {@link ReservePanel}. Hides on
+ *   scroll-down (after a soft delay) and slides back in on scroll-up.
+ * - Bottom-center: `Menu` ↔ `Close` CTA — toggles the {@link MenuOverlay}.
+ *   The cream pill grows around the inner gris-tan circle on entry; the
+ *   label uses an iOS-style vertical wheel to flip between Menu and Close.
+ *
+ * Menu and Reserve are mutually exclusive: opening Menu always dismisses
+ * Reserve. Both contexts must be in the tree
+ * ({@link MenuProvider}, {@link ReservePanelProvider}).
+ */
 export default function Header() {
   const { toggle: menuToggle, isOpen: menuIsOpen } = useMenu();
   const { open: openReservePanel, close: closeReservePanel, isOpen: reserveIsOpen } = useReservePanel();

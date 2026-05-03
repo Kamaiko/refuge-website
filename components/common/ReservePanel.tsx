@@ -10,8 +10,12 @@ import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { UNITES } from "@/lib/data/unites";
 import { submitReservation } from "@/actions/reservation";
 
+/** Subset of {@link import("@/lib/data/unites").Unite}["slug"] accepted by
+ *  the Reserve form. Mirrors the enum in `actions/reservation.ts`. */
 type RefugeSlug = "aubepine" | "galets" | "brume";
 
+/** Default departure date offset (in nights) used to pre-fill the form
+ *  with a sensible week-long stay. */
 const DEFAULT_STAY_NIGHTS = 5;
 
 function formatCAD(value: number) {
@@ -38,6 +42,21 @@ function isoDate(offsetDays = 0) {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * Right-side reservation panel. A backdrop fades in, the panel slides in
+ * from the right, and a bottom action bar scales in from the right edge,
+ * staggered to feel like the bar grows while the panel arrives.
+ *
+ * Form submission is wired to the {@link submitReservation} Server Action
+ * with Zod validation — per-field errors are surfaced inline and the
+ * cost summary is recomputed from the picked refuge × selected nights.
+ *
+ * Driven by {@link useReservePanel} — must sit inside a
+ * `ReservePanelProvider`. Like MenuOverlay, every tween uses
+ * `overwrite: true` so re-toggling mid-animation cleanly reverses from
+ * the current value (and kills delayed open-tweens that haven't fired
+ * yet, preventing the content from "resurrecting" during a close).
+ */
 export default function ReservePanel() {
   const { isOpen, close } = useReservePanel();
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -46,7 +65,7 @@ export default function ReservePanel() {
   const bottomBarRef = useRef<HTMLDivElement>(null);
   const bottomBarContentRef = useRef<HTMLDivElement>(null);
 
-  const [refuge, setRefuge] = useState<RefugeSlug>("galets");
+  const [refuge, setRefuge] = useState<RefugeSlug>("brume");
   const [arrivee, setArrivee] = useState(() => isoDate(0));
   const [depart, setDepart] = useState(() => isoDate(DEFAULT_STAY_NIGHTS));
   const [submitting, setSubmitting] = useState(false);
@@ -75,77 +94,92 @@ export default function ReservePanel() {
       const barContent = bottomBarContentRef.current;
       if (!backdrop || !panel) return;
 
+      // overwrite: true on every tween — a re-toggle mid-animation kills
+      // the in-flight AND delayed tweens, so a close click before the
+      // open's content/bar delays fire won't leave them queued to fire
+      // during the close (which would resurrect the content mid-exit and
+      // leave it mounted at opacity:1 for the next open).
       if (isOpen) {
         gsap.to(backdrop, {
           opacity: 1,
           pointerEvents: "auto",
           duration: 0.6,
           ease: PANEL.ease,
+          overwrite: true,
         });
         gsap.to(panel, {
           xPercent: 0,
           duration: 1.1,
           ease: PANEL.ease,
+          overwrite: true,
         });
         if (bar) {
           gsap.to(bar, {
             scaleX: 1,
             duration: 0.85,
             ease: PANEL.ease,
-            delay: 0.55,
+            delay: 0.15,
+            overwrite: true,
           });
         }
         if (barContent) {
           gsap.to(barContent, {
             opacity: 1,
-            duration: 0.7,
+            duration: 0.6,
             ease: PANEL.ease,
-            delay: 1.1,
+            delay: 0.5,
+            overwrite: true,
           });
         }
         if (content) {
           gsap.to(content, {
             opacity: 1,
-            duration: 0.8,
+            duration: 0.7,
             ease: PANEL.ease,
-            delay: 0.85,
+            delay: 0.5,
+            overwrite: true,
           });
         }
       } else {
         if (content) {
           gsap.to(content, {
             opacity: 0,
-            duration: 0.4,
+            duration: 0.3,
             ease: PANEL.closeEase,
+            overwrite: true,
           });
         }
         if (barContent) {
           gsap.to(barContent, {
             opacity: 0,
-            duration: 0.4,
+            duration: 0.3,
             ease: PANEL.closeEase,
+            overwrite: true,
           });
         }
         if (bar) {
           gsap.to(bar, {
             scaleX: 0,
-            duration: 0.55,
+            duration: 0.4,
             ease: PANEL.closeEase,
-            delay: 0.2,
+            delay: 0.12,
+            overwrite: true,
           });
         }
         gsap.to(panel, {
           xPercent: 105,
-          duration: 0.85,
+          duration: 0.65,
           ease: PANEL.closeEase,
-          delay: 0.45,
+          delay: 0.28,
+          overwrite: true,
         });
         gsap.to(backdrop, {
           opacity: 0,
           pointerEvents: "none",
-          duration: 0.55,
+          duration: 0.4,
           ease: PANEL.closeEase,
-          delay: 0.6,
+          delay: 0.4,
+          overwrite: true,
         });
       }
     },
@@ -232,7 +266,7 @@ export default function ReservePanel() {
 
           <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-14 flex-1">
             <fieldset className="flex flex-col gap-6">
-              <legend className="text-creme/90 text-base font-semibold">
+              <legend className="text-creme/90 text-base font-semibold mb-2">
                 <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Vos coordonnées
               </legend>
               <TextInput
@@ -252,7 +286,7 @@ export default function ReservePanel() {
             </fieldset>
 
             <fieldset className="flex flex-col gap-8">
-              <legend className="text-creme/90 text-base font-semibold">
+              <legend className="text-creme/90 text-base font-semibold mb-2">
                 <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Quel refuge aimeriez-vous réserver ?
               </legend>
               <div className="grid grid-cols-3 gap-3">
@@ -288,7 +322,7 @@ export default function ReservePanel() {
             </fieldset>
 
             <fieldset className="flex flex-col gap-8">
-              <legend className="text-creme/90 text-base font-semibold">
+              <legend className="text-creme/90 text-base font-semibold mb-2">
                 <span className="text-creme-dim/60 mr-2 font-normal">(3)</span>Combien de temps ?
               </legend>
               <div className="grid grid-cols-2 gap-3 mb-4">

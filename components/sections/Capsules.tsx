@@ -11,6 +11,25 @@ import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 
+/**
+ * Pinned scroll-scrub slideshow for the three refuges. The section pins for
+ * ~6 viewports on desktop (3 on mobile) — within that range the cards
+ * stack: card 0 grows from a stadium pill into a fullscreen rounded card,
+ * then cards 1 and 2 slide up over it, scaling the stack down underneath.
+ *
+ * Reads `UNITES` for content (order significant — see `lib/data/unites.ts`).
+ * Each card's text is revealed via {@link RevealChars}, driven imperatively
+ * from the pinned timeline's `onUpdate` (not scroll-position-based, because
+ * the cards are themselves moved by the timeline).
+ *
+ * The `Réserver {nom}` per-card buttons open the {@link ReservePanel} via
+ * {@link useReservePanel}. They are intentionally `tabIndex={-1}` —
+ * keyboard users reach the same flow via the global Header CTA, avoiding
+ * having to scroll through the pinned section to focus duplicate buttons.
+ *
+ * Reduced-motion: skips the pin entirely, shows all cards at their final
+ * stacked state.
+ */
 export default function Capsules() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);

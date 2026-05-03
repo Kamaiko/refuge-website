@@ -2,6 +2,9 @@
 
 import { z } from "zod";
 
+/** Server-side validation schema for the Reserve form. The refuge enum is
+ *  the source of truth for valid slugs — keep in sync with `UNITES` in
+ *  `lib/data/unites.ts`. */
 const ReservationSchema = z.object({
   nom: z.string().min(2, "Veuillez indiquer votre nom."),
   email: z.email("Adresse courriel invalide."),
@@ -11,12 +14,19 @@ const ReservationSchema = z.object({
   message: z.string().max(500).optional(),
 });
 
+/** Result returned by {@link submitReservation}. `errors` is a flat map
+ *  `fieldName → [messages]` keyed by the same names as the form inputs. */
 export type ReservationState = {
   ok: boolean;
   message: string;
   errors?: Record<string, string[]>;
 };
 
+/** Validates a Reserve form submission and (TODO) dispatches the request
+ *  to the booking inbox. Returns a {@link ReservationState} the client
+ *  uses to render success or per-field error messages.
+ *
+ *  Currently does not deliver email — the Resend integration is pending. */
 export async function submitReservation(
   _prev: ReservationState,
   formData: FormData,

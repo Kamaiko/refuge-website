@@ -6,6 +6,13 @@ import { gsap } from "@/lib/gsap";
 
 type RevealMode = "lines" | "words";
 
+/** Configuration for {@link RevealText}.
+ *  - `children`: the string to reveal — must be a plain string (not JSX),
+ *    so the splitter can tokenise it into lines/words.
+ *  - `as`: the wrapping element tag (defaults to `<p>`); useful for h1/h2
+ *    so headings stay semantic.
+ *  - `mode`: `"lines"` splits on `\n`; `"words"` splits on whitespace.
+ *  - `start` / `ease` / `duration` / `delay` / `stagger`: tween knobs. */
 type Props = {
   children: string;
   as?: ElementType;

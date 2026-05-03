@@ -7,6 +7,12 @@ import { BgGradient } from "@/components/common/BgTransition";
 
 const LINES = ["Choisissez celui", "qui vous attend"] as const;
 
+/** Transition section before the Capsules slideshow. The headline triggers
+ *  three synchronised scroll-scrubbed effects (depth scale + opacity ramp,
+ *  parallax y-drift slower than page scroll, per-line clip-path curtain).
+ *  A {@link BgGradient} fades from `--color-base-noir` into the gris-tan
+ *  background so the section seams cleanly into Capsules below.
+ *  Reduced-motion: lines are revealed instantly, no scroll-driven motion. */
 export default function Choisir() {
   const sectionRef = useRef<HTMLElement>(null);
   const titleWrapRef = useRef<HTMLDivElement>(null);
