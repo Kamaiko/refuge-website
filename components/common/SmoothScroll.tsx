@@ -79,19 +79,27 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     };
   }, []);
 
-  // Lock background scroll while any panel is open.
+  // Lock background scroll AND make page content un-focusable while any
+  // panel is open. The `inert` attribute on <main> removes its subtree
+  // from sequential focus navigation and pointer events — combined with
+  // the panel's overlay rendering siblings to <main>, this creates a
+  // proper focus trap without a JS focus-cycling library.
   useEffect(() => {
     const anyOpen = menuIsOpen || reserveIsOpen;
     const lenis = lenisRef.current;
+    const main = document.querySelector("main");
     if (anyOpen) {
       lenis?.stop();
       document.body.style.overflow = "hidden";
+      main?.setAttribute("inert", "");
     } else {
       lenis?.start();
       document.body.style.overflow = "";
+      main?.removeAttribute("inert");
     }
     return () => {
       document.body.style.overflow = "";
+      main?.removeAttribute("inert");
     };
   }, [menuIsOpen, reserveIsOpen]);
 

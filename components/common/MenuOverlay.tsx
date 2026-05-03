@@ -286,6 +286,28 @@ export default function MenuOverlay() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
+  // Focus management: save the trigger that opened the menu, move focus
+  // to the first nav link, restore focus to the trigger on close. Paired
+  // with the `inert` attribute on <main> (set by SmoothScroll) this gives
+  // a proper keyboard-only flow — Tab cycles only inside the overlay,
+  // Escape closes and returns focus to where the user was.
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
+      // Wait one frame so the overlay has been rendered and is focusable.
+      const id = window.setTimeout(() => {
+        const firstLink = navRef.current?.querySelector("a") as HTMLAnchorElement | null;
+        firstLink?.focus();
+      }, 50);
+      return () => window.clearTimeout(id);
+    }
+    if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
+
   return (
     <>
       {/* Backdrop noir plein écran derrière la boîte */}

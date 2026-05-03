@@ -64,6 +64,7 @@ export default function ReservePanel() {
   const contentRef = useRef<HTMLDivElement>(null);
   const bottomBarRef = useRef<HTMLDivElement>(null);
   const bottomBarContentRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const [refuge, setRefuge] = useState<RefugeSlug>("brume");
   const [arrivee, setArrivee] = useState(() => isoDate(0));
@@ -199,6 +200,24 @@ export default function ReservePanel() {
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, close]);
 
+  // Focus management: save the trigger that opened the panel, move focus
+  // to the close button, restore focus on close. Paired with the `inert`
+  // attribute on <main> (set by SmoothScroll) this keeps Tab cycling
+  // strictly within the dialog.
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
+      // Wait one frame so the panel has been rendered + made focusable.
+      const id = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+      return () => window.clearTimeout(id);
+    }
+    if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
+
   const nights = useMemo(() => diffNights(arrivee, depart), [arrivee, depart]);
   const dailyRate = useMemo(
     () => UNITES.find((u) => u.slug === refuge)?.tarifParNuit ?? 0,
@@ -250,6 +269,7 @@ export default function ReservePanel() {
       >
         <div ref={contentRef} className="flex-1 overflow-y-auto flex flex-col p-8 md:p-10 pb-32">
           <button
+            ref={closeBtnRef}
             type="button"
             onClick={close}
             aria-label="Fermer la réservation"
