@@ -41,21 +41,22 @@ export default function Choisir() {
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Three scroll-driven effects, all sync-end at "top 25%":
+        // Three scroll-driven effects, all sync-end at "top 15%":
         //   1. Depth   — scale + opacity ramp over the full approach.
-        //   2. Parallax — y drift, ~1.7× slower than page-scroll (negative y
-        //                 avoids overlapping the description below).
-        //   3. Curtain — per-line clip-path retraction (mask lifts upward),
-        //                synchronised with the parallax so the rideau finishes
-        //                its reveal exactly when the title stops drifting.
+        //   2. Parallax — y drift; title moves slower than page-scroll for a
+        //                 clearly different motion axis.
+        //   3. Curtain — per-line clip-path retraction, synced with parallax
+        //                so the rideau finishes when the title stops drifting.
         //
-        // Parallax magnitude differs by viewport: desktop has the eyebrow
-        // gap to spare and uses the original deep drift (-200) for a clearly
-        // different motion axis. Mobile keeps a tighter value (-50) — the
-        // eyebrow sits closer to the title there and any bigger offset would
-        // make the curtain reveal letter slivers across the eyebrow row.
+        // Mobile uses a softer parallax (-75 vs -200): the eyebrow sits much
+        // closer there and a deeper drift made the curtain's first reveal
+        // show letter slivers straddling the eyebrow row. The curtain's start
+        // % is then bumped to compensate — ScrollTrigger measures against the
+        // NATURAL top, so without the bump the visual reveal point would be
+        // offset upward by the in-flight parallax.
         const isMobile = window.matchMedia("(max-width: 767px)").matches;
-        const parallaxY = isMobile ? -50 : -200;
+        const parallaxY = isMobile ? -75 : -200;
+        const curtainStart = isMobile ? "top 88%" : "top 60%";
 
         lineRefs.current.forEach((line) => {
           if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
@@ -102,7 +103,7 @@ export default function Choisir() {
               ease: "none",
               scrollTrigger: {
                 trigger: titleWrapRef.current,
-                start: "top 60%",
+                start: curtainStart,
                 end: "top 15%",
                 scrub: true,
               },
