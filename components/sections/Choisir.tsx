@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { BgGradient } from "@/components/common/BgTransition";
 
-const LINES = ["Choisissez celui", "qui vous attend"] as const;
+const LINES = ["Choisissez celui", "qui vous rejoint"] as const;
 
 /** Transition section before the Capsules slideshow. The headline triggers
  *  three synchronised scroll-scrubbed effects (depth scale + opacity ramp,

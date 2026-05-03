@@ -357,11 +357,15 @@ export default function MenuOverlay() {
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
           >
             <Image
-              src="/images/unite-galets.avif"
+              src="/images/unite-brume.avif"
               alt=""
               fill
               sizes="25vw"
-              className="object-cover object-[60%_40%]"
+              // Source AVIFs (2400×1340, ~150KB) are already optimized.
+              // Next's default re-encode at quality 75 visibly softens them
+              // — match Capsules.tsx and serve the source directly.
+              unoptimized
+              className="object-cover object-[45%_40%]"
               priority={false}
             />
             <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
