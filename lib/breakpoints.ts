@@ -13,9 +13,7 @@
  *  `xs:text-lg md:text-xl` — same mental model. */
 export const BP = {
   xs: 390,
-  sm: 640,
   md: 768,
-  lg: 1024,
 } as const;
 
 export const MQ = {

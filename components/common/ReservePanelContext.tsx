@@ -4,12 +4,13 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 
 /** Open/close state of the right-side Reserve panel and its imperative
  *  controls. Consumed by Header (Reserve CTA), Capsules (per-card Reserve
- *  buttons), and ReservePanel (renders the panel + form). */
+ *  buttons), and ReservePanel (renders the panel + form).
+ *  No `toggle` here on purpose — the Reserve panel is always opened from a
+ *  CTA (`open`) and closed from inside (`close` via X button or backdrop). */
 type ReservePanelState = {
   isOpen: boolean;
   open: () => void;
   close: () => void;
-  toggle: () => void;
 };
 
 const ReservePanelContext = createContext<ReservePanelState | null>(null);
@@ -20,9 +21,8 @@ export function ReservePanelProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
-  const toggle = useCallback(() => setIsOpen((v) => !v), []);
   return (
-    <ReservePanelContext.Provider value={{ isOpen, open, close, toggle }}>
+    <ReservePanelContext.Provider value={{ isOpen, open, close }}>
       {children}
     </ReservePanelContext.Provider>
   );

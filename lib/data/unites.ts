@@ -1,4 +1,4 @@
-/** A single refuge listed on the site.
+/** All refuges shown on the site. Each entry's shape:
  *  - `slug`: stable id used by the Reserve form select and by URLs.
  *  - `nom`: display name (e.g. "Brume").
  *  - `surnom`: poetic subtitle shown above the name (e.g. "Sur le promontoire").
@@ -6,22 +6,15 @@
  *  - `capacite` / `surface`: human-readable specs ("2-4 personnes", "46 m²").
  *  - `image`: `/public` path to the cover AVIF.
  *  - `tarifParNuit`: indicative night rate in CAD, drives the Reserve cost
- *    summary. */
-export type Unite = {
-  slug: string;
-  nom: string;
-  surnom: string;
-  description: string;
-  capacite: string;
-  surface: string;
-  image: string;
-  tarifParNuit: number;
-};
-
-/** All refuges shown on the site. **Order is significant** — the Capsules
- *  section maps indexes 0/1/2 onto z-index stacking and slide-up sequencing,
- *  so reordering this array will reorder the scroll-pinned slideshow. */
-export const UNITES: Unite[] = [
+ *    summary.
+ *
+ *  **Order is significant** — the Capsules section maps indexes 0/1/2 onto
+ *  z-index stacking and slide-up sequencing, so reordering this array will
+ *  reorder the scroll-pinned slideshow.
+ *
+ *  Consumers narrow per-entry types with `(typeof UNITES)[number]` — no
+ *  separate `Unite` type alias is needed (avoids drift if the shape evolves). */
+export const UNITES = [
   {
     slug: "brume",
     nom: "Brume",
