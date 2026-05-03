@@ -47,15 +47,19 @@ export default function Choisir() {
       // teardown needed beyond `mm.revert()`.
       mm.add(
         {
-          // `isDesktop` is implied by `!isMobile` — both queries are mutually
-          // exclusive at the same `md` boundary, so we only declare what we
-          // actually consume.
+          // `isDesktop` is load-bearing even though we only branch on
+          // `isMobile`: gsap.matchMedia only fires the callback when at
+          // least one declared condition matches. Without `isDesktop`,
+          // desktop viewports match nothing and the animation never runs
+          // (the title stays clipped at inset(100%) — invisible).
           isMobile: `(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`,
+          isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
           reduceMotion: "(prefers-reduced-motion: reduce)",
         },
         (ctx) => {
           const { isMobile, reduceMotion } = ctx.conditions as {
             isMobile: boolean;
+            isDesktop: boolean;
             reduceMotion: boolean;
           };
 

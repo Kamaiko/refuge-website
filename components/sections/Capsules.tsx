@@ -337,38 +337,45 @@ function UniteCardContent({
               with a slight back-eased overshoot.
               Hover: a cream disc grows from center over the gris-tan base,
               and the "+" glyph crossfades to base-noir. */}
-          <button
-            type="button"
-            onClick={onReserve}
-            tabIndex={-1}
-            aria-label={`Réserver ${unite.nom}`}
+          {/* Wrapper owns the entrance scale (0 → 1 on `play`) so the button
+              itself is free to drive an independent hover scale via Tailwind
+              without inline transforms colliding. */}
+          <span
+            className="inline-block"
             style={{
               transform: play ? "scale(1)" : "scale(0)",
               transition: "transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1)",
               transitionDelay: play ? "0.1s" : "0s",
             }}
-            className="group relative inline-flex h-12 w-12 xs:h-14 xs:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
           >
-            <span
-              aria-hidden
-              className="absolute inset-0 rounded-full bg-creme scale-0 group-hover:scale-100 transition-transform duration-500 ease-out origin-center"
-            />
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 18 18"
-              fill="none"
-              aria-hidden
-              className="relative z-10 text-base-noir/85 group-hover:rotate-[135deg] transition-transform duration-500 ease-out"
+            <button
+              type="button"
+              onClick={onReserve}
+              tabIndex={-1}
+              aria-label={`Réserver ${unite.nom}`}
+              className="group relative inline-flex h-12 w-12 xs:h-14 xs:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 transition-transform duration-300 ease-out hover:scale-[1.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
             >
-              <path
-                d="M9 2v14M2 9h14"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-full bg-creme scale-0 group-hover:scale-100 transition-transform duration-500 ease-out origin-center"
               />
-            </svg>
-          </button>
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 18 18"
+                fill="none"
+                aria-hidden
+                className="relative z-10 text-base-noir/85 group-hover:rotate-[135deg] transition-transform duration-500 ease-out"
+              >
+                <path
+                  d="M9 2v14M2 9h14"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </span>
           <div
             className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] xs:text-xs whitespace-nowrap transition-transform duration-[900ms] ease-out will-change-transform"
             style={{
