@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -8,7 +8,9 @@ import { PANEL } from "@/lib/motion";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { UNITES } from "@/lib/data/unites";
-import { submitReservation } from "@/actions/reservation";
+import { submitReservation, type ReservationState } from "@/actions/reservation";
+
+const INITIAL_FORM_STATE: ReservationState = { ok: false, message: "" };
 
 /** Subset of {@link import("@/lib/data/unites").Unite}["slug"] accepted by
  *  the Reserve form. Mirrors the enum in `actions/reservation.ts`. */
@@ -69,9 +71,14 @@ export default function ReservePanel() {
   const [refuge, setRefuge] = useState<RefugeSlug>("brume");
   const [arrivee, setArrivee] = useState(() => isoDate(0));
   const [depart, setDepart] = useState(() => isoDate(DEFAULT_STAY_NIGHTS));
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  // useActionState (React 19) replaces three pieces of local state at once:
+  //  - `formState` carries `{ ok, message, errors }` returned by the server
+  //    action (was: `feedback` + `fieldErrors`).
+  //  - `formAction` is the action prop bound directly to <form action={…}>.
+  //  - `isPending` mirrors the in-flight submission (was: `submitting`).
+  // The form submits natively — no preventDefault, no manual FormData
+  // construction, no try/finally for the pending flag.
+  const [formState, formAction, isPending] = useActionState(submitReservation, INITIAL_FORM_STATE);
 
   // xPercent 105 (not 100): the panel sits at right-4, so translating by
   // exactly its own width leaves a 16px sliver visible. The extra 5% clears
@@ -225,21 +232,6 @@ export default function ReservePanel() {
   );
   const total = nights * dailyRate;
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setFeedback(null);
-    setFieldErrors({});
-    setSubmitting(true);
-    const formData = new FormData(e.currentTarget);
-    formData.set("refuge", refuge);
-    formData.set("arrivee", arrivee);
-    formData.set("depart", depart);
-    const result = await submitReservation({ ok: false, message: "" }, formData);
-    setSubmitting(false);
-    setFeedback({ ok: result.ok, message: result.message });
-    setFieldErrors(result.errors ?? {});
-  }
-
   return (
     <>
       <div
@@ -292,7 +284,12 @@ export default function ReservePanel() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-12 flex flex-col gap-14 flex-1">
+          <form action={formAction} className="mt-12 flex flex-col gap-14 flex-1">
+            {/* `refuge` is a state-driven choice (button group), not an input
+                field — mirror it into a hidden input so it lands in the
+                FormData that the action receives. */}
+            <input type="hidden" name="refuge" value={refuge} />
+
             <fieldset className="flex flex-col gap-6">
               <legend className="text-creme/90 text-base font-semibold mb-2">
                 <span className="text-creme-dim/60 mr-2 font-normal">(1)</span>Vos coordonnées
@@ -302,14 +299,14 @@ export default function ReservePanel() {
                 name="nom"
                 type="text"
                 autoComplete="name"
-                error={fieldErrors.nom?.[0]}
+                error={formState.errors?.nom?.[0]}
               />
               <TextInput
                 label="Courriel"
                 name="email"
                 type="email"
                 autoComplete="email"
-                error={fieldErrors.email?.[0]}
+                error={formState.errors?.email?.[0]}
               />
             </fieldset>
 
@@ -359,12 +356,12 @@ export default function ReservePanel() {
               </div>
             </fieldset>
 
-            {feedback ? (
+            {formState.message ? (
               <p
                 aria-live="polite"
-                className={`text-xs ${feedback.ok ? "text-turquoise" : "text-orange-sunset"}`}
+                className={`text-xs ${formState.ok ? "text-turquoise" : "text-orange-sunset"}`}
               >
-                {feedback.message}
+                {formState.message}
               </p>
             ) : null}
           </form>
@@ -406,10 +403,10 @@ export default function ReservePanel() {
                 const form = (e.currentTarget.closest("aside") as HTMLElement)?.querySelector("form");
                 if (form) (form as HTMLFormElement).requestSubmit();
               }}
-              disabled={submitting}
+              disabled={isPending}
               className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
             >
-              {submitting ? "Envoi…" : "Suivant"}
+              {isPending ? "Envoi…" : "Suivant"}
               <ArrowDiagonalIcon size={12} />
             </button>
           </div>
