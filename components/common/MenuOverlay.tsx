@@ -6,13 +6,14 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { useMenu } from "./MenuContext";
 import { PANEL } from "@/lib/motion";
+import { SITE_CONFIG } from "@/lib/constants";
 import Marquee from "./Marquee";
 
 const NAV = [
   { label: "Accueil", href: "#" },
   { label: "Introduction", href: "#manifeste" },
   { label: "Refuges", href: "#refuges" },
-  { label: "Pourquoi Aquilon®", href: "#choisir" },
+  { label: `Pourquoi ${SITE_CONFIG.brandMark}`, href: "#choisir" },
   { label: "Feedback", href: "#feedback" },
 ];
 
@@ -381,7 +382,7 @@ export default function MenuOverlay() {
             <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
               <Marquee
-                text="Aquilon®"
+                text={SITE_CONFIG.brandMark}
                 speed={120}
                 separator="·"
                 className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"

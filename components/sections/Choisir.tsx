@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { BgGradient } from "@/components/common/BgTransition";
+import { SITE_CONFIG } from "@/lib/constants";
 
 const LINES = ["Choisissez celui", "qui vous convient"] as const;
 
@@ -17,7 +18,7 @@ const FEATURES = [
   "Granit de Charlevoix",
   "Verre pleine hauteur",
   "Vue ouverte",
-  "Foyer extérieur",
+  "Foyer intérieur",
   "Toit végétal",
 ] as const;
 
@@ -161,7 +162,7 @@ export default function Choisir() {
           style={{ opacity: 0 }}
           className="text-creme text-xl md:text-2xl font-semibold tracking-tight"
         >
-          Découvrir les refuges Aquilon®
+          Découvrir les refuges {SITE_CONFIG.brandMark}
         </p>
 
         <div ref={titleWrapRef} className="mt-16 md:mt-24 will-change-transform">

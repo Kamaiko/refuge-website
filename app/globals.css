@@ -57,7 +57,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-orange-sunset);
+  background: var(--color-turquoise);
   color: var(--color-creme);
 }
 

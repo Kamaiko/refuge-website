@@ -6,6 +6,7 @@ import { MenuProvider } from "@/components/common/MenuContext";
 import MenuOverlay from "@/components/common/MenuOverlay";
 import { ReservePanelProvider } from "@/components/common/ReservePanelContext";
 import ReservePanel from "@/components/common/ReservePanel";
+import { SITE_CONFIG } from "@/lib/constants";
 import "./globals.css";
 
 const hostGrotesk = Host_Grotesk({
@@ -16,7 +17,7 @@ const hostGrotesk = Host_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Aquilon — Refuges Charlevoix",
+  title: `${SITE_CONFIG.name} — Refuges Charlevoix`,
   description:
     "Trois refuges contemporains posés dans la forêt boréale de Charlevoix, ouverts sur le Saint-Laurent.",
 };

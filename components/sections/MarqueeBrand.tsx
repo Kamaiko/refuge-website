@@ -1,4 +1,5 @@
 import Marquee from "@/components/common/Marquee";
+import { SITE_CONFIG } from "@/lib/constants";
 
 /** Decorative banner between Capsules and Feedback: a giant directional
  *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish. */
@@ -9,7 +10,7 @@ export default function MarqueeBrand() {
       className="relative w-full overflow-hidden py-24 md:py-32 select-none bg-base-noir"
     >
       <Marquee
-        text="Pourquoi Aquilon® ?"
+        text={`Pourquoi ${SITE_CONFIG.brandMark} ?`}
         speed={260}
         mobileSpeed={80}
         separator="·"

@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { UNITES } from "@/lib/data/unites";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
+import { SITE_CONFIG } from "@/lib/constants";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
@@ -198,7 +199,7 @@ export default function Capsules() {
         className="absolute inset-0 flex items-center pointer-events-none select-none z-0"
       >
         <Marquee
-          text="Aquilon®"
+          text={SITE_CONFIG.brandMark}
           speed={140}
           separator="·"
           className="text-creme text-[14vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em]"
