@@ -97,9 +97,7 @@ export default function Header() {
   // scroll-down (after a soft delay) and slide back on scroll-up. They
   // animate together so the top edge reads as a single navbar.
   useEffect(() => {
-    const targets = [brandRef.current, reserveRef.current].filter(
-      (el): el is HTMLAnchorElement | HTMLButtonElement => el !== null,
-    );
+    const targets = [brandRef.current, reserveRef.current].filter((el) => el !== null);
     if (!targets.length) return;
     const HIDE_AT = 80;
     const SENSITIVITY = 4;

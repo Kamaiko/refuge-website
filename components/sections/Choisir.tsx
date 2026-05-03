@@ -5,17 +5,20 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { BgGradient } from "@/components/common/BgTransition";
 
-const LINES = ["Choisissez celui", "qui vous rejoint"] as const;
+const LINES = ["Choisissez celui", "qui vous convient"] as const;
 
 /** Brand pillars surfaced as a tag cloud at the bottom-right of the section.
- *  All rendered as outlined gris pills on the section's gris-tan background. */
+ *  Rendered as outlined pills, alternating between a muted gris and a brighter
+ *  cream variant via index parity in the map below. */
 const FEATURES = [
   "Bois carbonisé",
-  "Solitaire",
-  "Boréal",
-  "Architecture lente",
-  "Sauna nordique",
+  "Bain nordique",
+  "Éco-friendly",
+  "Granit de Charlevoix",
+  "Verre pleine hauteur",
   "Vue ouverte",
+  "Foyer extérieur",
+  "Toit végétal",
 ] as const;
 
 /** Transition section before the Capsules slideshow. The headline triggers
@@ -56,7 +59,7 @@ export default function Choisir() {
             scrollTrigger: {
               trigger: titleWrapRef.current,
               start: "top bottom",
-              end: "top 25%",
+              end: "top 15%",
               scrub: true,
             },
           },
@@ -70,8 +73,8 @@ export default function Choisir() {
             ease: "none",
             scrollTrigger: {
               trigger: titleWrapRef.current,
-              start: "top 70%",
-              end: "top 25%",
+              start: "top 60%",
+              end: "top 15%",
               scrub: true,
             },
           },
@@ -87,8 +90,8 @@ export default function Choisir() {
               ease: "none",
               scrollTrigger: {
                 trigger: titleWrapRef.current,
-                start: "top 70%",
-                end: "top 25%",
+                start: "top 60%",
+                end: "top 15%",
                 scrub: true,
               },
             },
@@ -96,8 +99,7 @@ export default function Choisir() {
         });
       });
 
-      // Reduced-motion fallback: skip every scroll-driven effect, just
-      // reveal the lines instantly so the copy stays readable.
+      // Reduced-motion: instant reveal so the copy stays readable.
       mm.add("(prefers-reduced-motion: reduce)", () => {
         lineRefs.current.forEach((line) => {
           if (line) gsap.set(line, { clipPath: "inset(0% 0 0 0)", visibility: "visible" });
@@ -109,10 +111,7 @@ export default function Choisir() {
     { scope: sectionRef },
   );
 
-  // Eyebrow fade — scroll-scrubbed: opacity + y track the scroll position
-  // continuously over a ~50svh window so the reveal feels tied to the
-  // user's scroll, not a one-shot animation. Kept in its own useGSAP so
-  // it doesn't depend on the title's early-return guard (titleWrapRef).
+  // Eyebrow scroll-scrub: opacity + y track scroll over a ~50svh window.
   useGSAP(
     () => {
       if (!eyebrowRef.current) return;
@@ -128,7 +127,7 @@ export default function Choisir() {
             scrollTrigger: {
               trigger: eyebrowRef.current,
               start: "top 80%",
-              end: "top 30%",
+              end: "top 45%",
               scrub: true,
             },
           },
@@ -160,7 +159,7 @@ export default function Choisir() {
           // Pre-hidden via inline style so there's no SSR flash before
           // GSAP's ScrollTrigger applies its own `from` state on init.
           style={{ opacity: 0 }}
-          className="text-creme text-lg md:text-xl font-semibold tracking-tight"
+          className="text-creme text-xl md:text-2xl font-semibold tracking-tight"
         >
           Découvrir les refuges Aquilon®
         </p>
@@ -190,21 +189,23 @@ export default function Choisir() {
         </div>
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16">
-          <p className="text-creme-terre/70 max-w-md text-lg md:text-2xl font-medium leading-relaxed">
-            On les a posés à des distances précises. Chacun ouvre sur quelque chose qu&apos;aucun autre ne voit.
+          <p className="text-creme-terre/70 max-w-4xl text-3xl md:text-5xl font-medium leading-relaxed">
+            Choisissez parmi nos trois refuges architecturaux. Chacun atteint les plus hauts standards et s&apos;ajuste à votre rythme. Prenez celui qui vous parle.
           </p>
 
           <div className="flex flex-col gap-8">
-            <p className="text-creme text-base md:text-lg font-semibold leading-snug max-w-md">
-              Trois refuges Aquilon<sup className="text-[0.65em]">®</sup> — mêmes principes,
-              <br />
-              trois solitudes :
+            <p className="text-creme text-xl md:text-2xl font-semibold tracking-tight leading-snug max-w-md">
+              Les refuges ont été construits selon les mêmes règles :
             </p>
             <ul className="flex flex-wrap gap-3" aria-label="Principes communs aux refuges">
-              {FEATURES.map((f) => (
+              {FEATURES.map((f, i) => (
                 <li
                   key={f}
-                  className="inline-flex items-center rounded-pill border border-gris-secondaire/50 text-creme-dim px-6 md:px-8 py-3 md:py-4 text-base md:text-lg"
+                  className={`inline-flex items-center rounded-pill border-[3px] px-7 md:px-10 py-4 md:py-5 text-lg md:text-xl ${
+                    i % 2 === 0
+                      ? "border-creme-terre/70 text-creme-terre"
+                      : "border-white/50 text-white"
+                  }`}
                 >
                   {f}
                 </li>
