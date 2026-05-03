@@ -323,18 +323,22 @@ function UniteCardContent({
   );
 
   // Reveal / hide driven by `play`. Re-runs on every flip during the
-  // pinned scrub. Durations + delays match the prior CSS transitions
-  // 1:1 — the engine changes, the visual doesn't. RevealChars (surnom +
-  // nom) is unaffected — it has its own internal play handling.
+  // pinned scrub. Reveal cascades in a tight stagger: description first
+  // (anchor of the eye), CTA row + "+" right after, capacity last —
+  // ~80ms between each. Subtle but reads as intentional. The "+" uses
+  // a punchier overshoot (back.out(2) vs the original 1.7) to give it
+  // its own moment in the cascade. RevealChars (surnom + nom) is
+  // unaffected — it has its own internal play handling.
   useGSAP(
     () => {
       if (play) {
         gsap.to(descRef.current, { opacity: 1, x: 0, duration: 0.9, delay: 0.1, ease: "power2.out" });
-        gsap.to(ctaRowRef.current, { opacity: 1, duration: 0.7, delay: 0.1, ease: "power2.out" });
-        // back.out(1.7) ≈ the prior cubic-bezier(0.34, 1.4, 0.64, 1) overshoot.
-        gsap.to(plusBtnWrapRef.current, { scale: 1, duration: 0.6, delay: 0.1, ease: "back.out(1.7)" });
-        gsap.to(capacityRef.current, { x: 0, duration: 0.9, delay: 0.1, ease: "power2.out" });
+        gsap.to(ctaRowRef.current, { opacity: 1, duration: 0.7, delay: 0.18, ease: "power2.out" });
+        gsap.to(plusBtnWrapRef.current, { scale: 1, duration: 0.95, delay: 0.22, ease: "elastic.out(0.7, 0.5)" });
+        gsap.to(capacityRef.current, { x: 0, duration: 0.9, delay: 0.26, ease: "power2.out" });
       } else {
+        // Exit collapses simultaneously — staggering the hide reads as
+        // sluggish. Match durations/eases to the entrance for symmetry.
         gsap.to(descRef.current, { opacity: 0, x: 40, duration: 0.9, ease: "power2.out" });
         gsap.to(ctaRowRef.current, { opacity: 0, duration: 0.7, ease: "power2.out" });
         gsap.to(plusBtnWrapRef.current, { scale: 0, duration: 0.6, ease: "power2.in" });
