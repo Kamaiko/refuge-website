@@ -1,14 +1,18 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 
 type Props = {
   text: string;
-  /** Pixels per second (constant — no scroll-driven acceleration). */
+  /** Pixels per second on viewports ≥ 768px (constant — no scroll-driven acceleration). */
   speed?: number;
+  /** Pixels per second on viewports < 768px. Defaults to `speed` when omitted.
+   *  Useful when the marquee uses a viewport-relative font size (`text-[24vw]`)
+   *  and looks proportionally faster on small screens. */
+  mobileSpeed?: number;
   className?: string;
   separator?: string;
   /** If true, scroll direction flips the marquee direction. */
@@ -22,12 +26,30 @@ type Props = {
 export default function Marquee({
   text,
   speed = 60,
+  mobileSpeed,
   className,
   separator = " — ",
   directional = false,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
+  // Live speed read by the ticker. Updated by the matchMedia effect below
+  // without restarting the ticker, so viewport changes don't reset position.
+  const speedRef = useRef(speed);
+
+  useEffect(() => {
+    if (mobileSpeed === undefined) {
+      speedRef.current = speed;
+      return;
+    }
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => {
+      speedRef.current = mq.matches ? mobileSpeed : speed;
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [speed, mobileSpeed]);
 
   useGSAP(
     () => {
@@ -48,7 +70,7 @@ export default function Marquee({
       const dirState = { value: 1 };
 
       const tickerFn = (_time: number, deltaTime: number) => {
-        x -= dirState.value * speed * (deltaTime / 1000);
+        x -= dirState.value * speedRef.current * (deltaTime / 1000);
         if (x <= -half) x += half;
         else if (x > 0) x -= half;
         gsap.set(t, { x });

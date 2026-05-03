@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
@@ -11,8 +11,10 @@ import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
 
-const PILL_H = 84; // px — outer cream pill height
-const CIRCLE_H = 74; // px — inner gris-tan circle height (tighter cream halo)
+const PILL_H_DESKTOP = 84; // px — outer cream pill height ≥ md
+const CIRCLE_H_DESKTOP = 74; // px — inner gris-tan circle height ≥ md
+const PILL_H_MOBILE = 60; // px — outer cream pill height < md
+const CIRCLE_H_MOBILE = 52; // px — inner gris-tan circle height < md
 const PILL_PR = 4; // px — cream margin past the inner circle on the right
 
 /**
@@ -37,9 +39,27 @@ export default function Header() {
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
+  // Track viewport bucket to pick the right pill / circle dimensions for the
+  // floating CTAs. Defaults to desktop for SSR consistency; the matchMedia
+  // effect below switches to mobile sizes after mount, then on viewport change.
+  const [pillH, setPillH] = useState(PILL_H_DESKTOP);
+  const [circleH, setCircleH] = useState(CIRCLE_H_DESKTOP);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => {
+      setPillH(mq.matches ? PILL_H_MOBILE : PILL_H_DESKTOP);
+      setCircleH(mq.matches ? CIRCLE_H_MOBILE : CIRCLE_H_DESKTOP);
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
   // Entrance: Reserve fades in at full size; Menu's cream pill grows around
   // the inner circle (height + paddingRight + label width all start at 0
-  // so the cream only appears once the pill expands).
+  // so the cream only appears once the pill expands). Re-runs when the
+  // breakpoint flips so the pill ends at the correct size on each viewport.
   useGSAP(() => {
     if (reserveRef.current) {
       gsap.fromTo(
@@ -50,34 +70,51 @@ export default function Header() {
     }
 
     if (menuBtnRef.current && labelAreaRef.current) {
-      // backgroundColor starts transparent so the cream pill doesn't leak a
-      // 1px subpixel halo around the gris-tan circle before the pill grows
-      // wider than the circle.
-      // xPercent:-50 instead of -translate-x-1/2 — GSAP's scale tween below
-      // clobbers transform-based centering.
+      // Initial state: pill at FINAL height + perfect circle (width=height=pillH),
+      // cream halo already painted, gris-tan circle centered inside via equal
+      // horizontal padding. Only the label area is hidden (width 0 + opacity 0).
+      // xPercent:-50 keeps the button centered on its own width — as the pill
+      // grows during the stretch tween, it expands symmetrically left+right.
+      const padInit = (pillH - circleH) / 2;
       gsap.set(menuBtnRef.current, {
         xPercent: -50,
-        height: CIRCLE_H,
+        height: pillH,
+        minWidth: pillH,
         opacity: 0,
-        scale: 0.6,
-        paddingRight: 0,
-        backgroundColor: "transparent",
+        scale: 1,
+        paddingLeft: padInit,
+        paddingRight: padInit,
+        backgroundColor: "var(--color-creme)",
       });
-      gsap.set(labelAreaRef.current, { width: 0 });
+      gsap.set(labelAreaRef.current, { width: 0, opacity: 0 });
       if (wheelRef.current) gsap.set(wheelRef.current, { yPercent: 0 });
 
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" } });
-      tl
-        .to(menuBtnRef.current, { opacity: 1, scale: 1, duration: 0.6, delay: 0.5 })
+      // 1) Snap appearance — quick fade so the assembled pill (cream halo +
+      //    gris-tan circle + hamburger) appears as one solid object.
+      // 2) Horizontal stretch — paddingLeft → 0 and labelArea width → auto,
+      //    so the cream pill extends to the left while the gris-tan circle
+      //    naturally slides right (label area opens between the pill's left
+      //    edge and the circle).
+      // 3) Label fades in AFTER the stretch settles.
+      const tl = gsap.timeline();
+      tl.to(menuBtnRef.current, {
+        opacity: 1,
+        duration: 0.25,
+        delay: 0.5,
+        ease: "power1.out",
+      })
         .to(menuBtnRef.current, {
-          height: PILL_H,
+          paddingLeft: 0,
           paddingRight: PILL_PR,
-          backgroundColor: "var(--color-creme)",
-          duration: 0.55,
-        }, "+=0.05")
-        .to(labelAreaRef.current, { width: "auto", duration: 0.85 }, "<");
+          duration: 0.7,
+          ease: "power2.out",
+        }, "+=0.1")
+        .to(labelAreaRef.current, { width: "auto", duration: 0.7, ease: "power2.out" }, "<")
+        // Fade the label in DURING the stretch (start ~60% in) so the two
+        // phases blend instead of reading as a discrete 2-step.
+        .to(labelAreaRef.current, { opacity: 1, duration: 0.35, ease: "power2.out" }, "-=0.3");
     }
-  });
+  }, { dependencies: [pillH, circleH] });
 
   // Menu↔Close iOS wheel. overwrite prevents tween queueing on rapid toggle.
   useGSAP(
@@ -153,12 +190,12 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between p-7 md:p-10 pointer-events-none">
+      <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between px-8 pt-10 md:p-10 pointer-events-none">
         <Link
           ref={brandRef}
           href="/"
           aria-label={SITE_CONFIG.name}
-          className="group pointer-events-auto relative inline-flex h-20 w-20 items-center justify-center mt-1 rounded-full will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="group pointer-events-auto relative inline-flex h-16 w-16 md:h-20 md:w-20 items-center justify-center mt-1 rounded-full will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <Image
             src="/aquilon-logo-transparent.svg"
@@ -175,17 +212,18 @@ export default function Header() {
           type="button"
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
-          style={{ height: PILL_H, paddingRight: PILL_PR }}
-          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 text-lg font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          style={{ height: pillH, paddingRight: PILL_PR }}
+          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
-          <span className="pl-7 pr-5 text-lg font-medium text-base-noir whitespace-nowrap">
+          <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-sm md:text-lg font-medium text-base-noir whitespace-nowrap">
             Réserver
           </span>
           <span
-            style={{ height: CIRCLE_H, width: CIRCLE_H }}
+            style={{ height: circleH, width: circleH }}
             className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
           >
-            <ArrowDiagonalIcon size={20} className="text-creme/85" />
+            <ArrowDiagonalIcon size={16} className="text-creme/85 md:hidden" />
+            <ArrowDiagonalIcon size={20} className="text-creme/85 hidden md:block" />
           </span>
         </button>
       </header>
@@ -205,30 +243,30 @@ export default function Header() {
         onClick={handleMenuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
-        className="menu-cta opacity-0 fixed bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+        className="menu-cta opacity-0 fixed bottom-12 md:bottom-12 left-1/2 z-[300] inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
       >
         {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}
         <span
           ref={labelAreaRef}
-          style={{ width: 0, height: CIRCLE_H }}
-          className="inline-flex items-start text-lg font-medium text-base-noir overflow-hidden will-change-[width]"
+          style={{ width: 0, height: circleH }}
+          className="inline-flex items-start text-sm md:text-lg font-medium text-base-noir overflow-hidden will-change-[width]"
         >
-          <span className="block pl-7 pr-5 whitespace-nowrap">
+          <span className="block pl-8 pr-5 md:pl-12 md:pr-8 whitespace-nowrap">
             <span ref={wheelRef} className="block will-change-transform">
-              <span style={{ height: CIRCLE_H }} className="flex items-center">Menu</span>
-              <span style={{ height: CIRCLE_H }} className="flex items-center">Close</span>
+              <span style={{ height: circleH }} className="flex items-center">Menu</span>
+              <span style={{ height: circleH }} className="flex items-center">Close</span>
             </span>
           </span>
         </span>
 
         <span
-          style={{ height: CIRCLE_H, width: CIRCLE_H }}
+          style={{ height: circleH, width: circleH }}
           className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
         >
-          <span className="flex flex-col gap-[5px]">
-            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
-            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
-            <span className="block h-[2px] w-7 bg-creme/85 rounded-full" />
+          <span className="flex flex-col gap-1 md:gap-[5px]">
+            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
+            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
+            <span className="block h-[2px] w-5 md:w-7 bg-creme/85 rounded-full" />
           </span>
         </span>
       </button>

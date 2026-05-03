@@ -89,7 +89,9 @@ export default function Hero() {
         </div>
 
         <div className="relative z-10 flex h-full flex-col justify-between p-5 md:p-10">
-          <div className="flex-1 flex items-start">
+          {/* pt-32 on mobile clears the fixed Réserver pill (~60px tall + 40px
+              header padding) so the wordmark doesn't slide under it. */}
+          <div className="flex-1 flex items-start pt-32 md:pt-0">
             <h1
               ref={wordmarkRef}
               className="text-creme font-semibold leading-[0.85] tracking-[-0.04em] text-[18vw] md:text-[15vw]"
@@ -98,17 +100,19 @@ export default function Hero() {
             </h1>
           </div>
 
-          <div className="flex flex-col gap-10 pb-12 md:flex-row md:items-end md:justify-between md:gap-16">
+          {/* pb-36 on mobile clears the floating Menu pill (60px + 48px gap)
+              so the subcopy doesn't sit underneath it. */}
+          <div className="flex flex-col gap-6 pb-36 md:flex-row md:items-end md:justify-between md:gap-16 md:pb-12">
             <p
               ref={taglineRef}
-              className="text-creme max-w-2xl text-4xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
+              className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
             >
               {SITE_CONFIG.heroTagline}
             </p>
 
             <p
               ref={subcopyRef}
-              className="text-creme max-w-md text-lg font-semibold leading-snug md:text-xl"
+              className="text-creme max-w-md text-base font-semibold leading-snug md:text-xl"
             >
               {SITE_CONFIG.heroSubcopy}
             </p>

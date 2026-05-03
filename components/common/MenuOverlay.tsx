@@ -19,9 +19,12 @@ const NAV = [
 /** Menu CTA pill footprint (matches Header.tsx). The box collapses back to
  *  this exact rect at the end of the close animation, anchoring the visual
  *  origin to the Menu button position. Keep in sync with Header constants. */
-const CTA_W = 160;
-const CTA_H = 84;
-const CTA_BOTTOM = 48;
+const CTA_W_DESKTOP = 160;
+const CTA_H_DESKTOP = 84;
+const CTA_BOTTOM_DESKTOP = 48;
+const CTA_W_MOBILE = 130;
+const CTA_H_MOBILE = 60;
+const CTA_BOTTOM_MOBILE = 48;
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;
 /** Border-radius at the fully-open state. The closed state uses 9999 (cap)
@@ -35,11 +38,15 @@ const RADIUS_CLOSED = 9999;
 function getClosedRect() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const isMobile = vw < 768;
+  const ctaW = isMobile ? CTA_W_MOBILE : CTA_W_DESKTOP;
+  const ctaH = isMobile ? CTA_H_MOBILE : CTA_H_DESKTOP;
+  const ctaBottom = isMobile ? CTA_BOTTOM_MOBILE : CTA_BOTTOM_DESKTOP;
   return {
-    top: vh - CTA_H - CTA_BOTTOM,
-    left: vw / 2 - CTA_W / 2,
-    right: vw / 2 - CTA_W / 2,
-    bottom: CTA_BOTTOM,
+    top: vh - ctaH - ctaBottom,
+    left: vw / 2 - ctaW / 2,
+    right: vw / 2 - ctaW / 2,
+    bottom: ctaBottom,
   };
 }
 
@@ -303,14 +310,14 @@ export default function MenuOverlay() {
         aria-hidden={!isOpen}
       >
         <div className="relative z-[2] flex h-full">
-          <div className="flex-1 md:basis-[75%] flex flex-col px-6 md:px-12 pt-32 md:pt-40 pb-10">
-            <ul ref={navRef} className="w-full space-y-1 md:space-y-2">
+          <div className="flex-1 md:basis-[75%] flex flex-col px-6 md:px-12 pt-24 md:pt-40 pb-32 md:pb-10">
+            <ul ref={navRef} className="w-full space-y-4 md:space-y-3">
               {NAV.map((item) => (
-                <li key={item.href} className="overflow-hidden">
+                <li key={item.href} className="overflow-hidden pb-1">
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block text-creme-terre/70 text-4xl md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight leading-[1.1] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
+                    className="block text-creme-terre/70 text-[3.75rem] leading-[1.15] md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight md:leading-[1.2] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
                   >
                     {item.label}
                   </a>
