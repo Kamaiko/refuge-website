@@ -10,14 +10,9 @@ import { useReservePanel } from "@/components/common/ReservePanelContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
-
-const PILL_H_DESKTOP = 84; // px — outer cream pill height ≥ md (768px)
-const CIRCLE_H_DESKTOP = 74; // px — inner gris-tan circle height ≥ md
-const PILL_H_MOBILE = 60; // px — outer cream pill height, 390–767px
-const CIRCLE_H_MOBILE = 52; // px — inner gris-tan circle height, 390–767px
-const PILL_H_TINY = 48; // px — outer cream pill height < 390px (iPhone SE etc.)
-const CIRCLE_H_TINY = 42; // px — inner gris-tan circle height < 390px
-const PILL_PR = 4; // px — cream margin past the inner circle on the right
+import { MQ } from "@/lib/breakpoints";
+import { CTA } from "@/lib/cta-dimensions";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /**
  * Persistent floating header. Renders three pinned UI surfaces:
@@ -41,36 +36,14 @@ export default function Header() {
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
 
-  // Track viewport bucket to pick the right pill / circle dimensions for the
-  // floating CTAs. Three tiers: tiny (< 390px, iPhone SE), mobile (< 768px),
-  // desktop (≥ 768px). Defaults to desktop for SSR consistency; the matchMedia
-  // effect below switches sizes after mount and on every viewport change.
-  const [pillH, setPillH] = useState(PILL_H_DESKTOP);
-  const [circleH, setCircleH] = useState(CIRCLE_H_DESKTOP);
-
-  useEffect(() => {
-    const tinyMq = window.matchMedia("(max-width: 389px)");
-    const mobileMq = window.matchMedia("(max-width: 767px)");
-    const apply = () => {
-      if (tinyMq.matches) {
-        setPillH(PILL_H_TINY);
-        setCircleH(CIRCLE_H_TINY);
-      } else if (mobileMq.matches) {
-        setPillH(PILL_H_MOBILE);
-        setCircleH(CIRCLE_H_MOBILE);
-      } else {
-        setPillH(PILL_H_DESKTOP);
-        setCircleH(CIRCLE_H_DESKTOP);
-      }
-    };
-    apply();
-    tinyMq.addEventListener("change", apply);
-    mobileMq.addEventListener("change", apply);
-    return () => {
-      tinyMq.removeEventListener("change", apply);
-      mobileMq.removeEventListener("change", apply);
-    };
-  }, []);
+  // Three viewport tiers via the shared `useMediaQuery` hook. SSR defaults
+  // to desktop (matchMedia returns `false`), then reconciles after mount.
+  // Dimensions come from {@link CTA} so MenuOverlay reads the same values
+  // for its collapse origin.
+  const isTiny = useMediaQuery(MQ.belowXs);
+  const isMobile = useMediaQuery(MQ.belowMd);
+  const pillH = isTiny ? CTA.pillH.tiny : isMobile ? CTA.pillH.mobile : CTA.pillH.desktop;
+  const circleH = isTiny ? CTA.circleH.tiny : isMobile ? CTA.circleH.mobile : CTA.circleH.desktop;
 
   // Entrance: Reserve fades in at full size; Menu's cream pill grows around
   // the inner circle (height + paddingRight + label width all start at 0
@@ -121,7 +94,7 @@ export default function Header() {
       })
         .to(menuBtnRef.current, {
           paddingLeft: 0,
-          paddingRight: PILL_PR,
+          paddingRight: CTA.pillPaddingRight,
           duration: 0.7,
           ease: "power2.out",
         }, "+=0.1")
@@ -260,7 +233,7 @@ export default function Header() {
           type="button"
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
-          style={{ height: pillH, paddingRight: PILL_PR }}
+          style={{ height: pillH, paddingRight: CTA.pillPaddingRight }}
           // Hover scale is driven via gsap.to in the useEffect below — GSAP
           // owns the inline `transform` after entrance + scroll-hide, so a
           // Tailwind `hover:scale` would lose to it (inline wins over CSS).

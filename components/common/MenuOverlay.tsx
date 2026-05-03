@@ -7,6 +7,8 @@ import { gsap } from "@/lib/gsap";
 import { useMenu } from "./MenuContext";
 import { PANEL } from "@/lib/motion";
 import { SITE_CONFIG } from "@/lib/constants";
+import { BP } from "@/lib/breakpoints";
+import { CTA } from "@/lib/cta-dimensions";
 import Marquee from "./Marquee";
 
 const NAV = [
@@ -17,15 +19,6 @@ const NAV = [
   { label: "Feedback", href: "#feedback" },
 ];
 
-/** Menu CTA pill footprint (matches Header.tsx). The box collapses back to
- *  this exact rect at the end of the close animation, anchoring the visual
- *  origin to the Menu button position. Keep in sync with Header constants. */
-const CTA_W_DESKTOP = 160;
-const CTA_H_DESKTOP = 84;
-const CTA_BOTTOM_DESKTOP = 48;
-const CTA_W_MOBILE = 130;
-const CTA_H_MOBILE = 60;
-const CTA_BOTTOM_MOBILE = 48;
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;
 /** Border-radius at the fully-open state. The closed state uses 9999 (cap)
@@ -33,16 +26,16 @@ const GAP = 12;
 const RADIUS_OPEN = 60;
 const RADIUS_CLOSED = 9999;
 
-/** Computes the closed box rect (Menu CTA pill position) using the current
- *  viewport size. Recomputed at every animation start and on resize so the
- *  pill always lands exactly under the floating Menu button. */
+/** Computes the closed box rect (Menu CTA pill footprint) from the current
+ *  viewport size. Reads dimensions from {@link CTA} so the collapse origin
+ *  always matches what `Header.tsx` actually renders — no manual sync. */
 function getClosedRect() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const isMobile = vw < 768;
-  const ctaW = isMobile ? CTA_W_MOBILE : CTA_W_DESKTOP;
-  const ctaH = isMobile ? CTA_H_MOBILE : CTA_H_DESKTOP;
-  const ctaBottom = isMobile ? CTA_BOTTOM_MOBILE : CTA_BOTTOM_DESKTOP;
+  const isMobile = vw < BP.md;
+  const ctaW = isMobile ? CTA.width.mobile : CTA.width.desktop;
+  const ctaH = isMobile ? CTA.pillH.mobile : CTA.pillH.desktop;
+  const ctaBottom = isMobile ? CTA.bottom.mobile : CTA.bottom.desktop;
   return {
     top: vh - ctaH - ctaBottom,
     left: vw / 2 - ctaW / 2,
@@ -321,7 +314,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block text-creme-terre/70 text-[2.5rem] min-[390px]:text-[3.25rem] leading-[1.15] md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight md:leading-[1.2] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
+                    className="block text-creme-terre/70 text-[2.5rem] xs:text-[3.25rem] leading-[1.15] md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight md:leading-[1.2] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
                   >
                     {item.label}
                   </a>

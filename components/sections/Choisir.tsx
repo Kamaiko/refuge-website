@@ -5,6 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { BgGradient } from "@/components/common/BgTransition";
 import { SITE_CONFIG } from "@/lib/constants";
+import { MQ } from "@/lib/breakpoints";
 
 const LINES = ["Choisissez celui", "qui vous convient"] as const;
 
@@ -14,7 +15,7 @@ const LINES = ["Choisissez celui", "qui vous convient"] as const;
 const FEATURES = [
   "Bois carbonisé",
   "Bain nordique",
-  "Éco-friendly",
+  "Éco-responsable",
   "Granit de Charlevoix",
   "Verre pleine hauteur",
   "Vue ouverte",
@@ -40,84 +41,103 @@ export default function Choisir() {
 
       const mm = gsap.matchMedia();
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Three scroll-driven effects, all sync-end at "top 15%":
-        //   1. Depth   — scale + opacity ramp over the full approach.
-        //   2. Parallax — y drift; title moves slower than page-scroll for a
-        //                 clearly different motion axis.
-        //   3. Curtain — per-line clip-path retraction, synced with parallax
-        //                so the rideau finishes when the title stops drifting.
-        //
-        // Mobile uses a softer parallax (-75 vs -200): the eyebrow sits much
-        // closer there and a deeper drift made the curtain's first reveal
-        // show letter slivers straddling the eyebrow row. The curtain's start
-        // % is then bumped to compensate — ScrollTrigger measures against the
-        // NATURAL top, so without the bump the visual reveal point would be
-        // offset upward by the in-flight parallax.
-        const isMobile = window.matchMedia("(max-width: 767px)").matches;
-        const parallaxY = isMobile ? -75 : -200;
-        const curtainStart = isMobile ? "top 88%" : "top 60%";
+      // Single matrix combining viewport bucket + reduced-motion. GSAP
+      // auto-reverts the tweens / kills the ScrollTriggers when the user
+      // resizes across `md` or toggles motion preferences — no manual
+      // teardown needed beyond `mm.revert()`.
+      mm.add(
+        {
+          isMobile: `(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`,
+          isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
+          reduceMotion: "(prefers-reduced-motion: reduce)",
+        },
+        (ctx) => {
+          const { isMobile, reduceMotion } = ctx.conditions as {
+            isMobile: boolean;
+            isDesktop: boolean;
+            reduceMotion: boolean;
+          };
 
-        lineRefs.current.forEach((line) => {
-          if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
-        });
+          // Reduced-motion path: instant reveal, no scroll-driven motion.
+          if (reduceMotion) {
+            lineRefs.current.forEach((line) => {
+              if (line) gsap.set(line, { clipPath: "inset(0% 0 0 0)", visibility: "visible" });
+            });
+            return;
+          }
 
-        gsap.fromTo(
-          titleWrapRef.current,
-          { scale: 0.94, opacity: 0.5 },
-          {
-            scale: 1,
-            opacity: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: titleWrapRef.current,
-              start: "top bottom",
-              end: "top 15%",
-              scrub: true,
-            },
-          },
-        );
+          // Three scroll-driven effects, all sync-end at "top 15%":
+          //   1. Depth   — scale + opacity ramp over the full approach.
+          //   2. Parallax — y drift; title moves slower than page-scroll
+          //                 for a clearly different motion axis.
+          //   3. Curtain — per-line clip-path retraction, synced with the
+          //                parallax so it finishes when the title stops
+          //                drifting.
+          //
+          // Mobile uses a softer parallax (-75 vs -200): the eyebrow sits
+          // much closer there, and a deeper drift made the curtain's first
+          // reveal show letter slivers straddling the eyebrow row. The
+          // curtain's start % is bumped to compensate — ScrollTrigger
+          // measures against the title's NATURAL top, so without the bump
+          // the visual reveal point would be offset upward by the in-flight
+          // parallax.
+          const parallaxY = isMobile ? -75 : -200;
+          const curtainStart = isMobile ? "top 88%" : "top 60%";
 
-        gsap.fromTo(
-          titleWrapRef.current,
-          { y: parallaxY },
-          {
-            y: 0,
-            ease: "none",
-            scrollTrigger: {
-              trigger: titleWrapRef.current,
-              start: "top 60%",
-              end: "top 15%",
-              scrub: true,
-            },
-          },
-        );
+          lineRefs.current.forEach((line) => {
+            if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
+          });
 
-        lineRefs.current.forEach((line) => {
-          if (!line) return;
           gsap.fromTo(
-            line,
-            { clipPath: "inset(100% 0 0 0)" },
+            titleWrapRef.current,
+            { scale: 0.94, opacity: 0.5 },
             {
-              clipPath: "inset(0% 0 0 0)",
-              ease: "none",
+              scale: 1,
+              opacity: 1,
+              ease: "power2.out",
               scrollTrigger: {
                 trigger: titleWrapRef.current,
-                start: curtainStart,
+                start: "top bottom",
                 end: "top 15%",
                 scrub: true,
               },
             },
           );
-        });
-      });
 
-      // Reduced-motion: instant reveal so the copy stays readable.
-      mm.add("(prefers-reduced-motion: reduce)", () => {
-        lineRefs.current.forEach((line) => {
-          if (line) gsap.set(line, { clipPath: "inset(0% 0 0 0)", visibility: "visible" });
-        });
-      });
+          gsap.fromTo(
+            titleWrapRef.current,
+            { y: parallaxY },
+            {
+              y: 0,
+              ease: "none",
+              scrollTrigger: {
+                trigger: titleWrapRef.current,
+                start: "top 60%",
+                end: "top 15%",
+                scrub: true,
+              },
+            },
+          );
+
+          lineRefs.current.forEach((line) => {
+            if (!line) return;
+            gsap.fromTo(
+              line,
+              { clipPath: "inset(100% 0 0 0)" },
+              {
+                clipPath: "inset(0% 0 0 0)",
+                ease: "none",
+                scrollTrigger: {
+                  trigger: titleWrapRef.current,
+                  start: curtainStart,
+                  end: "top 15%",
+                  scrub: true,
+                },
+              },
+            );
+          });
+        },
+      );
 
       return () => mm.revert();
     },
@@ -202,7 +222,7 @@ export default function Choisir() {
         </div>
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16">
-          <p className="text-creme-terre/70 max-w-4xl text-2xl min-[390px]:text-3xl md:text-5xl font-medium leading-relaxed">
+          <p className="text-creme-terre/70 max-w-4xl text-2xl xs:text-3xl md:text-5xl font-medium leading-relaxed">
             Choisissez parmi nos trois refuges architecturaux. Chacun atteint les plus hauts standards et s&apos;ajuste à votre rythme. Prenez celui qui vous parle.
           </p>
 

@@ -253,7 +253,7 @@ export default function ReservePanel() {
             type="button"
             onClick={close}
             aria-label="Fermer la réservation"
-            className="self-start inline-flex h-10 w-10 min-[390px]:h-12 min-[390px]:w-12 shrink-0 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan"
+            className="self-start inline-flex h-10 w-10 xs:h-12 xs:w-12 shrink-0 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
               <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

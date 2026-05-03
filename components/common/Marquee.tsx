@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
+import { MQ } from "@/lib/breakpoints";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 type Props = {
   text: string;
@@ -33,23 +35,15 @@ export default function Marquee({
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
-  // Live speed read by the ticker. Updated by the matchMedia effect below
-  // without restarting the ticker, so viewport changes don't reset position.
+  // Live speed read by the ticker. Synced from the `useMediaQuery` hook
+  // via the effect below — writing to a ref (instead of state) keeps the
+  // ticker running without a re-render or position reset on viewport flip.
   const speedRef = useRef(speed);
+  const isMobile = useMediaQuery(MQ.belowMd);
 
   useEffect(() => {
-    if (mobileSpeed === undefined) {
-      speedRef.current = speed;
-      return;
-    }
-    const mq = window.matchMedia("(max-width: 767px)");
-    const apply = () => {
-      speedRef.current = mq.matches ? mobileSpeed : speed;
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, [speed, mobileSpeed]);
+    speedRef.current = mobileSpeed !== undefined && isMobile ? mobileSpeed : speed;
+  }, [speed, mobileSpeed, isMobile]);
 
   useGSAP(
     () => {

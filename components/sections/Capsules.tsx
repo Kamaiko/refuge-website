@@ -7,6 +7,7 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { UNITES } from "@/lib/data/unites";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { SITE_CONFIG } from "@/lib/constants";
+import { MQ } from "@/lib/breakpoints";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
@@ -53,8 +54,8 @@ export default function Capsules() {
       // scroll is exhausting on touch and the cards are still readable.
       mm.add(
         {
-          isDesktop: "(prefers-reduced-motion: no-preference) and (min-width: 769px)",
-          isMobile: "(prefers-reduced-motion: no-preference) and (max-width: 768px)",
+          isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
+          isMobile: `(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`,
         },
         (ctx) => {
           const { isMobile } = ctx.conditions as { isDesktop: boolean; isMobile: boolean };
@@ -269,9 +270,9 @@ export default function Capsules() {
           its original 8vh from bottom. */}
       <div
         ref={loadingBarRef}
-        className="absolute z-40 pointer-events-none left-1/2 -translate-x-1/2 bottom-[120px] min-[390px]:left-auto min-[390px]:translate-x-0 min-[390px]:right-[8vw] md:bottom-[8vh]"
+        className="absolute z-40 pointer-events-none left-1/2 -translate-x-1/2 bottom-[120px] xs:left-auto xs:translate-x-0 xs:right-[8vw] md:bottom-[8vh]"
       >
-        <div className="h-[3px] w-[70vw] max-w-[28rem] min-[390px]:w-[28rem] rounded-full bg-creme/15 overflow-hidden">
+        <div className="h-[3px] w-[70vw] xs:w-[80vw] max-w-[28rem] rounded-full bg-creme/15 overflow-hidden">
           <div
             ref={loadingBarFillRef}
             className="h-full w-full bg-creme rounded-full will-change-transform"
@@ -312,7 +313,7 @@ function UniteCardContent({
       />
       <div className="max-w-3xl">
         <p
-          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug min-[390px]:text-lg min-[390px]:leading-relaxed md:text-xl transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
+          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-lg xs:leading-relaxed md:text-xl transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
           style={{
             opacity: play ? 1 : 0,
             transform: play ? "translateX(0)" : "translateX(40px)",
@@ -346,7 +347,7 @@ function UniteCardContent({
               transition: "transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1)",
               transitionDelay: play ? "0.1s" : "0s",
             }}
-            className="group relative inline-flex h-12 w-12 min-[390px]:h-14 min-[390px]:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+            className="group relative inline-flex h-12 w-12 xs:h-14 xs:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
           >
             <span
               aria-hidden
@@ -369,7 +370,7 @@ function UniteCardContent({
             </svg>
           </button>
           <div
-            className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] min-[390px]:text-xs whitespace-nowrap transition-transform duration-[900ms] ease-out will-change-transform"
+            className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] xs:text-xs whitespace-nowrap transition-transform duration-[900ms] ease-out will-change-transform"
             style={{
               transform: play ? "translateX(0)" : "translateX(40px)",
               transitionDelay: play ? "0.1s" : "0s",
