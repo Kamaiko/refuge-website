@@ -6,6 +6,9 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
 import BrandMark from "@/components/common/BrandMark";
 
+const TAGLINE = "Trois refuges\nau creux du fjord.";
+const SUBCOPY = `Passer du temps de qualité dans nos emplacements au Québec avec — ${SITE_CONFIG.brandMark}.`;
+
 /** Full-viewport hero. A muted looping video sits behind the brand
  *  wordmark, tagline and subcopy (all GSAP fade-up on mount). The video
  *  parallaxes (scale 1.1 → 1.0) on scroll via a scrubbed ScrollTrigger.
@@ -107,14 +110,14 @@ export default function Hero() {
               ref={taglineRef}
               className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
             >
-              {SITE_CONFIG.heroTagline}
+              {TAGLINE}
             </p>
 
             <p
               ref={subcopyRef}
               className="text-creme max-w-md text-base font-semibold leading-snug md:text-xl"
             >
-              {SITE_CONFIG.heroSubcopy}
+              {SUBCOPY}
             </p>
           </div>
         </div>
