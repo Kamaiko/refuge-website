@@ -45,7 +45,18 @@ export default function Choisir() {
         //   1. Depth   — scale + opacity ramp over the full approach.
         //   2. Parallax — y drift, ~1.7× slower than page-scroll (negative y
         //                 avoids overlapping the description below).
-        //   3. Curtain — per-line clip-path retraction (mask lifts upward).
+        //   3. Curtain — per-line clip-path retraction (mask lifts upward),
+        //                synchronised with the parallax so the rideau finishes
+        //                its reveal exactly when the title stops drifting.
+        //
+        // Parallax magnitude differs by viewport: desktop has the eyebrow
+        // gap to spare and uses the original deep drift (-200) for a clearly
+        // different motion axis. Mobile keeps a tighter value (-50) — the
+        // eyebrow sits closer to the title there and any bigger offset would
+        // make the curtain reveal letter slivers across the eyebrow row.
+        const isMobile = window.matchMedia("(max-width: 767px)").matches;
+        const parallaxY = isMobile ? -50 : -200;
+
         lineRefs.current.forEach((line) => {
           if (line) gsap.set(line, { clipPath: "inset(100% 0 0 0)", visibility: "visible" });
         });
@@ -68,7 +79,7 @@ export default function Choisir() {
 
         gsap.fromTo(
           titleWrapRef.current,
-          { y: -200 },
+          { y: parallaxY },
           {
             y: 0,
             ease: "none",
