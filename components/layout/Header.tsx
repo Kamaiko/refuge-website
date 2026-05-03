@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -154,12 +155,16 @@ export default function Header() {
         <Link
           href="/"
           aria-label={SITE_CONFIG.name}
-          className="group pointer-events-auto relative inline-flex h-9 w-9 items-center justify-center mt-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="group pointer-events-auto relative inline-flex h-20 w-20 items-center justify-center mt-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
-          <span className="absolute inset-0 rounded-full border border-creme/30 transition-colors group-hover:border-creme/80" />
-          <span className="relative text-creme font-semibold tracking-tight text-sm">
-            {SITE_CONFIG.brandMark}
-          </span>
+          <Image
+            src="/aquilon-logo-transparent.svg"
+            alt=""
+            width={80}
+            height={80}
+            priority
+            className="h-full w-full transition-opacity group-hover:opacity-80"
+          />
         </Link>
 
         <button

@@ -10,7 +10,7 @@ export default function MarqueeBrand() {
     >
       <Marquee
         text="Pourquoi Aquilon® ?"
-        speed={140}
+        speed={260}
         separator="·"
         directional
         className="text-creme/90 text-[24vw] md:text-[14vw] font-semibold leading-none tracking-[-0.04em]"

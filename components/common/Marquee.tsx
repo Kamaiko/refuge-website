@@ -37,11 +37,17 @@ export default function Marquee({
       const half = t.scrollWidth / 2;
       const duration = half / speed;
 
+      // `modifiers.x` wraps every frame's x value into [-half, 0], so the
+      // tween's internal time can grow without producing visual drift —
+      // long-idle sessions used to "hit a wall" once GSAP's accumulated
+      // _time hit floating-point precision limits.
+      const wrapX = gsap.utils.unitize(gsap.utils.wrap(-half, 0), "px");
       const tween = gsap.to(t, {
-        x: -half,
+        x: `-=${half}`,
         duration,
         ease: "none",
         repeat: -1,
+        modifiers: { x: wrapX },
       });
 
       if (!directional || !wrap.current) return;

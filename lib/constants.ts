@@ -2,7 +2,6 @@
  *  the site (header wordmark, hero copy, page metadata).
  *
  *  - `name`: full brand name (e.g. used by `<BrandMark>` and metadata).
- *  - `brandMark`: monogram for the small top-left logo pill.
  *  - `heroTagline`: poetic two-line tagline (`\n` is rendered as a line
  *    break via `whitespace-pre-line`).
  *  - `heroSubcopy`: short positioning line under the tagline.
@@ -11,8 +10,7 @@
  */
 export const SITE_CONFIG = {
   name: "Aquilon",
-  brandMark: "A",
-  heroTagline: "Trois silences\nau creux du fjord.",
+  heroTagline: "Trois refuges\nau creux du fjord.",
   heroSubcopy:
     "Passer du temps de qualité dans nos emplacements au Québec avec — Aquilon®.",
   locale: "fr-CA",

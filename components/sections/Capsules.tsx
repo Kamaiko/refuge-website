@@ -36,9 +36,9 @@ export default function Capsules() {
   const cardImageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const marqueeWrapRef = useRef<HTMLDivElement>(null);
   const loadingBarRef = useRef<HTMLDivElement>(null);
+  const loadingBarFillRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
   const [revealActive, setRevealActive] = useState<boolean[]>([false, false, false]);
-  const [progressPct, setProgressPct] = useState(0);
   const { open: openReservePanel } = useReservePanel();
 
   useGSAP(
@@ -74,6 +74,15 @@ export default function Capsules() {
 
           if (marqueeWrapRef.current) gsap.set(marqueeWrapRef.current, { opacity: 1 });
           if (loadingBarRef.current) gsap.set(loadingBarRef.current, { opacity: 0 });
+          if (loadingBarFillRef.current) {
+            gsap.set(loadingBarFillRef.current, { scaleX: 0, transformOrigin: "left center" });
+          }
+          // quickTo writes scaleX directly each frame — no React rerender on
+          // every scroll tick and no integer rounding, so the bar tracks the
+          // pinned scrub continuously.
+          const fillSetter = loadingBarFillRef.current
+            ? gsap.quickTo(loadingBarFillRef.current, "scaleX", { duration: 0.15, ease: "power2.out" })
+            : null;
 
           // Timeline layout — total duration 5.5 units (no-op tween at pos 4
           // extends past phase 3 so card 3 gets a 1.5-unit sticky hold).
@@ -111,7 +120,7 @@ export default function Capsules() {
                   return next;
                 });
 
-                setProgressPct(Math.round(p * 100));
+                fillSetter?.(p);
               },
             },
           });
@@ -259,8 +268,8 @@ export default function Capsules() {
       >
         <div className="h-[3px] w-[28rem] rounded-full bg-creme/15 overflow-hidden">
           <div
-            className="h-full bg-creme rounded-full transition-[width] duration-300"
-            style={{ width: `${progressPct}%`, transitionTimingFunction: "var(--ease-cinematic)" }}
+            ref={loadingBarFillRef}
+            className="h-full w-full bg-creme rounded-full will-change-transform"
           />
         </div>
       </div>
