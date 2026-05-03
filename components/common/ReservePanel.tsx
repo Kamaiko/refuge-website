@@ -239,18 +239,21 @@ export default function ReservePanel() {
         // interfering with GSAP's tween parsing on re-open.
         style={{ visibility: "hidden" }}
         // data-lenis-prevent: Lenis intercepts wheel/touch on the document,
-        // which on small mobile prevents the panel's native overflow-y-auto
-        // from receiving touch-scroll. This attribute opts the subtree out
-        // of Lenis's interception so the panel scrolls natively.
+        // which on small mobile prevents the inner overflow from receiving
+        // touch-scroll. This attribute opts the subtree out of Lenis's
+        // interception so the inner scroll container scrolls natively.
         data-lenis-prevent
-        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme overflow-y-auto rounded-[36px] shadow-2xl"
+        // Flex column layout: the form is the only scrollable region; the
+        // bottom action bar (absolute child) stays pinned to the panel's
+        // visible bottom because the aside itself no longer scrolls.
+        className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme rounded-[36px] shadow-2xl flex flex-col overflow-hidden"
       >
-        <div ref={contentRef} className="flex flex-col min-h-full p-8 md:p-10 pb-32">
+        <div ref={contentRef} className="flex-1 overflow-y-auto flex flex-col p-8 md:p-10 pb-32">
           <button
             type="button"
             onClick={close}
             aria-label="Fermer la réservation"
-            className="self-start inline-flex h-12 w-12 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan"
+            className="self-start inline-flex h-10 w-10 min-[390px]:h-12 min-[390px]:w-12 shrink-0 items-center justify-center rounded-full bg-base-noir text-creme transition-colors hover:bg-base-noir/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan"
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
               <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
