@@ -7,7 +7,7 @@ const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='h
  * oklab, ...)` because Tailwind v4's default OKLAB only resolves at build
  * time — var()-backed stops fall back to sRGB and band on dark colors.
  */
-export function BgGradient({
+export default function BgGradient({
   from,
   to,
   direction = "down",

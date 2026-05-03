@@ -376,7 +376,12 @@ export default function ReservePanel() {
               </span>
             </div>
             <button
-              type="submit"
+              // type="button" because this trigger lives outside the
+              // <form> element (which closed above) — the click handler
+              // looks the form up and fires `requestSubmit()` explicitly.
+              // `type="submit"` would be misleading: browsers can't auto-
+              // associate it with the form across the DOM gap.
+              type="button"
               onClick={(e) => {
                 const form = (e.currentTarget.closest("aside") as HTMLElement)?.querySelector("form");
                 if (form) (form as HTMLFormElement).requestSubmit();

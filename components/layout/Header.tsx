@@ -131,29 +131,37 @@ export default function Header() {
     let lastY = window.scrollY;
     let hidden = false;
 
+    // Pointer-events flip outside the GSAP tween: GSAP's TweenVars types
+    // `pointerEvents` as `number`, which is wrong, and the previous
+    // `as unknown as number` cast was lying to the compiler. Setting the
+    // CSS property directly on the targets is correct and type-safe.
+    const setPointerEvents = (value: "none" | "") => {
+      for (const el of targets) (el as HTMLElement).style.pointerEvents = value;
+    };
+
     const onScroll = () => {
       const y = Math.max(0, window.scrollY);
       const dy = y - lastY;
       if (Math.abs(dy) < SENSITIVITY) return;
       if (dy > 0 && y > HIDE_AT && !hidden) {
+        setPointerEvents("none");
         gsap.to(targets, {
           yPercent: -140,
           opacity: 0,
           duration: SCROLL_OUT.duration,
           delay: SCROLL_OUT.delay,
           ease: "expo.in",
-          pointerEvents: "none" as unknown as number,
           overwrite: true,
         });
         hidden = true;
       } else if (dy < 0 && hidden) {
+        setPointerEvents("");
         gsap.to(targets, {
           yPercent: 0,
           opacity: 1,
           duration: SCROLL_OUT.duration,
           delay: SCROLL_OUT.delay,
           ease: "expo.out",
-          pointerEvents: "auto" as unknown as number,
           overwrite: true,
         });
         hidden = false;

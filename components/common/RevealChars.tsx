@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
+import { cn } from "@/lib/utils";
 
 /** Configuration for {@link RevealChars}.
  *  - `text`: the string to reveal — used both for rendering and as
@@ -93,7 +94,7 @@ export default function RevealChars({
             {Array.from(seg.value).map((ch, ci) => (
               <span
                 key={`c-${si}-${ci}`}
-                className={`inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
+                className={cn("inline-block overflow-hidden align-baseline", charClassName)}
               >
                 <span className="rc-glyph inline-block">{ch}</span>
               </span>

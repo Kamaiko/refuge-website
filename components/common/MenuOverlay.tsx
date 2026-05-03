@@ -273,17 +273,17 @@ export default function MenuOverlay() {
     return () => window.removeEventListener("resize", onResize);
   }, [isOpen]);
 
+  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow).
+  // Duplicating it here previously caused a restore race where this cleanup
+  // and SmoothScroll's effect could both run, with the second-to-run winning
+  // arbitrarily.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
     window.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
   return (

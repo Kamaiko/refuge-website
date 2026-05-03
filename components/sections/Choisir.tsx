@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
-import { BgGradient } from "@/components/common/BgTransition";
+import BgGradient from "@/components/common/BgGradient";
 import { SITE_CONFIG } from "@/lib/constants";
 import { MQ } from "@/lib/breakpoints";
 
