@@ -35,22 +35,30 @@ export default function Marquee({
       if (!t) return;
 
       const half = t.scrollWidth / 2;
-      const duration = half / speed;
 
-      // `modifiers.x` wraps every frame's x value into [-half, 0], so the
-      // tween's internal time can grow without producing visual drift —
-      // long-idle sessions used to "hit a wall" once GSAP's accumulated
-      // _time hit floating-point precision limits.
-      const wrapX = gsap.utils.unitize(gsap.utils.wrap(-half, 0), "px");
-      const tween = gsap.to(t, {
-        x: `-=${half}`,
-        duration,
-        ease: "none",
-        repeat: -1,
-        modifiers: { x: wrapX },
-      });
+      // Manual ticker, not a `gsap.to(... repeat: -1)` tween. A repeating
+      // tween's totalTime bottoms out at 0 when reversed long enough —
+      // past that point GSAP stops updating and the marquee freezes at
+      // the start of a repeat. Here `x` is project-local state, wrapped
+      // into [-half, 0) every frame, so it can run forever in either
+      // direction with zero accumulated drift. Same per-frame cost as
+      // a tween (one math op + one transform write) — actually a touch
+      // cheaper, no tween bookkeeping.
+      let x = 0;
+      const dirState = { value: 1 };
 
-      if (!directional || !wrap.current) return;
+      const tickerFn = (_time: number, deltaTime: number) => {
+        x -= dirState.value * speed * (deltaTime / 1000);
+        if (x <= -half) x += half;
+        else if (x > 0) x -= half;
+        gsap.set(t, { x });
+      };
+
+      gsap.ticker.add(tickerFn);
+
+      if (!directional || !wrap.current) {
+        return () => gsap.ticker.remove(tickerFn);
+      }
 
       let currentDir = 1;
       const st = ScrollTrigger.create({
@@ -60,8 +68,8 @@ export default function Marquee({
         onUpdate: (self) => {
           if (self.direction !== currentDir) {
             currentDir = self.direction;
-            gsap.to(tween, {
-              timeScale: currentDir,
+            gsap.to(dirState, {
+              value: currentDir,
               duration: 0.6,
               ease: "power2.out",
               overwrite: true,
@@ -72,7 +80,7 @@ export default function Marquee({
 
       return () => {
         st.kill();
-        tween.kill();
+        gsap.ticker.remove(tickerFn);
       };
     },
     { scope: wrap, dependencies: [directional] },

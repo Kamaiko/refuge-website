@@ -136,7 +136,7 @@ export default function Capsules() {
           if (marqueeWrapRef.current) {
             // power2.out front-loads the fade so the wordmark dims BEFORE the
             // growing card masks it. Linear hid the change behind the card.
-            tl.to(marqueeWrapRef.current, { opacity: 0.06, duration: 1, ease: "power2.out" }, PHASE_STARTS[0]);
+            tl.to(marqueeWrapRef.current, { opacity: 0, duration: 1, ease: "power2.out" }, PHASE_STARTS[0]);
           }
 
           tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[1])
