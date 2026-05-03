@@ -1,7 +1,7 @@
 import CurtainReveal from "@/components/common/CurtainReveal";
 
 const MANIFESTE =
-  "Charlevoix garde encore quelque chose de pur. Aquilon s’y pose sans bruit — trois refuges où ralentir devient une évidence.";
+  "Charlevoix garde encore quelque chose de pur. Aquilon® s’y pose sans bruit — trois refuges où ralentir devient une évidence.";
 
 /** Single-quote manifesto block. Uses {@link CurtainReveal} for a
  *  scroll-scrubbed sharp-edged wipe between a darker filter copy and

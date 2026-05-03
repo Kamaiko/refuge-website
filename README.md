@@ -8,7 +8,7 @@
 
 <br>
 
-![Aquilon hero](docs/hero.png)
+![Aquilon hero](docs/hero-aquilon.png)
 
 <br>
 

@@ -13,7 +13,7 @@ export default function Feedback() {
         mode="words"
         stagger={0.04}
         duration={0.9}
-        className="text-creme text-base md:text-lg font-semibold tracking-tight"
+        className="text-creme text-lg md:text-xl font-semibold tracking-tight"
       >
         Et eux, qu&apos;en pensent-ils ?
       </RevealText>
@@ -29,7 +29,7 @@ export default function Feedback() {
           duration={1.2}
           className="text-creme text-3xl md:text-5xl lg:text-[4.4vw] font-light leading-[0.98] tracking-[-0.02em] max-w-[75vw]"
         >
-          {"Un séjour à Aquilon au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau silencieux."}
+          {"Un séjour à Aquilon® au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau silencieux."}
         </RevealText>
       </div>
 

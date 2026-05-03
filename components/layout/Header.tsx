@@ -32,6 +32,7 @@ export default function Header() {
   const { toggle: menuToggle, isOpen: menuIsOpen } = useMenu();
   const { open: openReservePanel, close: closeReservePanel, isOpen: reserveIsOpen } = useReservePanel();
   const reserveRef = useRef<HTMLButtonElement>(null);
+  const brandRef = useRef<HTMLAnchorElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const labelAreaRef = useRef<HTMLSpanElement>(null);
   const wheelRef = useRef<HTMLSpanElement>(null);
@@ -92,11 +93,14 @@ export default function Header() {
     { dependencies: [menuIsOpen] },
   );
 
-  // Reserve scroll-out: hide on scroll-down (after a soft delay), show on
-  // scroll-up. Pure scroll-direction logic, not tied to any section.
+  // Top-bar scroll-out: brand logo (left) + Reserve CTA (right) hide on
+  // scroll-down (after a soft delay) and slide back on scroll-up. They
+  // animate together so the top edge reads as a single navbar.
   useEffect(() => {
-    const btn = reserveRef.current;
-    if (!btn) return;
+    const targets = [brandRef.current, reserveRef.current].filter(
+      (el): el is HTMLAnchorElement | HTMLButtonElement => el !== null,
+    );
+    if (!targets.length) return;
     const HIDE_AT = 80;
     const SENSITIVITY = 4;
     let lastY = window.scrollY;
@@ -107,7 +111,7 @@ export default function Header() {
       const dy = y - lastY;
       if (Math.abs(dy) < SENSITIVITY) return;
       if (dy > 0 && y > HIDE_AT && !hidden) {
-        gsap.to(btn, {
+        gsap.to(targets, {
           yPercent: -140,
           opacity: 0,
           duration: SCROLL_OUT.duration,
@@ -118,7 +122,7 @@ export default function Header() {
         });
         hidden = true;
       } else if (dy < 0 && hidden) {
-        gsap.to(btn, {
+        gsap.to(targets, {
           yPercent: 0,
           opacity: 1,
           duration: SCROLL_OUT.duration,
@@ -153,9 +157,10 @@ export default function Header() {
     <>
       <header className="fixed top-0 left-0 right-0 z-[100] flex items-start justify-between p-7 md:p-10 pointer-events-none">
         <Link
+          ref={brandRef}
           href="/"
           aria-label={SITE_CONFIG.name}
-          className="group pointer-events-auto relative inline-flex h-20 w-20 items-center justify-center mt-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="group pointer-events-auto relative inline-flex h-20 w-20 items-center justify-center mt-1 rounded-full will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <Image
             src="/aquilon-logo-transparent.svg"
