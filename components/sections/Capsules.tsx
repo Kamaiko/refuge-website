@@ -10,7 +10,6 @@ import { SITE_CONFIG } from "@/lib/constants";
 import { CAPSULES } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
-import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 
 /**
  * Pinned scroll-scrub slideshow for the three refuges. The section pins for
@@ -262,12 +261,17 @@ export default function Capsules() {
         </div>
       </div>
 
+      {/* On mobile the bar sits ~120px from the bottom so it clears the
+          floating Menu pill (bottom-12 + 60px height = 108px). On < 390px
+          it's also centered horizontally with a 70vw width to avoid
+          overflowing the viewport. From 390px up it returns to the
+          original right-anchored layout, and at md+ moves back down to
+          its original 8vh from bottom. */}
       <div
         ref={loadingBarRef}
-        className="absolute z-40 pointer-events-none"
-        style={{ bottom: "8vh", right: "8vw" }}
+        className="absolute z-40 pointer-events-none left-1/2 -translate-x-1/2 bottom-[120px] min-[390px]:left-auto min-[390px]:translate-x-0 min-[390px]:right-[8vw] md:bottom-[8vh]"
       >
-        <div className="h-[3px] w-[28rem] rounded-full bg-creme/15 overflow-hidden">
+        <div className="h-[3px] w-[70vw] max-w-[28rem] min-[390px]:w-[28rem] rounded-full bg-creme/15 overflow-hidden">
           <div
             ref={loadingBarFillRef}
             className="h-full w-full bg-creme rounded-full will-change-transform"
@@ -288,7 +292,7 @@ function UniteCardContent({
   onReserve: () => void;
 }) {
   return (
-    <div className="relative z-10 flex h-full flex-col justify-end p-8 md:p-14">
+    <div className="relative z-10 flex h-full flex-col justify-end p-8 pb-36 md:p-14">
       <div className="max-w-3xl">
         <RevealChars
           text={unite.surnom}
@@ -308,7 +312,7 @@ function UniteCardContent({
       />
       <div className="max-w-3xl">
         <p
-          className="block text-creme-dim mt-6 max-w-xl text-lg md:text-xl leading-relaxed transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
+          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug min-[390px]:text-lg min-[390px]:leading-relaxed md:text-xl transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
           style={{
             opacity: play ? 1 : 0,
             transform: play ? "translateX(0)" : "translateX(40px)",
@@ -319,27 +323,58 @@ function UniteCardContent({
         </p>
 
         <div
-          className="mt-8 flex flex-wrap items-center gap-6 transition-opacity duration-700 ease-out"
+          className="mt-8 flex flex-nowrap items-center gap-4 md:gap-6 transition-opacity duration-700 ease-out"
           style={{
             opacity: play ? 1 : 0,
-            transitionDelay: play ? "0.6s" : "0s",
+            transitionDelay: play ? "0.1s" : "0s",
           }}
         >
-          {/* tabIndex={-1}: visual flourish CTAs are skipped by Tab. The
-              same reservation flow is reachable via the Header "Réserver"
-              CTA, which opens the panel with refuge selection. Avoids
-              keyboard users having to scroll through the pinned scrub
-              just to focus a duplicate button. Mouse + AT activation work. */}
+          {/* Compact "+" CTA replacing the old pill — visually distinct from
+              the Header's cream Réserver pill. tabIndex={-1}: Tab skips this
+              flourish; the Header CTA is the keyboard path.
+              Entrance: scales from 0 → 1 (origin center) when `play` flips,
+              with a slight back-eased overshoot.
+              Hover: a cream disc grows from center over the gris-tan base,
+              and the "+" glyph crossfades to base-noir. */}
           <button
             type="button"
             onClick={onReserve}
             tabIndex={-1}
-            className="inline-flex items-center gap-3 rounded-pill bg-creme px-6 py-3 text-sm font-medium text-base-noir transition-opacity hover:opacity-90"
+            aria-label={`Réserver ${unite.nom}`}
+            style={{
+              transform: play ? "scale(1)" : "scale(0)",
+              transition: "transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1)",
+              transitionDelay: play ? "0.1s" : "0s",
+            }}
+            className="group relative inline-flex h-12 w-12 min-[390px]:h-14 min-[390px]:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
           >
-            Réserver {unite.nom}
-            <ArrowDiagonalIcon />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-creme scale-0 group-hover:scale-100 transition-transform duration-500 ease-out origin-center"
+            />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 18 18"
+              fill="none"
+              aria-hidden
+              className="relative z-10 text-base-noir/85 group-hover:rotate-[135deg] transition-transform duration-500 ease-out"
+            >
+              <path
+                d="M9 2v14M2 9h14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
-          <div className="flex items-center gap-6 text-creme-dim text-xs">
+          <div
+            className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] min-[390px]:text-xs whitespace-nowrap transition-transform duration-[900ms] ease-out will-change-transform"
+            style={{
+              transform: play ? "translateX(0)" : "translateX(40px)",
+              transitionDelay: play ? "0.1s" : "0s",
+            }}
+          >
             <span>{unite.capacite}</span>
             <span className="opacity-40">·</span>
             <span>{unite.surface}</span>

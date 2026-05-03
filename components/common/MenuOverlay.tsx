@@ -321,7 +321,7 @@ export default function MenuOverlay() {
                   <a
                     href={item.href}
                     onClick={close}
-                    className="block text-creme-terre/70 text-[3.25rem] leading-[1.15] md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight md:leading-[1.2] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
+                    className="block text-creme-terre/70 text-[2.5rem] min-[390px]:text-[3.25rem] leading-[1.15] md:text-5xl lg:text-[5.5vw] font-semibold tracking-tight md:leading-[1.2] hover:text-creme transition-colors duration-500 ease-out focus-visible:outline-none focus-visible:text-creme rounded-sm"
                   >
                     {item.label}
                   </a>

@@ -11,10 +11,12 @@ import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { SITE_CONFIG } from "@/lib/constants";
 import { SCROLL_OUT } from "@/lib/motion";
 
-const PILL_H_DESKTOP = 84; // px — outer cream pill height ≥ md
+const PILL_H_DESKTOP = 84; // px — outer cream pill height ≥ md (768px)
 const CIRCLE_H_DESKTOP = 74; // px — inner gris-tan circle height ≥ md
-const PILL_H_MOBILE = 60; // px — outer cream pill height < md
-const CIRCLE_H_MOBILE = 52; // px — inner gris-tan circle height < md
+const PILL_H_MOBILE = 60; // px — outer cream pill height, 390–767px
+const CIRCLE_H_MOBILE = 52; // px — inner gris-tan circle height, 390–767px
+const PILL_H_TINY = 48; // px — outer cream pill height < 390px (iPhone SE etc.)
+const CIRCLE_H_TINY = 42; // px — inner gris-tan circle height < 390px
 const PILL_PR = 4; // px — cream margin past the inner circle on the right
 
 /**
@@ -40,20 +42,34 @@ export default function Header() {
   const wheelRef = useRef<HTMLSpanElement>(null);
 
   // Track viewport bucket to pick the right pill / circle dimensions for the
-  // floating CTAs. Defaults to desktop for SSR consistency; the matchMedia
-  // effect below switches to mobile sizes after mount, then on viewport change.
+  // floating CTAs. Three tiers: tiny (< 390px, iPhone SE), mobile (< 768px),
+  // desktop (≥ 768px). Defaults to desktop for SSR consistency; the matchMedia
+  // effect below switches sizes after mount and on every viewport change.
   const [pillH, setPillH] = useState(PILL_H_DESKTOP);
   const [circleH, setCircleH] = useState(CIRCLE_H_DESKTOP);
 
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
+    const tinyMq = window.matchMedia("(max-width: 389px)");
+    const mobileMq = window.matchMedia("(max-width: 767px)");
     const apply = () => {
-      setPillH(mq.matches ? PILL_H_MOBILE : PILL_H_DESKTOP);
-      setCircleH(mq.matches ? CIRCLE_H_MOBILE : CIRCLE_H_DESKTOP);
+      if (tinyMq.matches) {
+        setPillH(PILL_H_TINY);
+        setCircleH(CIRCLE_H_TINY);
+      } else if (mobileMq.matches) {
+        setPillH(PILL_H_MOBILE);
+        setCircleH(CIRCLE_H_MOBILE);
+      } else {
+        setPillH(PILL_H_DESKTOP);
+        setCircleH(CIRCLE_H_DESKTOP);
+      }
     };
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+    tinyMq.addEventListener("change", apply);
+    mobileMq.addEventListener("change", apply);
+    return () => {
+      tinyMq.removeEventListener("change", apply);
+      mobileMq.removeEventListener("change", apply);
+    };
   }, []);
 
   // Entrance: Reserve fades in at full size; Menu's cream pill grows around
@@ -175,6 +191,31 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Subtle hover scale on the floating CTAs. Both buttons keep an inline
+  // transform written by GSAP (Menu: permanent xPercent:-50 for centering;
+  // Reserve: y from entrance + scroll-hide), so a Tailwind `hover:scale`
+  // would lose to that inline declaration. Driving the scale through
+  // gsap.to lets it merge cleanly with the existing transform stack.
+  useEffect(() => {
+    const targets = [menuBtnRef.current, reserveRef.current].filter(
+      (el): el is HTMLButtonElement => el !== null,
+    );
+    if (!targets.length) return;
+    const cleanups = targets.map((btn) => {
+      const enter = () =>
+        gsap.to(btn, { scale: 1.04, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+      const leave = () =>
+        gsap.to(btn, { scale: 1, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+      btn.addEventListener("mouseenter", enter);
+      btn.addEventListener("mouseleave", leave);
+      return () => {
+        btn.removeEventListener("mouseenter", enter);
+        btn.removeEventListener("mouseleave", leave);
+      };
+    });
+    return () => cleanups.forEach((fn) => fn());
+  }, []);
+
   // Mutual-exclusion is now handled by stacking order, not state coupling:
   // - Reserve open → Menu CTA z-index drops below the Reserve backdrop and
   //   is set pointer-events:none, so it's visually masked by the blur and
@@ -220,7 +261,10 @@ export default function Header() {
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
           style={{ height: pillH, paddingRight: PILL_PR }}
-          className="reserve-cta opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          // Hover scale is driven via gsap.to in the useEffect below — GSAP
+          // owns the inline `transform` after entrance + scroll-hide, so a
+          // Tailwind `hover:scale` would lose to it (inline wins over CSS).
+          className="reserve-cta group opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme/95 font-medium text-base-noir transition-colors hover:bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-sm md:text-lg font-medium text-base-noir whitespace-nowrap">
             Réserver
@@ -254,7 +298,7 @@ export default function Header() {
         // and its backdrop (z-[200]). When Reserve is open, drop to z-[150]
         // so the backdrop covers the Menu (visible through the blur but
         // not clickable). Pointer-events disabled in the same condition.
-        className={`menu-cta opacity-0 fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
+        className={`menu-cta group opacity-0 fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
           reserveMaskActive ? "z-[150] pointer-events-none" : "z-[300]"
         }`}
       >
