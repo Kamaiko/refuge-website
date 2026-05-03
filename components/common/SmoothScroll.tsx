@@ -84,21 +84,47 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   // from sequential focus navigation and pointer events — combined with
   // the panel's overlay rendering siblings to <main>, this creates a
   // proper focus trap without a JS focus-cycling library.
+  //
+  // Body lock uses the position:fixed pattern (not just overflow:hidden):
+  // it bulletproofs against iOS Safari rubber-band, prevents scroll
+  // chaining from inside the panel back to the page, and cooperates with
+  // Lenis's wheel handling. Scroll position is captured before the lock
+  // and restored after, so the user lands back exactly where they were.
+  const lockedScrollYRef = useRef(0);
   useEffect(() => {
     const anyOpen = menuIsOpen || reserveIsOpen;
     const lenis = lenisRef.current;
     const main = document.querySelector("main");
     if (anyOpen) {
+      lockedScrollYRef.current = window.scrollY;
       lenis?.stop();
-      document.body.style.overflow = "hidden";
+      const body = document.body;
+      body.style.position = "fixed";
+      body.style.top = `-${lockedScrollYRef.current}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+      body.style.overflow = "hidden";
       main?.setAttribute("inert", "");
     } else {
+      const body = document.body;
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.overflow = "";
+      window.scrollTo(0, lockedScrollYRef.current);
       lenis?.start();
-      document.body.style.overflow = "";
       main?.removeAttribute("inert");
     }
+    // Safety net: if SmoothScroll unmounts while a lock is active, restore
+    // body styles so the page isn't left frozen.
     return () => {
-      document.body.style.overflow = "";
+      const body = document.body;
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.overflow = "";
       main?.removeAttribute("inert");
     };
   }, [menuIsOpen, reserveIsOpen]);

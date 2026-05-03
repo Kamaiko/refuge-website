@@ -259,7 +259,7 @@ export default function ReservePanel() {
         // visible bottom because the aside itself no longer scrolls.
         className="fixed top-4 right-4 bottom-4 z-[210] w-[calc(100%-2rem)] md:w-[640px] bg-gris-tan text-creme rounded-[36px] shadow-2xl flex flex-col overflow-hidden"
       >
-        <div ref={contentRef} className="flex-1 overflow-y-auto flex flex-col p-8 md:p-10 pb-32">
+        <div ref={contentRef} className="flex-1 overflow-y-auto overscroll-contain flex flex-col p-8 md:p-10 pb-32">
           <button
             ref={closeBtnRef}
             type="button"
