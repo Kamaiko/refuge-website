@@ -75,9 +75,9 @@ export default function Marquee({
       // near 3× even during very fast scrolls (no whoosh).
       let boost = 1;
       let lastY = window.scrollY;
-      const BOOST_MAX = 3.5; // total cap = 1 + 3.5 = 4.5×
+      const BOOST_MAX = 2.8; // total cap = 1 + 2.8 = 3.8×
       const VEL_HALF = 500; // px/s where extra-boost reaches half-cap
-      const LERP = 0.15; // per-frame ease toward target
+      const LERP = 0.22; // per-frame ease toward target — snappier decay
 
       // quickSetter bypasses GSAP's property parser — significantly faster
       // than `gsap.set(t, { x })` for a per-frame transform write.
