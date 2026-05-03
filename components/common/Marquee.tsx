@@ -9,7 +9,8 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 type Props = {
   text: string;
-  /** Pixels per second on viewports ≥ 768px (constant — no scroll-driven acceleration). */
+  /** Pixels per second on viewports ≥ 768px. Constant baseline — see
+   *  `scrollBoost` for scroll-driven acceleration on top of this. */
   speed?: number;
   /** Pixels per second on viewports < 768px. Defaults to `speed` when omitted.
    *  Useful when the marquee uses a viewport-relative font size (`text-[24vw]`)
@@ -19,6 +20,10 @@ type Props = {
   separator?: string;
   /** If true, scroll direction flips the marquee direction. */
   directional?: boolean;
+  /** If true, scroll velocity adds a subtle boost on top of `speed` —
+   *  base speed when idle, asymptotically peaks near 3× during fast
+   *  scrolling. Boost decays smoothly back to 1 when the scroll stops. */
+  scrollBoost?: boolean;
 };
 
 /** Infinite horizontal marquee. Duplicates `text` enough times to fill the
@@ -32,6 +37,7 @@ export default function Marquee({
   className,
   separator = " — ",
   directional = false,
+  scrollBoost = false,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
@@ -63,8 +69,28 @@ export default function Marquee({
       let x = 0;
       const dirState = { value: 1 };
 
+      // Scroll-boost state. `boost` is a multiplier on the base speed,
+      // anchored at 1 (idle = base speed) and easing toward a target
+      // derived from current scroll velocity. Saturating curve caps it
+      // near 3× even during very fast scrolls (no whoosh).
+      let boost = 1;
+      let lastY = window.scrollY;
+      const BOOST_MAX = 3.5; // total cap = 1 + 3.5 = 4.5×
+      const VEL_HALF = 500; // px/s where extra-boost reaches half-cap
+      const LERP = 0.15; // per-frame ease toward target
+
       const tickerFn = (_time: number, deltaTime: number) => {
-        x -= dirState.value * speedRef.current * (deltaTime / 1000);
+        const dt = deltaTime / 1000;
+        if (scrollBoost) {
+          const y = window.scrollY;
+          const scrollVel = dt > 0 ? Math.abs(y - lastY) / dt : 0;
+          lastY = y;
+          // x / (x + half) maps [0, ∞) → [0, 1) — saturating, smooth, no
+          // discontinuity. Multiplied by BOOST_MAX gives the additive boost.
+          const target = 1 + (scrollVel / (scrollVel + VEL_HALF)) * BOOST_MAX;
+          boost += (target - boost) * LERP;
+        }
+        x -= dirState.value * speedRef.current * boost * dt;
         if (x <= -half) x += half;
         else if (x > 0) x -= half;
         gsap.set(t, { x });
@@ -84,9 +110,13 @@ export default function Marquee({
         onUpdate: (self) => {
           if (self.direction !== currentDir) {
             currentDir = self.direction;
+            // 0.35s is short enough to feel responsive to a scroll flick
+            // but still smooths the +/- velocity crossing — without an
+            // ease, the ribbon would snap from +N to -N in a single frame
+            // and look broken.
             gsap.to(dirState, {
               value: currentDir,
-              duration: 0.6,
+              duration: 0.35,
               ease: "power2.out",
               overwrite: true,
             });
@@ -99,7 +129,7 @@ export default function Marquee({
         gsap.ticker.remove(tickerFn);
       };
     },
-    { scope: wrap, dependencies: [directional] },
+    { scope: wrap, dependencies: [directional, scrollBoost] },
   );
 
   return (

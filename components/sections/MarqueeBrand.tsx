@@ -15,6 +15,7 @@ export default function MarqueeBrand() {
         mobileSpeed={80}
         separator="·"
         directional
+        scrollBoost
         className="text-creme/90 text-[24vw] md:text-[14vw] font-semibold leading-none tracking-[-0.04em]"
       />
     </section>
