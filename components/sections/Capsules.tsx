@@ -303,8 +303,49 @@ function UniteCardContent({
   play: boolean;
   onReserve: () => void;
 }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const ctaRowRef = useRef<HTMLDivElement>(null);
+  const plusBtnWrapRef = useRef<HTMLSpanElement>(null);
+  const capacityRef = useRef<HTMLDivElement>(null);
+
+  // Initial state — set once before first paint so the elements start
+  // hidden (matches the pre-migration CSS where opacity defaulted to 0
+  // via the inline `style` driven by `play=false`).
+  useGSAP(
+    () => {
+      gsap.set(descRef.current, { opacity: 0, x: 40 });
+      gsap.set(ctaRowRef.current, { opacity: 0 });
+      gsap.set(plusBtnWrapRef.current, { scale: 0 });
+      gsap.set(capacityRef.current, { x: 40 });
+    },
+    { scope: cardRef },
+  );
+
+  // Reveal / hide driven by `play`. Re-runs on every flip during the
+  // pinned scrub. Durations + delays match the prior CSS transitions
+  // 1:1 — the engine changes, the visual doesn't. RevealChars (surnom +
+  // nom) is unaffected — it has its own internal play handling.
+  useGSAP(
+    () => {
+      if (play) {
+        gsap.to(descRef.current, { opacity: 1, x: 0, duration: 0.9, delay: 0.1, ease: "power2.out" });
+        gsap.to(ctaRowRef.current, { opacity: 1, duration: 0.7, delay: 0.1, ease: "power2.out" });
+        // back.out(1.7) ≈ the prior cubic-bezier(0.34, 1.4, 0.64, 1) overshoot.
+        gsap.to(plusBtnWrapRef.current, { scale: 1, duration: 0.6, delay: 0.1, ease: "back.out(1.7)" });
+        gsap.to(capacityRef.current, { x: 0, duration: 0.9, delay: 0.1, ease: "power2.out" });
+      } else {
+        gsap.to(descRef.current, { opacity: 0, x: 40, duration: 0.9, ease: "power2.out" });
+        gsap.to(ctaRowRef.current, { opacity: 0, duration: 0.7, ease: "power2.out" });
+        gsap.to(plusBtnWrapRef.current, { scale: 0, duration: 0.6, ease: "power2.in" });
+        gsap.to(capacityRef.current, { x: 40, duration: 0.9, ease: "power2.out" });
+      }
+    },
+    { scope: cardRef, dependencies: [play] },
+  );
+
   return (
-    <div className="relative z-10 flex h-full flex-col justify-end p-8 pb-36 md:p-14">
+    <div ref={cardRef} className="relative z-10 flex h-full flex-col justify-end p-8 pb-36 md:p-14">
       <div className="max-w-3xl">
         <RevealChars
           text={unite.surnom}
@@ -324,41 +365,27 @@ function UniteCardContent({
       />
       <div className="max-w-3xl">
         <p
-          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-lg xs:leading-relaxed md:text-xl transition-[opacity,transform] duration-[900ms] ease-out will-change-transform"
-          style={{
-            opacity: play ? 1 : 0,
-            transform: play ? "translateX(0)" : "translateX(40px)",
-            transitionDelay: play ? "0.1s" : "0s",
-          }}
+          ref={descRef}
+          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-lg xs:leading-relaxed md:text-xl will-change-transform"
         >
           {unite.description}
         </p>
 
         <div
-          className="mt-8 flex flex-nowrap items-center gap-4 md:gap-6 transition-opacity duration-700 ease-out"
-          style={{
-            opacity: play ? 1 : 0,
-            transitionDelay: play ? "0.1s" : "0s",
-          }}
+          ref={ctaRowRef}
+          className="mt-8 flex flex-nowrap items-center gap-4 md:gap-6"
         >
-          {/* Compact "+" CTA replacing the old pill — visually distinct from
-              the Header's cream Réserver pill. tabIndex={-1}: Tab skips this
-              flourish; the Header CTA is the keyboard path.
-              Entrance: scales from 0 → 1 (origin center) when `play` flips,
-              with a slight back-eased overshoot.
-              Hover: a cream disc grows from center over the gris-tan base,
-              and the "+" glyph crossfades to base-noir. */}
-          {/* Wrapper owns the entrance scale (0 → 1 on `play`) so the button
-              itself is free to drive an independent hover scale via Tailwind
-              without inline transforms colliding. */}
-          <span
-            className="inline-block"
-            style={{
-              transform: play ? "scale(1)" : "scale(0)",
-              transition: "transform 600ms cubic-bezier(0.34, 1.4, 0.64, 1)",
-              transitionDelay: play ? "0.1s" : "0s",
-            }}
-          >
+          {/* Compact "+" CTA. tabIndex={-1}: Tab skips this flourish; the
+              Header Réserver CTA is the keyboard path.
+              Entrance: scales 0 → 1 from center via the GSAP useEffect
+              above (back.out overshoot).
+              Hover (Tailwind, independent of `play`): a cream disc grows
+              from center over the gris-tan base, the "+" glyph rotates
+              135° (lands as ×), and the whole button scales 1 → 1.1.
+              Wrapper carries the entrance scale so the button itself is
+              free to drive the hover scale without inline transforms
+              colliding (GSAP owns the wrapper's transform). */}
+          <span ref={plusBtnWrapRef} className="inline-block">
             <button
               type="button"
               onClick={onReserve}
@@ -388,11 +415,8 @@ function UniteCardContent({
             </button>
           </span>
           <div
-            className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] xs:text-xs whitespace-nowrap transition-transform duration-[900ms] ease-out will-change-transform"
-            style={{
-              transform: play ? "translateX(0)" : "translateX(40px)",
-              transitionDelay: play ? "0.1s" : "0s",
-            }}
+            ref={capacityRef}
+            className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] xs:text-xs whitespace-nowrap will-change-transform"
           >
             <span>{unite.capacite}</span>
             <span className="opacity-40">·</span>
