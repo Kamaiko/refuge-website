@@ -79,6 +79,10 @@ export default function Marquee({
       const VEL_HALF = 500; // px/s where extra-boost reaches half-cap
       const LERP = 0.15; // per-frame ease toward target
 
+      // quickSetter bypasses GSAP's property parser — significantly faster
+      // than `gsap.set(t, { x })` for a per-frame transform write.
+      const setX = gsap.quickSetter(t, "x", "px") as (value: number) => void;
+
       const tickerFn = (_time: number, deltaTime: number) => {
         const dt = deltaTime / 1000;
         if (scrollBoost) {
@@ -93,7 +97,7 @@ export default function Marquee({
         x -= dirState.value * speedRef.current * boost * dt;
         if (x <= -half) x += half;
         else if (x > 0) x -= half;
-        gsap.set(t, { x });
+        setX(x);
       };
 
       gsap.ticker.add(tickerFn);

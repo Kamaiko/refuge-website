@@ -16,10 +16,34 @@ const hostGrotesk = Host_Grotesk({
   display: "swap",
 });
 
+const SITE_TITLE = `${SITE_CONFIG.name} — Refuges Charlevoix`;
+const SITE_DESCRIPTION =
+  "Trois refuges contemporains posés dans la forêt boréale de Charlevoix, ouverts sur le Saint-Laurent.";
+
 export const metadata: Metadata = {
-  title: `${SITE_CONFIG.name} — Refuges Charlevoix`,
-  description:
-    "Trois refuges contemporains posés dans la forêt boréale de Charlevoix, ouverts sur le Saint-Laurent.",
+  // Resolves relative URLs (OG images etc.) to absolute. Set
+  // NEXT_PUBLIC_SITE_URL in the deployment env to the production URL —
+  // dev falls back to localhost so social-sharing previews work locally.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001"),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: "website",
+    locale: "fr_CA",
+    siteName: SITE_CONFIG.name,
+    // Hero AVIF as the placeholder OG image. Swap for a 1200×630 PNG/JPG
+    // when the final brand asset lands — AVIF is supported by LinkedIn /
+    // Slack / iMessage but Twitter/X falls back to a generic preview.
+    images: [{ url: "/images/hero-shape.avif", width: 1920, height: 1080, alt: SITE_TITLE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/images/hero-shape.avif"],
+  },
 };
 
 export default function RootLayout({

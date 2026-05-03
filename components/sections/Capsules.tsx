@@ -39,6 +39,10 @@ export default function Capsules() {
   const loadingBarRef = useRef<HTMLDivElement>(null);
   const loadingBarFillRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
+  // Mirrors `activeIdx` for the scroll-tick guard — `onUpdate` fires every
+  // frame during the pinned scrub, but React state reads inside the
+  // callback would be stale. The ref reflects the latest committed value.
+  const activeIdxRef = useRef(0);
   const [revealActive, setRevealActive] = useState<boolean[]>([false, false, false]);
   const { open: openReservePanel } = useReservePanel();
 
@@ -103,7 +107,14 @@ export default function Capsules() {
               onUpdate: (self) => {
                 const p = self.progress;
                 const idx = p < 0.36 ? 0 : p < 0.64 ? 1 : 2;
-                setActiveIdx(idx);
+                // Guard against same-value setState — onUpdate fires every
+                // scroll frame during the pinned scrub. Without this, React
+                // is notified on each tick even when the active card hasn't
+                // changed (the bands cover ~30% of progress each).
+                if (idx !== activeIdxRef.current) {
+                  activeIdxRef.current = idx;
+                  setActiveIdx(idx);
+                }
 
                 const dir = self.direction;
                 setRevealActive((prev) => {
