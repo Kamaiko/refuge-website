@@ -5,6 +5,7 @@ import Medaillons from "@/components/sections/Medaillons";
 import Choisir from "@/components/sections/Choisir";
 import Capsules from "@/components/sections/Capsules";
 import MarqueeBrand from "@/components/sections/MarqueeBrand";
+import Vivre from "@/components/sections/Vivre";
 import Feedback from "@/components/sections/Feedback";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
         <Choisir />
         <Capsules />
         <MarqueeBrand />
+        <Vivre />
         <Feedback />
       </main>
     </>

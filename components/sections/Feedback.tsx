@@ -7,7 +7,7 @@ export default function Feedback() {
   return (
     <section
       id="feedback"
-      className="relative w-full px-8 md:px-16 py-32 md:py-48 min-h-[100svh] flex flex-col"
+      className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-32 md:pb-48 min-h-[100svh] flex flex-col"
     >
       {/* Eyebrow — top-left */}
       <RevealText
