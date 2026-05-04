@@ -10,7 +10,10 @@ import { cn } from "@/lib/utils";
  *  - `play`: imperative trigger. Flip from false → true to slide the
  *    glyphs in; true → false plays a faster reverse-out.
  *  - `charClassName`: applied to each per-glyph mask span if you need
- *    extra alignment / leading control. */
+ *    extra alignment / leading control.
+ *  - `stagger`: per-character delay in seconds. Default 0 (all glyphs
+ *    move together). Useful at small font sizes where the per-glyph
+ *    sweep would otherwise pass too fast to read. */
 type Props = {
   text: string;
   play: boolean;
@@ -18,6 +21,7 @@ type Props = {
   charClassName?: string;
   duration?: number;
   delay?: number;
+  stagger?: number;
 };
 
 /**
@@ -37,17 +41,22 @@ export default function RevealChars({
   charClassName,
   duration = 0.9,
   delay = 0,
+  stagger = 0,
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
   // Sync GSAP's transform cache with the SSR offscreen state and reveal the
   // wrapper. Without this, the first play tween reads xPercent=0 (default)
   // and snaps the glyphs visible for a frame before tweening.
+  // xPercent: 110 (not 100) buffers ~10% past the mask edge — at xPercent:100
+  // the glyph's left edge sits exactly on the mask's right edge, where
+  // sub-pixel antialiasing can leak 1px back into the mask and read as a
+  // faint vertical bar before the reveal plays.
   useEffect(() => {
     if (!ref.current) return;
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
-    gsap.set(glyphs, { xPercent: 100 });
+    gsap.set(glyphs, { xPercent: 110 });
     gsap.set(ref.current, { visibility: "visible" });
   }, []);
 
@@ -56,13 +65,14 @@ export default function RevealChars({
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
     gsap.to(glyphs, {
-      xPercent: play ? 0 : 100,
+      xPercent: play ? 0 : 110,
       duration: play ? duration : duration * 0.5,
       delay: play ? delay : 0,
+      stagger: play ? stagger : stagger * 0.5,
       ease: play ? "quint.out" : "quint.in",
       overwrite: true,
     });
-  }, [play, duration, delay, text]);
+  }, [play, duration, delay, stagger, text]);
 
   const segments: { type: "word" | "space"; value: string }[] = [];
   const re = /(\S+|\s+)/g;

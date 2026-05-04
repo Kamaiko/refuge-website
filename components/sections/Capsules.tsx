@@ -354,7 +354,8 @@ function UniteCardContent({
         <RevealChars
           text={unite.surnom}
           play={play}
-          duration={0.7}
+          duration={1.0}
+          stagger={0.025}
           className="block text-creme-dim text-xs uppercase tracking-[0.3em] mb-4"
         />
       </div>
