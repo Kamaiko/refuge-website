@@ -101,19 +101,12 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   // proper focus trap without a JS focus-cycling library.
   //
   // Lock strategy: `overflow: hidden` on <html> + <body>, plus
-  // `lenis.stop()` to halt Lenis's virtual scroll. Crucially this leaves
-  // `window.scrollY` UNCHANGED, so:
-  //   - ScrollTrigger doesn't see a synthetic scroll-to-zero and doesn't
-  //     rewind any pinned-and-scrubbed timeline (Capsules would otherwise
-  //     paint solid noir while the panel is open and "rapidly catch up"
-  //     through the cards on close).
-  //   - Header's scroll listener doesn't observe a 0 → savedY delta on
-  //     close (which previously fired a hide animation, sliding the
-  //     header up out of view).
-  // The previous `position: fixed` strategy collapsed scrollY to 0 to
-  // visually pin the page, which is robust against iOS rubber-band but
-  // produced both bugs above. `overflow: hidden` + `touch-action: none`
-  // on <html> handles iOS rubber-band without the side effects.
+  // `lenis.stop()` to halt Lenis's virtual scroll, plus `touch-action:
+  // none` on <html> for iOS Safari rubber-band. `window.scrollY` stays
+  // unchanged — pinned-and-scrubbed timelines (e.g. Capsules) don't
+  // rewind, and Header's scroll listener doesn't fire on a synthetic
+  // delta. `touch-action` does NOT inherit, so panel children keep
+  // their default and remain touch-scrollable.
   useEffect(() => {
     const anyOpen = menuIsOpen || reserveIsOpen;
     const lenis = lenisRef.current;
@@ -125,9 +118,6 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       lenis?.stop();
       html.style.overflow = "hidden";
       body.style.overflow = "hidden";
-      // iOS Safari rubber-band guard. `touch-action` does NOT inherit,
-      // so the scrollable panel children keep their own default and
-      // remain touch-scrollable.
       html.style.touchAction = "none";
       main?.setAttribute("inert", "");
     } else {

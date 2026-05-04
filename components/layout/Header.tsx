@@ -15,6 +15,16 @@ import { MQ } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
+/** Minimum scroll delta (px) before the bar's hide/show flips state.
+ *  Filters out micro-scroll noise from trackpads and momentum tails. */
+const SENSITIVITY = 4;
+
+/** Lower-bound for the "hero zone" — below this scrollY the bar stays
+ *  pinned visible. 60% of the viewport height matches the hero (which
+ *  is `100svh`) without needing a ref into the hero element itself.
+ *  Floor at 80px so the rule still holds on tiny viewports. */
+const getHideAt = () => Math.max(80, window.innerHeight * 0.6);
+
 /**
  * Persistent floating header. Renders three pinned UI surfaces:
  * - Top-left: brand monogram link back to the home page.
@@ -131,12 +141,6 @@ export default function Header() {
   //      snaps it back to the scroll-implied state on close. The
   //      ReservePanel does NOT touch the bar — it visually covers it,
   //      so closing the panel reveals exactly what was there before.
-  const SENSITIVITY = 4;
-  /** Lower-bound for the "hero zone" — below this scrollY the bar stays
-   *  pinned visible. 60% of the viewport height matches the hero (which
-   *  is `100svh`) without needing a ref into the hero element itself.
-   *  Floor at 80px so the rule still holds on tiny viewports. */
-  const getHideAt = () => Math.max(80, window.innerHeight * 0.6);
   const hiddenRef = useRef(false);
 
   // GSAP types `pointerEvents` as number, which is wrong. Set the CSS
@@ -220,28 +224,21 @@ export default function Header() {
   }, []);
 
   // (b) Menu-driven override — snap on open, snap to scroll-implied
-  // state on close. Only Menu, never ReservePanel.
-  // Skip the very first mount so the entrance animation runs untouched.
-  const initialMountRef = useRef(true);
+  // state on close. Only Menu, never ReservePanel. The first mount is
+  // a no-op naturally: prevMenuOpenRef starts false, menuIsOpen starts
+  // false, so both branches are skipped and the entrance animation runs
+  // untouched.
   const prevMenuOpenRef = useRef(false);
   useEffect(() => {
     const menuJustClosed = prevMenuOpenRef.current && !menuIsOpen;
     prevMenuOpenRef.current = menuIsOpen;
 
-    if (initialMountRef.current) {
-      initialMountRef.current = false;
-      return;
-    }
-
     if (menuIsOpen) {
-      // Force hidden, no animation — the menu covers the bar anyway, and
-      // any animation here would be the slide-up artifact on close.
       animateHidden(false);
       return;
     }
 
     if (menuJustClosed) {
-      // Snap to the state implied by current scrollY — no slide-in.
       if (window.scrollY > getHideAt()) animateHidden(false);
       else animateVisible(false, false);
     }
@@ -286,10 +283,8 @@ export default function Header() {
   const [reserveMaskActive, setReserveMaskActive] = useState(false);
   useEffect(() => {
     if (reserveIsOpen) {
-      // Sync to time, not to a derivable value: the rule is right to flag
-      // synchronous setState in effects in general, but this case syncs
-      // UI to the panel's open / close transition timing (an external
-      // animation clock), which is exactly the "external system" exception.
+      // External-system sync (panel animation clock); setState in effect
+      // is intentional — not derivable from props alone.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setReserveMaskActive(true);
       return;

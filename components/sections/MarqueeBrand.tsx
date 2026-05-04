@@ -3,19 +3,20 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
+import { MQ } from "@/lib/breakpoints";
 import Marquee from "@/components/common/Marquee";
 import { SITE_CONFIG } from "@/lib/constants";
 
 /** Decorative banner between Capsules and Feedback: a giant directional
  *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish.
  *
- *  Scroll-driven Y parallax: the ribbon translates down faster than the
- *  end of its scroll range so that, by the time Capsules has taken over
- *  the upper viewport, the ribbon's text is already pushed below the
- *  section's `overflow-hidden` clip — fully out of view rather than
- *  peeking at the boundary. The reduced top padding lets the text start
- *  higher in the section so the parallax travel doesn't make it bleed
- *  into Capsules' painted area too early. Skipped under reduced-motion. */
+ *  Scroll-driven Y parallax (desktop only): the ribbon translates down
+ *  so that, by the time Capsules has taken over the upper viewport, the
+ *  ribbon's text is pushed below the section's `overflow-hidden` clip.
+ *  On mobile the section is too short for any travel to fit — `pt-16 +
+ *  text-[24vw]` lands around ~160 px, which means even a 100 px parallax
+ *  drives the text fully out of frame. Skipped on mobile and under
+ *  reduced-motion; the text stays put and remains visible. */
 const PARALLAX_Y = 360;
 
 export default function MarqueeBrand() {
@@ -24,7 +25,7 @@ export default function MarqueeBrand() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`, () => {
         if (!sectionRef.current) return;
         gsap.fromTo(
           sectionRef.current,
