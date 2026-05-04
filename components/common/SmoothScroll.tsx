@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { SECTION_LOCK_EVENT, type SectionLockDetail } from "@/lib/section-lock";
 import { useMenu } from "./MenuContext";
 import { useReservePanel } from "./ReservePanelContext";
 
@@ -72,21 +73,21 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     document.addEventListener("focusin", onFocusIn);
 
     // Section-level Lenis lock: any section that needs to fully control
-    // scroll input (e.g. Vivre's wheel-hijack carousel) dispatches a
-    // `section-lock` CustomEvent with `{ lock: boolean }`. We stop/start
-    // Lenis here so the section's wheel handler can fully take over —
-    // otherwise Lenis's smooth-scroll tween would carry the user past
-    // the section faster than the wheel listener can intercept.
+    // scroll input (e.g. Vivre's wheel-hijack carousel) dispatches the
+    // SECTION_LOCK_EVENT. We stop/start Lenis here so the section's wheel
+    // handler can fully take over — otherwise Lenis's smooth-scroll tween
+    // would carry the user past the section faster than the wheel
+    // listener can intercept. See `lib/section-lock.ts` for the contract.
     const onSectionLock = (e: Event) => {
-      const detail = (e as CustomEvent<{ lock?: boolean }>).detail;
+      const detail = (e as CustomEvent<SectionLockDetail>).detail;
       if (detail?.lock) lenis.stop();
       else lenis.start();
     };
-    window.addEventListener("section-lock", onSectionLock);
+    window.addEventListener(SECTION_LOCK_EVENT, onSectionLock);
 
     return () => {
       document.removeEventListener("focusin", onFocusIn);
-      window.removeEventListener("section-lock", onSectionLock);
+      window.removeEventListener(SECTION_LOCK_EVENT, onSectionLock);
       gsap.ticker.remove(tickerHandler);
       lenis.destroy();
       lenisRef.current = null;
