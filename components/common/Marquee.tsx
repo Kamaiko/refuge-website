@@ -75,7 +75,7 @@ export default function Marquee({
       // near 3× even during very fast scrolls (no whoosh).
       let boost = 1;
       let lastY = window.scrollY;
-      const BOOST_MAX = 2.8; // total cap = 1 + 2.8 = 3.8×
+      const BOOST_MAX = 2.2; // total cap = 1 + 2.2 = 3.2×
       const VEL_HALF = 500; // px/s where extra-boost reaches half-cap
       const LERP = 0.22; // per-frame ease toward target — snappier decay
 
@@ -109,7 +109,14 @@ export default function Marquee({
       let currentDir = 1;
       const st = ScrollTrigger.create({
         trigger: wrap.current,
-        start: "top bottom",
+        // Deadzone: while the ribbon's top sits in the bottom 30% of the
+        // viewport, the directional onUpdate doesn't fire — the ribbon
+        // keeps its current direction even if the user wiggles the
+        // scroll. Once the top crosses 70%, scroll-direction flips
+        // resume. Reversible: scrolling back into the deadzone disables
+        // flipping again (ScrollTrigger marks the trigger inactive
+        // outside [start, end] and stops invoking onUpdate).
+        start: "top 70%",
         end: "bottom top",
         onUpdate: (self) => {
           if (self.direction !== currentDir) {
