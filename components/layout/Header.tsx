@@ -120,58 +120,133 @@ export default function Header() {
     { dependencies: [menuIsOpen] },
   );
 
-  // Top-bar scroll-out: brand logo (left) + Reserve CTA (right) hide on
-  // scroll-down (after a soft delay) and slide back on scroll-up. They
-  // animate together so the top edge reads as a single navbar.
-  useEffect(() => {
-    const targets = [brandRef.current, reserveRef.current].filter((el) => el !== null);
+  // Top-bar visibility — brand + Reserve animate together as one navbar.
+  //
+  //  (a) Position + scroll-driven: while still inside the hero zone the
+  //      bar is **pinned visible no matter the scroll direction**, so a
+  //      tiny accidental wheel-up doesn't toggle it on/off. Past that
+  //      zone, scroll direction takes over: hide on down, show on up.
+  //
+  //  (b) Menu-driven snap: the Menu forces the bar hidden on open and
+  //      snaps it back to the scroll-implied state on close. The
+  //      ReservePanel does NOT touch the bar — it visually covers it,
+  //      so closing the panel reveals exactly what was there before.
+  const SENSITIVITY = 4;
+  /** Lower-bound for the "hero zone" — below this scrollY the bar stays
+   *  pinned visible. 60% of the viewport height matches the hero (which
+   *  is `100svh`) without needing a ref into the hero element itself.
+   *  Floor at 80px so the rule still holds on tiny viewports. */
+  const getHideAt = () => Math.max(80, window.innerHeight * 0.6);
+  const hiddenRef = useRef(false);
+
+  // GSAP types `pointerEvents` as number, which is wrong. Set the CSS
+  // property directly on the targets — type-safe and outside the tween.
+  const collectTargets = () =>
+    [brandRef.current, reserveRef.current].filter(
+      (el): el is NonNullable<typeof el> => el !== null,
+    );
+  const setPointerEvents = (
+    targets: ReturnType<typeof collectTargets>,
+    value: "none" | "",
+  ) => {
+    for (const el of targets) el.style.pointerEvents = value;
+  };
+
+  const animateHidden = (animate: boolean) => {
+    const targets = collectTargets();
     if (!targets.length) return;
-    const HIDE_AT = 80;
-    const SENSITIVITY = 4;
+    setPointerEvents(targets, "none");
+    gsap.to(targets, {
+      yPercent: -140,
+      opacity: 0,
+      duration: animate ? SCROLL_OUT.duration : 0,
+      delay: animate ? SCROLL_OUT.delay : 0,
+      ease: "expo.in",
+      overwrite: true,
+    });
+    hiddenRef.current = true;
+  };
+
+  const animateVisible = (animate: boolean, withScrollDelay = false) => {
+    const targets = collectTargets();
+    if (!targets.length) return;
+    setPointerEvents(targets, "");
+    gsap.to(targets, {
+      yPercent: 0,
+      opacity: 1,
+      duration: animate ? SCROLL_OUT.duration : 0,
+      // Anti-jitter delay only matters for the scroll-driven flip; the
+      // hero-zone re-pin and the menu-close snap should feel instant.
+      delay: animate && withScrollDelay ? SCROLL_OUT.delay : 0,
+      ease: "expo.out",
+      overwrite: true,
+    });
+    hiddenRef.current = false;
+  };
+
+  // (a) Scroll-driven hide/show. The lock that SmoothScroll applies for
+  // overlays uses `overflow: hidden` (no scrollY change), so this listener
+  // can stay attached for the component's lifetime — no synthetic events
+  // fire while an overlay is open.
+  useEffect(() => {
     let lastY = window.scrollY;
-    let hidden = false;
-
-    // Pointer-events flip outside the GSAP tween: GSAP's TweenVars types
-    // `pointerEvents` as `number`, which is wrong, and the previous
-    // `as unknown as number` cast was lying to the compiler. Setting the
-    // CSS property directly on the targets is correct and type-safe.
-    const setPointerEvents = (value: "none" | "") => {
-      for (const el of targets) (el as HTMLElement).style.pointerEvents = value;
-    };
-
     const onScroll = () => {
       const y = Math.max(0, window.scrollY);
+      const hideAt = getHideAt();
+
+      // In hero zone: pin visible, ignore direction. Skipping the dy
+      // check means a small wobble while reading the hero won't toggle
+      // the bar's state at all.
+      if (y < hideAt) {
+        if (hiddenRef.current) animateVisible(true, false);
+        lastY = y;
+        return;
+      }
+
       const dy = y - lastY;
       if (Math.abs(dy) < SENSITIVITY) return;
-      if (dy > 0 && y > HIDE_AT && !hidden) {
-        setPointerEvents("none");
-        gsap.to(targets, {
-          yPercent: -140,
-          opacity: 0,
-          duration: SCROLL_OUT.duration,
-          delay: SCROLL_OUT.delay,
-          ease: "expo.in",
-          overwrite: true,
-        });
-        hidden = true;
-      } else if (dy < 0 && hidden) {
-        setPointerEvents("");
-        gsap.to(targets, {
-          yPercent: 0,
-          opacity: 1,
-          duration: SCROLL_OUT.duration,
-          delay: SCROLL_OUT.delay,
-          ease: "expo.out",
-          overwrite: true,
-        });
-        hidden = false;
+      if (dy > 0 && !hiddenRef.current) {
+        animateHidden(true);
+      } else if (dy < 0 && hiddenRef.current) {
+        animateVisible(true, true);
       }
       lastY = y;
     };
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+    // animateHidden / animateVisible are stable wrappers around refs +
+    // GSAP — re-binding the listener every render would be wasteful.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // (b) Menu-driven override — snap on open, snap to scroll-implied
+  // state on close. Only Menu, never ReservePanel.
+  // Skip the very first mount so the entrance animation runs untouched.
+  const initialMountRef = useRef(true);
+  const prevMenuOpenRef = useRef(false);
+  useEffect(() => {
+    const menuJustClosed = prevMenuOpenRef.current && !menuIsOpen;
+    prevMenuOpenRef.current = menuIsOpen;
+
+    if (initialMountRef.current) {
+      initialMountRef.current = false;
+      return;
+    }
+
+    if (menuIsOpen) {
+      // Force hidden, no animation — the menu covers the bar anyway, and
+      // any animation here would be the slide-up artifact on close.
+      animateHidden(false);
+      return;
+    }
+
+    if (menuJustClosed) {
+      // Snap to the state implied by current scrollY — no slide-in.
+      if (window.scrollY > getHideAt()) animateHidden(false);
+      else animateVisible(false, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuIsOpen]);
 
   // Subtle hover scale on the floating CTAs. Both buttons keep an inline
   // transform written by GSAP (Menu: permanent xPercent:-50 for centering;
@@ -211,6 +286,11 @@ export default function Header() {
   const [reserveMaskActive, setReserveMaskActive] = useState(false);
   useEffect(() => {
     if (reserveIsOpen) {
+      // Sync to time, not to a derivable value: the rule is right to flag
+      // synchronous setState in effects in general, but this case syncs
+      // UI to the panel's open / close transition timing (an external
+      // animation clock), which is exactly the "external system" exception.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReserveMaskActive(true);
       return;
     }

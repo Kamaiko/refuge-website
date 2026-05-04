@@ -9,10 +9,15 @@ import { SITE_CONFIG } from "@/lib/constants";
 /** Decorative banner between Capsules and Feedback: a giant directional
  *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish.
  *
- *  Scroll-driven Y parallax (±150px over the section's full visible range)
- *  makes the ribbon read as if it lives on a different axis from the page
- *  beneath it — the ribbon drifts down ~20% slower than the page-scroll
- *  rate. Skipped under prefers-reduced-motion. */
+ *  Scroll-driven Y parallax: the ribbon translates down faster than the
+ *  end of its scroll range so that, by the time Capsules has taken over
+ *  the upper viewport, the ribbon's text is already pushed below the
+ *  section's `overflow-hidden` clip — fully out of view rather than
+ *  peeking at the boundary. The reduced top padding lets the text start
+ *  higher in the section so the parallax travel doesn't make it bleed
+ *  into Capsules' painted area too early. Skipped under reduced-motion. */
+const PARALLAX_Y = 360;
+
 export default function MarqueeBrand() {
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -25,11 +30,11 @@ export default function MarqueeBrand() {
           sectionRef.current,
           { y: 0 },
           {
-            y: 240,
+            y: PARALLAX_Y,
             ease: "none",
             scrollTrigger: {
               trigger: sectionRef.current,
-              start: "top bottom",
+              start: "top 50%",
               end: "bottom top",
               scrub: true,
             },
@@ -45,7 +50,7 @@ export default function MarqueeBrand() {
     <section
       ref={sectionRef}
       aria-hidden
-      className="relative w-full overflow-hidden pt-24 md:pt-32 pb-0 select-none bg-base-noir will-change-transform"
+      className="relative w-full overflow-hidden pt-16 md:pt-20 pb-0 select-none bg-base-noir will-change-transform"
     >
       <Marquee
         text={`Pourquoi ${SITE_CONFIG.brandMark} ?`}

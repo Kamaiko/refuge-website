@@ -24,17 +24,17 @@ const SLIDES: readonly Slide[] = [
   {
     title: "Profitez de la vue",
     body: "à travers la grande fenêtre panoramique",
-    image: "/images/unite-aubepine.avif",
+    image: "/images/unite-brume.avif",
   },
   {
-    title: "Le silence retrouvé",
-    body: "loin de l'agitation, dans une intimité totale",
+    title: "Le temps s'étire",
+    body: "loin du tumulte, dans une intimité totale",
     image: "/images/unite-galets.avif",
   },
   {
     title: "Détendez-vous",
     body: "dans un bain nordique en bois",
-    image: "/images/unite-brume.avif",
+    image: "/images/unite-aubepine.avif",
   },
 ] as const;
 
@@ -43,6 +43,45 @@ const SLIDES: readonly Slide[] = [
  *  conversion. Length must equal `SLIDES.length`. */
 const LABELS = ["slide-0", "slide-1", "slide-2"] as const;
 const LAST_INDEX = SLIDES.length - 1;
+
+/**
+ * Single source of truth for the carousel's internal text rhythm.
+ *
+ * Principle: do NOT ballpark the text-swap delay. Every text timing is
+ * **derived** from `VIVRE.transitionDuration` (the card-slide duration),
+ * so changing one knob keeps everything in sync.
+ *
+ * Sizing rationale:
+ *  - `revealDuration` ≈ half the card slide. The longest title's full
+ *    reveal then takes ≈ `transitionDuration * 0.5 + chars * stagger`,
+ *    which lands within (or just at the end of) the slide window.
+ *  - `swapDelayMs` matches the RevealChars **reverse-out** time for the
+ *    longest title — so the moment text-2 finishes fading out is exactly
+ *    when text-3 starts fading in, both visible only while the card is
+ *    travelling right-to-left.
+ *
+ * RevealChars internal formulas (from its source):
+ *  - forward play time   = `duration + (chars - 1) * stagger`
+ *  - reverse-out time    = `duration * 0.5 + (chars - 1) * stagger * 0.5`
+ */
+const TEXT_REVEAL = {
+  /** Used for both the title (small stagger) and body (smaller still). */
+  duration: VIVRE.transitionDuration * 0.55,
+  titleStagger: 0.012,
+  bodyStagger: 0.008,
+  bodyDelay: 0.05,
+} as const;
+
+const MAX_TITLE_CHARS = Math.max(...SLIDES.map((s) => s.title.length));
+
+/** Derived from the longest title's reverse-out time at the title config
+ *  above. Fires text-3's `play=true` exactly when text-2's reverse-out
+ *  finishes — no overlap, no gap, no hand-tuned constant. */
+const TEXT_SWAP_DELAY_MS = Math.round(
+  (TEXT_REVEAL.duration * 0.5 +
+    Math.max(0, MAX_TITLE_CHARS - 1) * TEXT_REVEAL.titleStagger * 0.5) *
+    1000,
+);
 
 /**
  * Three-slide horizontal carousel with **wheel-hijacked**, fixed-speed
@@ -204,7 +243,7 @@ export default function Vivre() {
           textSwapTimer = window.setTimeout(() => {
             inn(true);
             textSwapTimer = null;
-          }, VIVRE.textSwapDelayMs);
+          }, TEXT_SWAP_DELAY_MS);
         };
 
         const tweenTo = (target: number) => {
@@ -339,46 +378,82 @@ export default function Vivre() {
   return (
     <section
       ref={sectionRef}
-      className="relative h-screen w-full overflow-hidden bg-base-noir z-10"
+      className="relative w-full overflow-hidden bg-base-noir z-10 md:h-screen"
     >
-      <CardSlot ref={textCardARef} side="left" zClass="z-10">
-        <CardWrapper>
-          <CardText title={SLIDES[0].title} body={SLIDES[0].body} active />
-        </CardWrapper>
-      </CardSlot>
-
-      <CardSlot ref={textCardBRef} side="right" zClass="z-[15]">
-        <CardWrapper>
-          <CardText title={SLIDES[1].title} body={SLIDES[1].body} active={text2Active} />
-          <CardText
-            title={SLIDES[2].title}
-            body={SLIDES[2].body}
-            active={text3Active}
-            stacked
-          />
-        </CardWrapper>
-      </CardSlot>
-
-      <CardSlot ref={imageCardARef} side="right" zClass="z-20">
-        <RoundedFrame>
-          {/* Image 2 layer (behind) — dolly target imageScale2Ref. */}
-          <div ref={imageScale2Ref} className="absolute inset-0">
-            <SlideImage src={SLIDES[1].image} />
-          </div>
-          {/* Image 1 layer (top) — clip-path target + dolly target. */}
-          <div ref={imageLayer1Ref} className="absolute inset-0">
-            <div ref={imageScale1Ref} className="absolute inset-0">
-              <SlideImage src={SLIDES[0].image} />
+      {/* Mobile: vertical stack — small gris-tan text card on top,
+          larger image card below. The wheel-hijack carousel doesn't fit
+          a 50/50 column layout below 768px, so we drop it entirely on
+          mobile and let the user scroll through the three slides
+          naturally. */}
+      <div className="md:hidden flex flex-col gap-12 px-3 py-16">
+        {SLIDES.map((slide) => (
+          <article key={slide.title} className="flex flex-col gap-3">
+            <div className="bg-gris-tan rounded-[28px] p-7">
+              <h3 className="text-creme-terre/70 text-2xl font-medium leading-[1.1] tracking-tight">
+                {slide.title}
+              </h3>
+              <p className="mt-3 text-creme-dim text-sm leading-relaxed">
+                {slide.body}
+              </p>
             </div>
-          </div>
-        </RoundedFrame>
-      </CardSlot>
+            <div className="relative aspect-[4/5] w-full rounded-[28px] overflow-hidden">
+              <Image
+                src={slide.image}
+                alt=""
+                fill
+                sizes="100vw"
+                unoptimized
+                className="object-cover"
+              />
+            </div>
+          </article>
+        ))}
+      </div>
 
-      <CardSlot ref={imageCardBRef} side="right" zClass="z-[25]">
-        <RoundedFrame>
-          <SlideImage src={SLIDES[2].image} />
-        </RoundedFrame>
-      </CardSlot>
+      {/* Desktop: absolutely-positioned wheel-hijack carousel. Hidden on
+          mobile. The cards are `position: absolute` to the section
+          (closest positioned ancestor); the wrapper here is just a
+          display gate, not a containing block. */}
+      <div className="hidden md:block">
+        <CardSlot ref={textCardARef} side="left" zClass="z-10">
+          <CardWrapper>
+            <CardText title={SLIDES[0].title} body={SLIDES[0].body} active />
+          </CardWrapper>
+        </CardSlot>
+
+        <CardSlot ref={textCardBRef} side="right" zClass="z-[15]">
+          <CardWrapper>
+            <CardText title={SLIDES[1].title} body={SLIDES[1].body} active={text2Active} />
+            <CardText
+              title={SLIDES[2].title}
+              body={SLIDES[2].body}
+              active={text3Active}
+              stacked
+            />
+          </CardWrapper>
+        </CardSlot>
+
+        <CardSlot ref={imageCardARef} side="right" zClass="z-20">
+          <RoundedFrame>
+            {/* Image 2 layer (behind) — dolly target imageScale2Ref. */}
+            <div ref={imageScale2Ref} className="absolute inset-0">
+              <SlideImage src={SLIDES[1].image} objectPosition="35% 50%" />
+            </div>
+            {/* Image 1 layer (top) — clip-path target + dolly target. */}
+            <div ref={imageLayer1Ref} className="absolute inset-0">
+              <div ref={imageScale1Ref} className="absolute inset-0">
+                <SlideImage src={SLIDES[0].image} objectPosition="95% 50%" />
+              </div>
+            </div>
+          </RoundedFrame>
+        </CardSlot>
+
+        <CardSlot ref={imageCardBRef} side="right" zClass="z-[25]">
+          <RoundedFrame>
+            <SlideImage src={SLIDES[2].image} objectPosition="30% 50%" scale={1.5} />
+          </RoundedFrame>
+        </CardSlot>
+      </div>
     </section>
   );
 }
@@ -432,8 +507,19 @@ function RoundedFrame({ children }: { children: React.ReactNode }) {
 
 /** Single full-bleed image inside a slide's frame. `unoptimized` because
  *  the source AVIFs are already encoded at the right size — Next's
- *  re-encode at quality 75 would only soften them. */
-function SlideImage({ src }: { src: string }) {
+ *  re-encode at quality 75 would only soften them. `scale` tightens the
+ *  crop (defaults to 1.3, composes multiplicatively with the GSAP dolly
+ *  on imageCardA). `objectPosition` shifts the visible framing — lower
+ *  X% pulls focal point left, higher X% pulls it right. */
+function SlideImage({
+  src,
+  objectPosition = "50% 50%",
+  scale = 1.3,
+}: {
+  src: string;
+  objectPosition?: string;
+  scale?: number;
+}) {
   return (
     <Image
       src={src}
@@ -442,6 +528,7 @@ function SlideImage({ src }: { src: string }) {
       sizes="50vw"
       unoptimized
       className="object-cover"
+      style={{ objectPosition, transform: `scale(${scale})` }}
     />
   );
 }
@@ -467,17 +554,17 @@ function CardText({
       <RevealChars
         text={title}
         play={active}
-        duration={1.0}
-        stagger={0.025}
+        duration={TEXT_REVEAL.duration}
+        stagger={TEXT_REVEAL.titleStagger}
         className="block text-creme-terre/70 text-3xl md:text-5xl font-medium leading-[1.1] tracking-tight"
       />
       <div className="mt-4 text-creme-dim text-sm md:text-base leading-relaxed max-w-md">
         <RevealChars
           text={body}
           play={active}
-          duration={1.0}
-          delay={0.1}
-          stagger={0.012}
+          duration={TEXT_REVEAL.duration}
+          delay={TEXT_REVEAL.bodyDelay}
+          stagger={TEXT_REVEAL.bodyStagger}
         />
       </div>
     </div>

@@ -1,41 +1,130 @@
-import RevealText from "@/components/common/RevealText";
+"use client";
+
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
 
-/** Closing testimonial section. Eyebrow, large quote, and author signature,
- *  each fading in via {@link RevealText} as it scrolls into view. */
+const EYEBROW = "Et eux, qu'en pensent-ils ?";
+const QUOTE = `Un séjour à ${SITE_CONFIG.brandMark} au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau suspendu.`;
+
+/**
+ * Closing testimonial section. Three blocks (eyebrow, quote, author) are
+ * revealed **per word** as the section scrolls into view.
+ *
+ * Effect ("voilement") : each word sits inside its own mask, starts below
+ * the mask offset (yPercent: 110), invisible (opacity: 0) and blurred
+ * (filter: blur). All three properties scrub-tween together as the section
+ * progresses through the viewport, with a per-word stagger that produces
+ * a wave-like reveal — words don't all rise at once, they cascade.
+ *
+ * The reveal scrubs IN BOTH DIRECTIONS — scrolling back up makes the
+ * words sink, blur out and fade away in reverse. Reduced-motion paints
+ * the final state with no animation.
+ */
 export default function Feedback() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const authorRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      const section = sectionRef.current;
+      if (!section) return;
+
+      const words = section.querySelectorAll<HTMLElement>(".voile-word");
+      const author = authorRef.current;
+
+      const mm = gsap.matchMedia();
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        if (!words.length) return;
+
+        // Initial offscreen-below + invisible + blurred state.
+        gsap.set(words, {
+          yPercent: 110,
+          opacity: 0,
+          filter: "blur(6px)",
+        });
+        if (author) gsap.set(author, { opacity: 0, y: 20 });
+
+        // Single tween across every word, staggered. Scrub 0.5 lets the
+        // motion lag the scroll input slightly — feels more deliberate
+        // than a 1:1 mapping while still giving full reverse on up-scroll.
+        // `each: 0.04` ≈ a tight wave that reads as 30+ discrete reveals
+        // for the long quote, but compresses naturally for the short
+        // eyebrow (5 words). `from: "start"` cascades left-to-right,
+        // top-to-bottom in document order.
+        // Stagger + scrub lag together: stagger gives each word its own
+        // slot in the reveal sequence; scrub lag (1.4s) holds the tween
+        // back from snapping when the user scroll-blasts past, so even a
+        // fast scroll produces a perceptible cascade instead of a flash.
+        gsap.to(words, {
+          yPercent: 0,
+          opacity: 1,
+          filter: "blur(0px)",
+          ease: "none",
+          stagger: { each: 0.09, from: "start" },
+          scrollTrigger: {
+            trigger: section,
+            start: "top 50%",
+            end: "center 60%",
+            scrub: 1.4,
+          },
+        });
+
+        // Author block fades in last, on its own slim ScrollTrigger so
+        // it doesn't compete with the word stagger for visual attention.
+        if (author) {
+          gsap.to(author, {
+            opacity: 1,
+            y: 0,
+            ease: "none",
+            scrollTrigger: {
+              trigger: author,
+              start: "top 95%",
+              end: "top 70%",
+              scrub: 0.5,
+            },
+          });
+        }
+      });
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set(words, { yPercent: 0, opacity: 1, filter: "blur(0px)" });
+        if (author) gsap.set(author, { opacity: 1, y: 0 });
+      });
+
+      return () => {
+        mm.revert();
+        ScrollTrigger.getAll().forEach((t) => {
+          if (t.trigger === section || t.trigger === author) t.kill();
+        });
+      };
+    },
+    { scope: sectionRef },
+  );
+
   return (
     <section
+      ref={sectionRef}
       id="feedback"
       className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-32 md:pb-48 min-h-[100svh] flex flex-col"
     >
       {/* Eyebrow — top-left */}
-      <RevealText
-        mode="words"
-        stagger={0.04}
-        duration={0.9}
-        className="text-creme text-lg md:text-xl font-semibold tracking-tight"
-      >
-        Et eux, qu&apos;en pensent-ils ?
-      </RevealText>
+      <p className="text-creme text-lg md:text-xl font-semibold tracking-tight">
+        <WordSplit text={EYEBROW} />
+      </p>
 
       {/* Quote — large, left-aligned, capped at ~75% of viewport width with
           a tighter leading. Smaller display size than the original 5.5vw so
           the quote reads as one calm block instead of dominating. */}
       <div className="flex-1 flex items-center mt-16 md:mt-24">
-        <RevealText
-          as="p"
-          mode="lines"
-          stagger={0.12}
-          duration={1.2}
-          className="text-creme text-3xl md:text-5xl lg:text-[4.4vw] font-light leading-[0.98] tracking-[-0.02em] max-w-[75vw]"
-        >
-          {`Un séjour à ${SITE_CONFIG.brandMark} au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau silencieux.`}
-        </RevealText>
+        <p className="text-creme text-2xl md:text-4xl lg:text-[3.8vw] font-light leading-[0.98] tracking-[-0.02em] max-w-[75vw]">
+          <WordSplit text={QUOTE} />
+        </p>
       </div>
 
       {/* Author — bottom-left, avatar + name + location */}
-      <div className="flex items-center gap-4 mt-12">
+      <div ref={authorRef} className="flex items-center gap-4 mt-12 will-change-transform">
         <span
           aria-hidden
           className="inline-block h-12 w-12 rounded-full bg-gris-tan-soft shrink-0"
@@ -46,5 +135,40 @@ export default function Feedback() {
         </div>
       </div>
     </section>
+  );
+}
+
+/** Splits `text` on whitespace and wraps each word in a `(mask, inner)`
+ *  pair so per-word transforms / opacity / blur can be tweened without
+ *  affecting word spacing or line wrapping.
+ *
+ *  - Outer span (`overflow-hidden`, `align-bottom`): the mask. Width
+ *    follows its content, baseline anchored to bottom so the inner word
+ *    sliding from below appears to rise out of the line itself.
+ *  - Inner span (`.voile-word`): the GSAP target. `will-change` opts it
+ *    into a compositor layer so blur + transform updates don't repaint
+ *    the surrounding text. */
+function WordSplit({ text }: { text: string }) {
+  const tokens = text.split(/(\s+)/);
+  return (
+    <span aria-label={text}>
+      {tokens.map((token, i) =>
+        /^\s+$/.test(token) ? (
+          <span key={i} aria-hidden>
+            {token}
+          </span>
+        ) : (
+          <span
+            key={i}
+            aria-hidden
+            className="inline-block overflow-hidden align-bottom"
+          >
+            <span className="voile-word inline-block will-change-[transform,filter,opacity]">
+              {token}
+            </span>
+          </span>
+        ),
+      )}
+    </span>
   );
 }

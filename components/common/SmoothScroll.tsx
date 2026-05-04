@@ -100,46 +100,49 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   // the panel's overlay rendering siblings to <main>, this creates a
   // proper focus trap without a JS focus-cycling library.
   //
-  // Body lock uses the position:fixed pattern (not just overflow:hidden):
-  // it bulletproofs against iOS Safari rubber-band, prevents scroll
-  // chaining from inside the panel back to the page, and cooperates with
-  // Lenis's wheel handling. Scroll position is captured before the lock
-  // and restored after, so the user lands back exactly where they were.
-  const lockedScrollYRef = useRef(0);
+  // Lock strategy: `overflow: hidden` on <html> + <body>, plus
+  // `lenis.stop()` to halt Lenis's virtual scroll. Crucially this leaves
+  // `window.scrollY` UNCHANGED, so:
+  //   - ScrollTrigger doesn't see a synthetic scroll-to-zero and doesn't
+  //     rewind any pinned-and-scrubbed timeline (Capsules would otherwise
+  //     paint solid noir while the panel is open and "rapidly catch up"
+  //     through the cards on close).
+  //   - Header's scroll listener doesn't observe a 0 → savedY delta on
+  //     close (which previously fired a hide animation, sliding the
+  //     header up out of view).
+  // The previous `position: fixed` strategy collapsed scrollY to 0 to
+  // visually pin the page, which is robust against iOS rubber-band but
+  // produced both bugs above. `overflow: hidden` + `touch-action: none`
+  // on <html> handles iOS rubber-band without the side effects.
   useEffect(() => {
     const anyOpen = menuIsOpen || reserveIsOpen;
     const lenis = lenisRef.current;
     const main = document.querySelector("main");
+    const html = document.documentElement;
+    const body = document.body;
+
     if (anyOpen) {
-      lockedScrollYRef.current = window.scrollY;
       lenis?.stop();
-      const body = document.body;
-      body.style.position = "fixed";
-      body.style.top = `-${lockedScrollYRef.current}px`;
-      body.style.left = "0";
-      body.style.right = "0";
+      html.style.overflow = "hidden";
       body.style.overflow = "hidden";
+      // iOS Safari rubber-band guard. `touch-action` does NOT inherit,
+      // so the scrollable panel children keep their own default and
+      // remain touch-scrollable.
+      html.style.touchAction = "none";
       main?.setAttribute("inert", "");
     } else {
-      const body = document.body;
-      body.style.position = "";
-      body.style.top = "";
-      body.style.left = "";
-      body.style.right = "";
+      html.style.overflow = "";
       body.style.overflow = "";
-      window.scrollTo(0, lockedScrollYRef.current);
+      html.style.touchAction = "";
       lenis?.start();
       main?.removeAttribute("inert");
     }
     // Safety net: if SmoothScroll unmounts while a lock is active, restore
-    // body styles so the page isn't left frozen.
+    // styles so the page isn't left frozen.
     return () => {
-      const body = document.body;
-      body.style.position = "";
-      body.style.top = "";
-      body.style.left = "";
-      body.style.right = "";
+      html.style.overflow = "";
       body.style.overflow = "";
+      html.style.touchAction = "";
       main?.removeAttribute("inert");
     };
   }, [menuIsOpen, reserveIsOpen]);
