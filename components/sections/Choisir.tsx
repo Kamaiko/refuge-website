@@ -227,7 +227,7 @@ export default function Choisir() {
         </div>
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16">
-          <p className="text-creme-terre/70 max-w-4xl text-2xl xs:text-3xl md:text-5xl font-medium leading-relaxed">
+          <p className="text-creme-terre/70 max-w-4xl text-2xl xs:text-3xl md:text-5xl font-medium leading-snug">
             Choisissez parmi nos trois refuges architecturaux. Chacun atteint les plus hauts standards et s&apos;ajuste à votre rythme. Prenez celui qui vous parle.
           </p>
 

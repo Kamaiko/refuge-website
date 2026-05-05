@@ -10,14 +10,14 @@ import { SITE_CONFIG } from "@/lib/constants";
 /** Decorative banner between Capsules and Feedback: a giant directional
  *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish.
  *
- *  Scroll-driven Y parallax (desktop only): the ribbon translates down
- *  so that, by the time Capsules has taken over the upper viewport, the
- *  ribbon's text is pushed below the section's `overflow-hidden` clip.
- *  On mobile the section is too short for any travel to fit — `pt-16 +
- *  text-[24vw]` lands around ~160 px, which means even a 100 px parallax
- *  drives the text fully out of frame. Skipped on mobile and under
- *  reduced-motion; the text stays put and remains visible. */
-const PARALLAX_Y = 360;
+ *  Scroll-driven Y parallax with per-viewport magnitudes — the ribbon
+ *  translates down so it drifts below the section's `overflow-hidden`
+ *  clip by the time the next section takes over. The travel must stay
+ *  ≤ `(section_height - text_height)` or the text is pushed out of
+ *  frame immediately. Mobile section is far shorter (`pt-16 +
+ *  text-[24vw]` ≈ 160 px), so it gets a much smaller travel.
+ *  Skipped under reduced-motion. */
+const PARALLAX_Y = { mobile: 100, desktop: 360 } as const;
 
 export default function MarqueeBrand() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -25,13 +25,14 @@ export default function MarqueeBrand() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
-      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`, () => {
+
+      const buildParallax = (yTo: number) => {
         if (!sectionRef.current) return;
         gsap.fromTo(
           sectionRef.current,
           { y: 0 },
           {
-            y: PARALLAX_Y,
+            y: yTo,
             ease: "none",
             scrollTrigger: {
               trigger: sectionRef.current,
@@ -41,7 +42,15 @@ export default function MarqueeBrand() {
             },
           },
         );
+      };
+
+      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`, () => {
+        buildParallax(PARALLAX_Y.desktop);
       });
+      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`, () => {
+        buildParallax(PARALLAX_Y.mobile);
+      });
+
       return () => mm.revert();
     },
     { scope: sectionRef },
@@ -60,7 +69,7 @@ export default function MarqueeBrand() {
         separator="·"
         directional
         scrollBoost
-        className="text-creme/90 text-[24vw] md:text-[14vw] font-semibold leading-none tracking-[-0.04em]"
+        className="text-creme/90 text-[24vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em]"
       />
     </section>
   );
