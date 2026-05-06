@@ -23,18 +23,18 @@ type Slide = {
  *  scroll-velocity coupling. */
 const SLIDES: readonly Slide[] = [
   {
+    title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
+    body: "Personne ne vous chronomètre. Le fjord encore moins. Le seul calendrier ici, c'est la lumière qui tombe.",
+    image: "/images/refuge-brume.avif",
+  },
+  {
     title: "Profitez de la vue—par la grande baie vitrée panoramique",
     body: "Approchez le fjord comme jamais, et contemplez ce paysage maritime unique sous toutes ses lumières.",
-    image: "/images/refuge-brume.avif",
+    image: "/images/refuge-galets.avif",
   },
   {
     title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
     body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
-    image: "/images/refuge-galets.avif",
-  },
-  {
-    title: "Une façade noire—par un savoir-faire ancestral du Japon",
-    body: "Le bois carbonisé Shou Sugi Ban traverse les saisons sans entretien et marque le paysage d’une présence forte",
     image: "/images/refuge-aubepine.avif",
   },
 ] as const;
