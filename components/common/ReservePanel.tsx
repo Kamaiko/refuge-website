@@ -7,13 +7,13 @@ import { gsap } from "@/lib/gsap";
 import { PANEL } from "@/lib/motion";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
-import { UNITES } from "@/lib/data/unites";
+import { REFUGES } from "@/lib/data/refuges";
 import { submitReservation, type ReservationState } from "@/actions/reservation";
 
 const INITIAL_FORM_STATE: ReservationState = { ok: false, message: "" };
 
-/** Subset of {@link import("@/lib/data/unites").Unite}["slug"] accepted by
- *  the Reserve form. Mirrors the enum in `actions/reservation.ts`. */
+/** Subset of `(typeof REFUGES)[number]["slug"]` accepted by the Reserve
+ *  form. Mirrors the enum in `actions/reservation.ts`. */
 type RefugeSlug = "aubepine" | "galets" | "brume";
 
 /** Default departure date offset (in nights) used to pre-fill the form
@@ -194,9 +194,8 @@ export default function ReservePanel() {
     { dependencies: [isOpen] },
   );
 
-  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow).
-  // Duplicating it here previously caused a restore race that left the page
-  // non-scrollable after closing.
+  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow) —
+  // do not duplicate it here.
 
   useEffect(() => {
     if (!isOpen) return;
@@ -227,7 +226,7 @@ export default function ReservePanel() {
 
   const nights = useMemo(() => diffNights(arrivee, depart), [arrivee, depart]);
   const dailyRate = useMemo(
-    () => UNITES.find((u) => u.slug === refuge)?.tarifParNuit ?? 0,
+    () => REFUGES.find((u) => u.slug === refuge)?.tarifParNuit ?? 0,
     [refuge],
   );
   const total = nights * dailyRate;
@@ -315,13 +314,13 @@ export default function ReservePanel() {
                 <span className="text-creme-dim/60 mr-2 font-normal">(2)</span>Quel refuge aimeriez-vous réserver ?
               </legend>
               <div className="grid grid-cols-3 gap-3">
-                {UNITES.map((unite) => {
-                  const selected = refuge === unite.slug;
+                {REFUGES.map((r) => {
+                  const selected = refuge === r.slug;
                   return (
                     <button
-                      key={unite.slug}
+                      key={r.slug}
                       type="button"
-                      onClick={() => setRefuge(unite.slug as RefugeSlug)}
+                      onClick={() => setRefuge(r.slug as RefugeSlug)}
                       className={`group relative flex flex-col overflow-hidden rounded-[20px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan ${
                         selected
                           ? "bg-creme text-base-noir"
@@ -330,15 +329,15 @@ export default function ReservePanel() {
                     >
                       <span className="relative block aspect-[4/3] overflow-hidden rounded-[16px] m-2 mb-0 bg-base-noir-soft">
                         <Image
-                          src={unite.image}
-                          alt={unite.nom}
+                          src={r.image}
+                          alt={r.nom}
                           fill
                           sizes="180px"
                           className="object-cover"
                         />
                       </span>
                       <span className="block px-3 py-3 text-center text-sm font-medium tracking-tight">
-                        {unite.nom}
+                        {r.nom}
                       </span>
                     </button>
                   );

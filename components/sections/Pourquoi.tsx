@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
-import { VIVRE } from "@/lib/motion";
+import { POURQUOI } from "@/lib/motion";
 import { dispatchSectionLock } from "@/lib/section-lock";
 import RevealChars from "@/components/common/RevealChars";
 
@@ -15,26 +15,27 @@ type Slide = {
   image: string;
 };
 
-/** Lifestyle features showcased between MarqueeBrand and Feedback. Three
- *  slides, alternating layout (text-left, image-left, text-left). The
- *  section is short-pinned while the wheel handler intercepts scroll
- *  ticks and advances slides at fixed speed — one tick = one slide,
- *  no queueing, no scroll-velocity coupling. */
+/** Three reasons answering the "Pourquoi Aquilon ?" question posed by
+ *  MarqueeBrand directly above. Three slides, alternating layout
+ *  (text-left, image-left, text-left). The section is short-pinned
+ *  while the wheel handler intercepts scroll ticks and advances slides
+ *  at fixed speed — one tick = one slide, no queueing, no
+ *  scroll-velocity coupling. */
 const SLIDES: readonly Slide[] = [
   {
-    title: "Profitez de la vue",
-    body: "à travers la grande fenêtre panoramique",
-    image: "/images/unite-brume.avif",
+    title: "Profitez de la vue—par la grande baie vitrée panoramique",
+    body: "Approchez le fjord comme jamais, et contemplez ce paysage maritime unique sous toutes ses lumières.",
+    image: "/images/refuge-brume.avif",
   },
   {
-    title: "Le temps s'étire",
-    body: "loin du tumulte, dans une intimité totale",
-    image: "/images/unite-galets.avif",
+    title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
+    body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
+    image: "/images/refuge-galets.avif",
   },
   {
-    title: "Détendez-vous",
-    body: "dans un bain nordique en bois",
-    image: "/images/unite-aubepine.avif",
+    title: "Une façade noire—par un savoir-faire ancestral du Japon",
+    body: "Le bois carbonisé Shou Sugi Ban traverse les saisons sans entretien et marque le paysage d’une présence forte",
+    image: "/images/refuge-aubepine.avif",
   },
 ] as const;
 
@@ -48,7 +49,7 @@ const LAST_INDEX = SLIDES.length - 1;
  * Single source of truth for the carousel's internal text rhythm.
  *
  * Principle: do NOT ballpark the text-swap delay. Every text timing is
- * **derived** from `VIVRE.transitionDuration` (the card-slide duration),
+ * **derived** from `POURQUOI.transitionDuration` (the card-slide duration),
  * so changing one knob keeps everything in sync.
  *
  * Sizing rationale:
@@ -66,7 +67,7 @@ const LAST_INDEX = SLIDES.length - 1;
  */
 const TEXT_REVEAL = {
   /** Used for both the title (small stagger) and body (smaller still). */
-  duration: VIVRE.transitionDuration * 0.55,
+  duration: POURQUOI.transitionDuration * 0.55,
   titleStagger: 0.012,
   bodyStagger: 0.008,
   bodyDelay: 0.05,
@@ -111,7 +112,7 @@ const TEXT_SWAP_DELAY_MS = Math.round(
  * Reduced-motion: skips the pin and wheel-hijack entirely; only slide 1
  * is shown (the carousel's mode of expression IS the motion).
  */
-export default function Vivre() {
+export default function Pourquoi() {
   const sectionRef = useRef<HTMLElement>(null);
 
   const textCardARef = useRef<HTMLDivElement>(null);
@@ -149,13 +150,13 @@ export default function Vivre() {
       // doesn't repeat it. Linear is also symmetric but feels mechanical;
       // `power1.out` has more punch but is asymmetric (its fast-start
       // becomes a fast-end when reversed).
-      const tl = gsap.timeline({ paused: true, defaults: { ease: VIVRE.ease } });
+      const tl = gsap.timeline({ paused: true, defaults: { ease: POURQUOI.ease } });
       tl.addLabel(LABELS[0], 0);
 
       // ─── Phase 1: slide 0 → slide 1 ────────────────────────────────
       tl.to(imageCardARef.current, {
         xPercent: -100,
-        x: VIVRE.travelGapPx,
+        x: POURQUOI.travelGapPx,
         duration: 1,
       }, LABELS[0]);
       tl.to(imageLayer1Ref.current, {
@@ -187,7 +188,7 @@ export default function Vivre() {
       // ─── Phase 2: slide 1 → slide 2 ────────────────────────────────
       tl.to(textCardBRef.current, {
         xPercent: -100,
-        x: VIVRE.travelGapPx,
+        x: POURQUOI.travelGapPx,
         duration: 1,
       }, LABELS[1]);
       tl.to(imageCardARef.current, {
@@ -264,15 +265,15 @@ export default function Vivre() {
           }
 
           tl.tweenTo(LABELS[target], {
-            duration: VIVRE.transitionDuration,
-            ease: VIVRE.ease,
+            duration: POURQUOI.transitionDuration,
+            ease: POURQUOI.ease,
             onComplete: () => {
               state.currentSlide = target;
               state.isAnimating = false;
               cooldownTimer = window.setTimeout(() => {
                 canFire = true;
                 cooldownTimer = null;
-              }, VIVRE.cooldownMs);
+              }, POURQUOI.cooldownMs);
             },
           });
         };
@@ -386,15 +387,18 @@ export default function Vivre() {
           mobile and let the user scroll through the three slides
           naturally. */}
       <div className="md:hidden flex flex-col gap-12 px-3 py-16">
-        {SLIDES.map((slide) => (
+        {SLIDES.map((slide, i) => (
           <article key={slide.title} className="flex flex-col gap-3">
-            <div className="bg-gris-tan rounded-[28px] p-7">
-              <h3 className="text-creme-terre/70 text-2xl font-medium leading-[1.1] tracking-tight">
+            <div className="bg-gris-tan rounded-[28px] p-7 flex flex-col gap-6">
+              <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
                 {slide.title}
               </h3>
-              <p className="mt-3 text-creme-dim text-sm leading-relaxed">
-                {slide.body}
-              </p>
+              <div className="flex items-end justify-between gap-4">
+                <SlideIndicators current={i + 1} total={SLIDES.length} active />
+                <p className="text-creme-dim text-base leading-relaxed max-w-sm text-right">
+                  {slide.body}
+                </p>
+              </div>
             </div>
             <div className="relative aspect-[4/5] w-full rounded-[28px] overflow-hidden">
               <Image
@@ -417,17 +421,31 @@ export default function Vivre() {
       <div className="hidden md:block">
         <CardSlot ref={textCardARef} side="left" zClass="z-10">
           <CardWrapper>
-            <CardText title={SLIDES[0].title} body={SLIDES[0].body} active />
+            <CardText
+              title={SLIDES[0].title}
+              body={SLIDES[0].body}
+              active
+              index={1}
+              total={SLIDES.length}
+            />
           </CardWrapper>
         </CardSlot>
 
         <CardSlot ref={textCardBRef} side="right" zClass="z-[15]">
           <CardWrapper>
-            <CardText title={SLIDES[1].title} body={SLIDES[1].body} active={text2Active} />
+            <CardText
+              title={SLIDES[1].title}
+              body={SLIDES[1].body}
+              active={text2Active}
+              index={2}
+              total={SLIDES.length}
+            />
             <CardText
               title={SLIDES[2].title}
               body={SLIDES[2].body}
               active={text3Active}
+              index={3}
+              total={SLIDES.length}
               stacked
             />
           </CardWrapper>
@@ -486,7 +504,7 @@ function CardSlot({
 /** Outer card body — the gris-tan rounded box with overflow clip. Holds
  *  one or more `CardText` content layers; only the wrapper carries the bg
  *  so stacked text layers don't paint over each other. Corners match the
- *  Capsules cards (`rounded-[40px] md:rounded-[60px]`). */
+ *  Hebergements cards (`rounded-[40px] md:rounded-[60px]`). */
 function CardWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative h-full w-full bg-gris-tan rounded-[40px] md:rounded-[60px] overflow-hidden">
@@ -533,40 +551,110 @@ function SlideImage({
   );
 }
 
-/** Text content layer — title + body anchored TOP-LEFT, RevealChars sweep
- *  driven by `active`. `stacked` lets two layers overlap inside the same
- *  CardWrapper (used by textCardB to swap text-2 ↔ text-3 sequentially). */
+/** Text content layer — title TOP-LEFT (large), pagination indicators
+ *  BOTTOM-LEFT, secondary copy BOTTOM-RIGHT. RevealChars sweep is driven
+ *  by `active`. `stacked` lets two layers overlap inside the same
+ *  CardWrapper (used by textCardB to swap text-2 ↔ text-3 sequentially).
+ *  `index`/`total` feed the `01 / 03` pagination chips. */
 function CardText({
   title,
   body,
   active,
+  index,
+  total,
   stacked = false,
 }: {
   title: string;
   body: string;
   active: boolean;
+  index: number;
+  total: number;
   stacked?: boolean;
 }) {
+  // Hide inactive layer entirely — prevents per-glyph mask sub-pixel
+  // leak from bleeding through. The 500ms delay must outlast the
+  // longest RevealChars reverse-out at TEXT_REVEAL settings; if those
+  // change, this needs to grow accordingly.
+  const inactiveOpacityClass = active
+    ? "opacity-100 delay-0"
+    : "opacity-0 delay-500";
   return (
     <div
-      className={`${stacked ? "absolute" : "relative"} inset-0 h-full w-full p-10 md:p-16 flex flex-col justify-start`}
+      className={`${stacked ? "absolute" : "relative"} inset-0 h-full w-full p-10 md:p-14 lg:p-16 flex flex-col justify-between gap-8 transition-opacity duration-300 ${inactiveOpacityClass}`}
     >
       <RevealChars
         text={title}
         play={active}
         duration={TEXT_REVEAL.duration}
         stagger={TEXT_REVEAL.titleStagger}
-        className="block text-creme-terre/70 text-3xl md:text-5xl font-medium leading-[1.1] tracking-tight"
+        className="block text-creme-terre/85 text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.05] tracking-tight"
       />
-      <div className="mt-4 text-creme-dim text-sm md:text-base leading-relaxed max-w-md">
-        <RevealChars
-          text={body}
-          play={active}
-          duration={TEXT_REVEAL.duration}
-          delay={TEXT_REVEAL.bodyDelay}
-          stagger={TEXT_REVEAL.bodyStagger}
+
+      {/* Symmetric inset on the bottom row keeps both ends clear of the
+          fixed Menu pill at viewport bottom-center AND keeps the visual
+          rhythm consistent card-to-card — every card gets the same
+          horizontal breathing room, regardless of which side it sits on. */}
+      <div className="flex items-end justify-between gap-6 px-12 md:px-16 lg:px-20">
+        <SlideIndicators
+          current={index}
+          total={total}
+          active={active}
+          shiftLeft={index !== 2}
         />
+        <div className="text-creme text-xl md:text-2xl leading-snug max-w-lg text-right font-semibold">
+          <RevealChars
+            text={body}
+            play={active}
+            duration={TEXT_REVEAL.duration}
+            delay={TEXT_REVEAL.bodyDelay}
+            stagger={TEXT_REVEAL.bodyStagger}
+          />
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** Pagination chips — two outlined circles. The `current` chip is more
+ *  saturated; the `total` chip dimmed so they read as the position-in-
+ *  series ("où je suis / combien il y en a"). Padding-zeros to two
+ *  digits matches the reference Awwwards pattern (`01`, `02`, `03`). */
+function SlideIndicators({
+  current,
+  total,
+  active,
+  shiftLeft = false,
+}: {
+  current: number;
+  total: number;
+  active: boolean;
+  shiftLeft?: boolean;
+}) {
+  const fmt = (n: number) => String(n).padStart(2, "0");
+  // `shiftLeft` cancels most of CardText's bottom-row left inset
+  // (`px-12 md:px-16 lg:px-20`) so the chips read closer to the card's
+  // edge. Slide 2 keeps the default inset — its inner card edge IS the
+  // menu-pill zone, pulling the chips left would put them under the pill.
+  const marginXClass = shiftLeft
+    ? "-ml-8 md:-ml-12 lg:-ml-14"
+    : "ml-2 md:ml-3";
+  const chips = [
+    { value: current, tone: "border-creme-terre/40 text-creme-terre/85" },
+    { value: total, tone: "border-creme-terre/20 text-creme-terre/40" },
+  ];
+  return (
+    <div
+      aria-hidden
+      className={`flex items-center gap-2 shrink-0 ${marginXClass} mb-2 md:mb-3 transition-opacity duration-500 ${active ? "opacity-100" : "opacity-0"}`}
+    >
+      {chips.map(({ value, tone }, i) => (
+        <span
+          key={i}
+          className={`inline-flex h-14 w-14 items-center justify-center rounded-full border text-sm font-medium tracking-wide ${tone}`}
+        >
+          {fmt(value)}
+        </span>
+      ))}
     </div>
   );
 }

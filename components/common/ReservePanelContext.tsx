@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 
 /** Open/close state of the right-side Reserve panel and its imperative
- *  controls. Consumed by Header (Reserve CTA), Capsules (per-card Reserve
+ *  controls. Consumed by Header (Reserve CTA), Hebergements (per-card Reserve
  *  buttons), and ReservePanel (renders the panel + form).
  *  No `toggle` here on purpose — the Reserve panel is always opened from a
  *  CTA (`open`) and closed from inside (`close` via X button or backdrop). */

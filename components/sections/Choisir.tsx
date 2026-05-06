@@ -23,11 +23,11 @@ const FEATURES = [
   "Toit végétal",
 ] as const;
 
-/** Transition section before the Capsules slideshow. The headline triggers
+/** Transition section before the Hebergements slideshow. The headline triggers
  *  three synchronised scroll-scrubbed effects (depth scale + opacity ramp,
  *  parallax y-drift slower than page scroll, per-line clip-path curtain).
  *  A {@link BgGradient} fades from `--color-base-noir` into the gris-tan
- *  background so the section seams cleanly into Capsules below.
+ *  background so the section seams cleanly into Hebergements below.
  *  Reduced-motion: lines are revealed instantly, no scroll-driven motion. */
 export default function Choisir() {
   const sectionRef = useRef<HTMLElement>(null);

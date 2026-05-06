@@ -8,13 +8,13 @@
  *  - `tarifParNuit`: indicative night rate in CAD, drives the Reserve cost
  *    summary.
  *
- *  **Order is significant** — the Capsules section maps indexes 0/1/2 onto
- *  z-index stacking and slide-up sequencing, so reordering this array will
- *  reorder the scroll-pinned slideshow.
+ *  **Order is significant** — the Hebergements section maps indexes 0/1/2
+ *  onto z-index stacking and slide-up sequencing, so reordering this array
+ *  will reorder the scroll-pinned slideshow.
  *
- *  Consumers narrow per-entry types with `(typeof UNITES)[number]` — no
- *  separate `Unite` type alias is needed (avoids drift if the shape evolves). */
-export const UNITES = [
+ *  Consumers narrow per-entry types with `(typeof REFUGES)[number]` — no
+ *  separate `Refuge` type alias is needed (avoids drift if the shape evolves). */
+export const REFUGES = [
   {
     slug: "brume",
     nom: "Brume",
@@ -23,7 +23,7 @@ export const UNITES = [
       "Le plus haut, le plus exposé au ciel. Aux premières heures, la brume s’élève du fleuve et passe sous le refuge. Aurores boréales possibles l’hiver.",
     capacite: "2-4 personnes",
     surface: "46 m²",
-    image: "/images/unite-brume.avif",
+    image: "/images/refuge-brume.avif",
     tarifParNuit: 680,
   },
   {
@@ -34,7 +34,7 @@ export const UNITES = [
       "Le plus enclavé des trois. Aucun voisin, aucune vue ouverte ; seulement les arbres, le bois noir et le silence. Pour celles et ceux qui viennent vraiment écouter.",
     capacite: "2 personnes",
     surface: "32 m²",
-    image: "/images/unite-aubepine.avif",
+    image: "/images/refuge-aubepine.avif",
     tarifParNuit: 540,
   },
   {
@@ -45,7 +45,7 @@ export const UNITES = [
       "Le refuge le plus exposé. La marée, le vent, la lumière qui change toute la journée. Les bélugas passent l’été, parfois.",
     capacite: "2-3 personnes",
     surface: "38 m²",
-    image: "/images/unite-galets.avif",
+    image: "/images/refuge-galets.avif",
     tarifParNuit: 600,
   },
 ];

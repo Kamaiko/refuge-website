@@ -73,7 +73,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     document.addEventListener("focusin", onFocusIn);
 
     // Section-level Lenis lock: any section that needs to fully control
-    // scroll input (e.g. Vivre's wheel-hijack carousel) dispatches the
+    // scroll input (e.g. Pourquoi's wheel-hijack carousel) dispatches the
     // SECTION_LOCK_EVENT. We stop/start Lenis here so the section's wheel
     // handler can fully take over — otherwise Lenis's smooth-scroll tween
     // would carry the user past the section faster than the wheel
@@ -103,7 +103,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   // Lock strategy: `overflow: hidden` on <html> + <body>, plus
   // `lenis.stop()` to halt Lenis's virtual scroll, plus `touch-action:
   // none` on <html> for iOS Safari rubber-band. `window.scrollY` stays
-  // unchanged — pinned-and-scrubbed timelines (e.g. Capsules) don't
+  // unchanged — pinned-and-scrubbed timelines (e.g. Hebergements) don't
   // rewind, and Header's scroll listener doesn't fire on a synthetic
   // delta. `touch-action` does NOT inherit, so panel children keep
   // their default and remain touch-scrollable.

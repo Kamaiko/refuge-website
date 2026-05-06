@@ -68,7 +68,7 @@ export default function Medaillons() {
             className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft will-change-transform"
           >
             <Image
-              src="/images/unite-aubepine.avif"
+              src="/images/refuge-aubepine.avif"
               alt=""
               role="presentation"
               fill
@@ -81,7 +81,7 @@ export default function Medaillons() {
             className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft self-end will-change-transform"
           >
             <Image
-              src="/images/unite-galets.avif"
+              src="/images/refuge-galets.avif"
               alt=""
               role="presentation"
               fill

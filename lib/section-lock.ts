@@ -1,6 +1,6 @@
 /**
  * Section-level Lenis lock — the wire contract between scroll-hijacking
- * sections (e.g. {@link Vivre}'s wheel-driven carousel) and the global
+ * sections (e.g. {@link Pourquoi}'s wheel-driven carousel) and the global
  * {@link SmoothScroll} provider that owns the Lenis instance.
  *
  * A section dispatches `SECTION_LOCK_EVENT` on `window` with a boolean

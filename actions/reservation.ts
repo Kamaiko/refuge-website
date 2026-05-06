@@ -3,8 +3,8 @@
 import { z } from "zod";
 
 /** Server-side validation schema for the Reserve form. The refuge enum is
- *  the source of truth for valid slugs — keep in sync with `UNITES` in
- *  `lib/data/unites.ts`. */
+ *  the source of truth for valid slugs — keep in sync with `REFUGES` in
+ *  `lib/data/refuges.ts`. */
 const ReservationSchema = z.object({
   nom: z.string().min(2, "Veuillez indiquer votre nom."),
   email: z.email("Adresse courriel invalide."),

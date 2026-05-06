@@ -32,7 +32,7 @@ type Props = {
  *
  * Imperative — driven by the `play` prop, not a ScrollTrigger. Use when
  * the reveal needs to fire on something other than scroll position
- * (e.g. the active pinned card in the Capsules section).
+ * (e.g. the active pinned card in the Hebergements section).
  */
 export default function RevealChars({
   text,

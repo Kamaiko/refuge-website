@@ -7,7 +7,7 @@ import { MQ } from "@/lib/breakpoints";
 import Marquee from "@/components/common/Marquee";
 import { SITE_CONFIG } from "@/lib/constants";
 
-/** Decorative banner between Capsules and Feedback: a giant directional
+/** Decorative banner between Hebergements and Pourquoi: a giant directional
  *  {@link Marquee} of the brand line. Aria-hidden — pure visual flourish.
  *
  *  Scroll-driven Y parallax with per-viewport magnitudes — the ribbon

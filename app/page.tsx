@@ -3,9 +3,9 @@ import Hero from "@/components/sections/Hero";
 import Manifeste from "@/components/sections/Manifeste";
 import Medaillons from "@/components/sections/Medaillons";
 import Choisir from "@/components/sections/Choisir";
-import Capsules from "@/components/sections/Capsules";
+import Hebergements from "@/components/sections/Hebergements";
 import MarqueeBrand from "@/components/sections/MarqueeBrand";
-import Vivre from "@/components/sections/Vivre";
+import Pourquoi from "@/components/sections/Pourquoi";
 import Feedback from "@/components/sections/Feedback";
 
 export default function Home() {
@@ -17,9 +17,9 @@ export default function Home() {
         <Manifeste />
         <Medaillons />
         <Choisir />
-        <Capsules />
+        <Hebergements />
         <MarqueeBrand />
-        <Vivre />
+        <Pourquoi />
         <Feedback />
       </main>
     </>

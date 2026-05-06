@@ -16,16 +16,16 @@ export const SCROLL_OUT = {
   duration: 0.5,
 } as const;
 
-/** Scroll-pinned card stack on the Capsules section. */
-export const CAPSULES = {
+/** Scroll-pinned card stack on the Hebergements section. */
+export const HEBERGEMENTS = {
   /** Total pinned scroll length — ~6 viewports on desktop. */
   stickyDuration: "+=600%",
   /** Scale reduction per stacked card behind the active one. */
   scaleStep: 0.07,
 } as const;
 
-/** Wheel-hijacked horizontal carousel on the Vivre section. */
-export const VIVRE = {
+/** Wheel-hijacked horizontal carousel on the Pourquoi section. */
+export const POURQUOI = {
   /** Horizontal gap (in px) preserved between the leaving and arriving
    *  card during the slide travel. Negative because cards travel by
    *  `xPercent: -100` (one-card-width left); the small overlap hides any

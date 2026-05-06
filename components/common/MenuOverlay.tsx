@@ -273,10 +273,8 @@ export default function MenuOverlay() {
     return () => window.removeEventListener("resize", onResize);
   }, [isOpen]);
 
-  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow).
-  // Duplicating it here previously caused a restore race where this cleanup
-  // and SmoothScroll's effect could both run, with the second-to-run winning
-  // arbitrarily.
+  // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow) —
+  // do not duplicate it here.
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
@@ -383,13 +381,13 @@ export default function MenuOverlay() {
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
           >
             <Image
-              src="/images/unite-brume.avif"
+              src="/images/refuge-brume.avif"
               alt=""
               fill
               sizes="25vw"
               // Source AVIFs (2400×1340, ~150KB) are already optimized.
               // Next's default re-encode at quality 75 visibly softens them
-              // — match Capsules.tsx and serve the source directly.
+              // — match Hebergements.tsx and serve the source directly.
               unoptimized
               className="object-cover object-[45%_40%]"
               priority={false}

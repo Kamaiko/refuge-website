@@ -30,7 +30,7 @@ type Props = {
  * - lines: splits on \n, each line slides up from below an overflow-hidden mask
  * - words: each word slides up from below
  *
- * For per-character right→left wipe (used by Capsules), see RevealChars.
+ * For per-character right→left wipe (used by Hebergements), see RevealChars.
  */
 export default function RevealText({
   children,

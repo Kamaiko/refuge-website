@@ -4,11 +4,11 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { UNITES } from "@/lib/data/unites";
+import { REFUGES } from "@/lib/data/refuges";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
 import { SITE_CONFIG } from "@/lib/constants";
 import { MQ } from "@/lib/breakpoints";
-import { CAPSULES } from "@/lib/motion";
+import { HEBERGEMENTS } from "@/lib/motion";
 import Marquee from "@/components/common/Marquee";
 import RevealChars from "@/components/common/RevealChars";
 
@@ -18,7 +18,7 @@ import RevealChars from "@/components/common/RevealChars";
  * stack: card 0 grows from a stadium pill into a fullscreen rounded card,
  * then cards 1 and 2 slide up over it, scaling the stack down underneath.
  *
- * Reads `UNITES` for content (order significant — see `lib/data/unites.ts`).
+ * Reads `REFUGES` for content (order significant — see `lib/data/refuges.ts`).
  * Each card's text is revealed via {@link RevealChars}, driven imperatively
  * from the pinned timeline's `onUpdate` (not scroll-position-based, because
  * the cards are themselves moved by the timeline).
@@ -31,7 +31,7 @@ import RevealChars from "@/components/common/RevealChars";
  * Reduced-motion: skips the pin entirely, shows all cards at their final
  * stacked state.
  */
-export default function Capsules() {
+export default function Hebergements() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cardImageRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -63,7 +63,7 @@ export default function Capsules() {
         },
         (ctx) => {
           const { isMobile } = ctx.conditions as { isDesktop: boolean; isMobile: boolean };
-          const stickyDuration = isMobile ? "+=300%" : CAPSULES.stickyDuration;
+          const stickyDuration = isMobile ? "+=300%" : HEBERGEMENTS.stickyDuration;
 
           gsap.set(cards[0], { scale: 0.42, yPercent: 0, opacity: 1, zIndex: 1 });
           gsap.set(cards[1], { yPercent: 110, scale: 1, opacity: 1, zIndex: 2 });
@@ -93,8 +93,8 @@ export default function Capsules() {
           // extends past phase 3 so card 3 gets a 1.5-unit sticky hold).
           const PHASE_STARTS = [0, 1.5, 3] as const;
           const STACK_FINAL_SCALES = [
-            1 - CAPSULES.scaleStep * 2,
-            1 - CAPSULES.scaleStep,
+            1 - HEBERGEMENTS.scaleStep * 2,
+            1 - HEBERGEMENTS.scaleStep,
             1,
           ] as const;
           const tl = gsap.timeline({
@@ -219,9 +219,9 @@ export default function Capsules() {
 
       <div className="absolute inset-0 p-3 md:p-4 z-10">
         <div className="relative h-full w-full">
-          {UNITES.map((unite, i) => (
+          {REFUGES.map((refuge, i) => (
             <div
-              key={unite.slug}
+              key={refuge.slug}
               ref={(el) => {
                 cardRefs.current[i] = el;
               }}
@@ -240,8 +240,8 @@ export default function Capsules() {
                   className="absolute inset-0 will-change-transform"
                 >
                   <Image
-                    src={unite.image}
-                    alt={unite.nom}
+                    src={refuge.image}
+                    alt={refuge.nom}
                     fill
                     sizes="100vw"
                     priority={i === 0}
@@ -262,8 +262,8 @@ export default function Capsules() {
                   }}
                 />
 
-                <UniteCardContent
-                  unite={unite}
+                <RefugeCardContent
+                  refuge={refuge}
                   play={revealActive[i] ?? false}
                   onReserve={openReservePanel}
                 />
@@ -294,12 +294,12 @@ export default function Capsules() {
   );
 }
 
-function UniteCardContent({
-  unite,
+function RefugeCardContent({
+  refuge,
   play,
   onReserve,
 }: {
-  unite: (typeof UNITES)[number];
+  refuge: (typeof REFUGES)[number];
   play: boolean;
   onReserve: () => void;
 }) {
@@ -352,7 +352,7 @@ function UniteCardContent({
     <div ref={cardRef} className="relative z-10 flex h-full flex-col justify-end p-8 pb-36 md:p-14">
       <div className="max-w-3xl">
         <RevealChars
-          text={unite.surnom}
+          text={refuge.surnom}
           play={play}
           duration={1.0}
           stagger={0.025}
@@ -362,7 +362,7 @@ function UniteCardContent({
       {/* Title sits OUTSIDE max-w-3xl: at 8vw + tight tracking, the nom
           would otherwise wrap or be clipped by the card's overflow-hidden. */}
       <RevealChars
-        text={unite.nom}
+        text={refuge.nom}
         play={play}
         delay={0.1}
         duration={1.1}
@@ -373,7 +373,7 @@ function UniteCardContent({
           ref={descRef}
           className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-lg xs:leading-relaxed md:text-xl will-change-transform"
         >
-          {unite.description}
+          {refuge.description}
         </p>
 
         <div
@@ -395,7 +395,7 @@ function UniteCardContent({
               type="button"
               onClick={onReserve}
               tabIndex={-1}
-              aria-label={`Réserver ${unite.nom}`}
+              aria-label={`Réserver ${refuge.nom}`}
               className="group relative inline-flex h-12 w-12 xs:h-14 xs:w-14 items-center justify-center rounded-full overflow-hidden bg-creme-terre/70 transition-transform duration-300 ease-out hover:scale-[1.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
             >
               <span
@@ -423,9 +423,9 @@ function UniteCardContent({
             ref={capacityRef}
             className="flex items-center gap-2 md:gap-6 text-creme-dim text-[11px] xs:text-xs whitespace-nowrap will-change-transform"
           >
-            <span>{unite.capacite}</span>
+            <span>{refuge.capacite}</span>
             <span className="opacity-40">·</span>
-            <span>{unite.surface}</span>
+            <span>{refuge.surface}</span>
           </div>
         </div>
       </div>

@@ -24,6 +24,11 @@ type Props = {
    *  base speed when idle, asymptotically peaks near 3× during fast
    *  scrolling. Boost decays smoothly back to 1 when the scroll stops. */
   scrollBoost?: boolean;
+  /** ScrollTrigger `start` for the directional-flip deadzone. While the
+   *  ribbon's top sits below this line, scroll-direction flips don't
+   *  fire — the marquee keeps its current direction. Default `"top 80%"`
+   *  (top of ribbon at 80% from viewport top before flips kick in). */
+  directionalStart?: string;
 };
 
 /** Infinite horizontal marquee. Duplicates `text` enough times to fill the
@@ -38,6 +43,7 @@ export default function Marquee({
   separator = " — ",
   directional = false,
   scrollBoost = false,
+  directionalStart = "top 80%",
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
@@ -109,14 +115,11 @@ export default function Marquee({
       let currentDir = 1;
       const st = ScrollTrigger.create({
         trigger: wrap.current,
-        // Deadzone: while the ribbon's top sits in the bottom 30% of the
-        // viewport, the directional onUpdate doesn't fire — the ribbon
-        // keeps its current direction even if the user wiggles the
-        // scroll. Once the top crosses 70%, scroll-direction flips
-        // resume. Reversible: scrolling back into the deadzone disables
-        // flipping again (ScrollTrigger marks the trigger inactive
-        // outside [start, end] and stops invoking onUpdate).
-        start: "top 70%",
+        // Deadzone configured by `directionalStart` prop — while the
+        // ribbon's top sits below that line, the directional onUpdate
+        // doesn't fire and the ribbon keeps its current direction. Once
+        // the top crosses it, scroll-direction flips resume. Reversible.
+        start: directionalStart,
         end: "bottom top",
         onUpdate: (self) => {
           if (self.direction !== currentDir) {
@@ -140,7 +143,7 @@ export default function Marquee({
         gsap.ticker.remove(tickerFn);
       };
     },
-    { scope: wrap, dependencies: [directional, scrollBoost] },
+    { scope: wrap, dependencies: [directional, scrollBoost, directionalStart] },
   );
 
   return (
