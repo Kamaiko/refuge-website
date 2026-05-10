@@ -24,12 +24,12 @@ type Slide = {
 const SLIDES: readonly Slide[] = [
   {
     title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
-    body: "Personne ne vous chronomètre. Le fjord encore moins. Le seul calendrier ici, c'est la lumière qui tombe.",
+    body: "Personne ne vous chronomètre. Le seul calendrier ici, c'est la lumière qui tombe sur le fjord.",
     image: "/images/refuge-brume.avif",
   },
   {
     title: "Profitez de la vue—par la grande baie vitrée panoramique",
-    body: "Approchez le fjord comme jamais, et contemplez ce paysage maritime unique sous toutes ses lumières.",
+    body: "Une fenêtre ouverte sur l'eau et le ciel, qui se renouvelle à chaque heure du jour.",
     image: "/images/refuge-galets.avif",
   },
   {
