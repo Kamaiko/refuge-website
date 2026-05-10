@@ -56,19 +56,27 @@ export default function Header() {
   const pillH = isTiny ? CTA.pillH.tiny : isMobile ? CTA.pillH.mobile : CTA.pillH.desktop;
   const circleH = isTiny ? CTA.circleH.tiny : isMobile ? CTA.circleH.mobile : CTA.circleH.desktop;
 
-  // Entrance: Reserve fades in at full size; Menu's cream pill grows around
-  // the inner circle (height + paddingRight + label width all start at 0
-  // so the cream only appears once the pill expands). Re-runs when the
-  // breakpoint flips so the pill ends at the correct size on each viewport.
+  // Entrance — Reserve fades in at full size. Kept in its own `useGSAP`
+  // **without** dependencies because `useMediaQuery` flips after hydration
+  // on mobile (SSR default is false → real value true), which previously
+  // re-ran this hook via the [pillH, circleH] deps; the revertOnUpdate
+  // cleanup snapped opacity back to 0 mid-tween → visible flicker on
+  // refresh. Reserve's tween doesn't depend on the breakpoint, so the
+  // hook shouldn't re-run when the breakpoint settles.
   useGSAP(() => {
-    if (reserveRef.current) {
-      gsap.fromTo(
-        reserveRef.current,
-        { opacity: 0, y: -10 },
-        { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "expo.out" },
-      );
-    }
+    if (!reserveRef.current) return;
+    gsap.fromTo(
+      reserveRef.current,
+      { opacity: 0, y: -10 },
+      { opacity: 1, y: 0, duration: 0.9, delay: 0.4, ease: "expo.out" },
+    );
+  }, { dependencies: [] });
 
+  // Menu's cream pill grows around the inner circle (height + paddingRight
+  // + label width all start at 0 so the cream only appears once the pill
+  // expands). Re-runs when the breakpoint flips so the pill ends at the
+  // correct size on each viewport.
+  useGSAP(() => {
     if (menuBtnRef.current && labelAreaRef.current) {
       // Initial state: pill at FINAL height + perfect circle (width=height=pillH),
       // cream halo already painted, gris-tan circle centered inside via equal
