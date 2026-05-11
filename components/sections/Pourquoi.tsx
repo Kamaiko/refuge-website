@@ -379,6 +379,7 @@ export default function Pourquoi() {
   return (
     <section
       ref={sectionRef}
+      id="pourquoi"
       className="relative w-full overflow-hidden bg-base-noir z-10 md:h-screen"
     >
       {/* Mobile: vertical stack — small gris-tan text card on top,
