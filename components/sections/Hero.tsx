@@ -7,7 +7,7 @@ import { SITE_CONFIG } from "@/lib/constants";
 import BrandMark from "@/components/common/BrandMark";
 
 const TAGLINE = "Trois refuges\nau creux du fjord.";
-const SUBCOPY = `Passer du temps de qualité dans nos emplacements au Québec avec — ${SITE_CONFIG.brandMark}.`;
+const SUBCOPY = `Passez du temps de qualité dans nos emplacements au Québec avec — ${SITE_CONFIG.brandMark}.`;
 
 /** Full-viewport hero. A muted looping video sits behind the brand
  *  wordmark, tagline and subcopy (all GSAP fade-up on mount). The video
@@ -115,7 +115,7 @@ export default function Hero() {
 
             <p
               ref={subcopyRef}
-              className="text-creme max-w-md text-base font-semibold leading-snug md:text-xl"
+              className="text-creme max-w-md text-lg font-semibold leading-snug md:text-2xl"
             >
               {SUBCOPY}
             </p>
