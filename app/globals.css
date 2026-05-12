@@ -95,3 +95,31 @@ body::-webkit-scrollbar,
     scroll-behavior: auto !important;
   }
 }
+
+/* Gradient fill for the Footer's "Aquilon®" wordmark. Two targets :
+   1) `.aquilon-wordmark-fill .rc-glyph` — the inner span carrying
+      each character within RevealChars. `background-clip: text` MUST
+      be on the element that directly contains the text (the rc-glyph),
+      not on a parent mask, because the rc-glyph also carries the GSAP
+      `xPercent` transform and the bg-clip needs to live on the same
+      element as the transform to render correctly across engines.
+   2) `.aquilon-wordmark-fill` (direct) — for the standalone ® span
+      that's classed directly and has the character as its own text
+      content (no rc-glyph descendant).
+   Each glyph gets its own pale-top → creme-bottom gradient —
+   visually identical to a word-wide gradient since all glyphs share
+   the same line-height.
+
+   Colors are inlined as raw RGB (matching `--color-creme-dim` =
+   #C9C5BD and `--color-creme` = #F4EFE7) instead of `var()` +
+   `color-mix()`, to rule out engine-specific gotchas where
+   `color-mix(in oklab, …)` on top of CSS variables fails to compile
+   inside a `background-image` declaration. */
+.aquilon-wordmark-fill,
+.aquilon-wordmark-fill .rc-glyph {
+  background-image: linear-gradient(to bottom, rgb(201 197 189), rgb(244 239 231));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

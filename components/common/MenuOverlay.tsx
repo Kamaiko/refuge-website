@@ -9,15 +9,8 @@ import { PANEL } from "@/lib/motion";
 import { SITE_CONFIG } from "@/lib/constants";
 import { BP } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
+import { NAV } from "@/lib/data/nav";
 import Marquee from "./Marquee";
-
-const NAV = [
-  { label: "Accueil", href: "#" },
-  { label: "Introduction", href: "#manifeste" },
-  { label: "Refuges", href: "#refuges" },
-  { label: `Pourquoi ${SITE_CONFIG.brandMark} ?`, href: "#pourquoi" },
-  { label: "Feedback", href: "#feedback" },
-];
 
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;

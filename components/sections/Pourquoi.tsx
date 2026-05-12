@@ -8,6 +8,7 @@ import { MQ } from "@/lib/breakpoints";
 import { POURQUOI } from "@/lib/motion";
 import { dispatchSectionLock } from "@/lib/section-lock";
 import RevealChars from "@/components/common/RevealChars";
+import SlideIndicators from "@/components/common/SlideIndicators";
 
 type Slide = {
   title: string;
@@ -616,46 +617,3 @@ function CardText({
   );
 }
 
-/** Pagination chips — two outlined circles. The `current` chip is more
- *  saturated; the `total` chip dimmed so they read as the position-in-
- *  series ("où je suis / combien il y en a"). Padding-zeros to two
- *  digits matches the reference Awwwards pattern (`01`, `02`, `03`). */
-function SlideIndicators({
-  current,
-  total,
-  active,
-  shiftLeft = false,
-}: {
-  current: number;
-  total: number;
-  active: boolean;
-  shiftLeft?: boolean;
-}) {
-  const fmt = (n: number) => String(n).padStart(2, "0");
-  // `shiftLeft` cancels most of CardText's bottom-row left inset
-  // (`px-12 md:px-16 lg:px-20`) so the chips read closer to the card's
-  // edge. Slide 2 keeps the default inset — its inner card edge IS the
-  // menu-pill zone, pulling the chips left would put them under the pill.
-  const marginXClass = shiftLeft
-    ? "-ml-8 md:-ml-12 lg:-ml-14"
-    : "ml-2 md:ml-3";
-  const chips = [
-    { value: current, tone: "border-creme-terre/40 text-creme-terre/85" },
-    { value: total, tone: "border-creme-terre/20 text-creme-terre/40" },
-  ];
-  return (
-    <div
-      aria-hidden
-      className={`flex items-center gap-2 shrink-0 ${marginXClass} mb-2 md:mb-3 transition-opacity duration-500 ${active ? "opacity-100" : "opacity-0"}`}
-    >
-      {chips.map(({ value, tone }, i) => (
-        <span
-          key={i}
-          className={`inline-flex h-14 w-14 items-center justify-center rounded-full border text-sm font-medium tracking-wide ${tone}`}
-        >
-          {fmt(value)}
-        </span>
-      ))}
-    </div>
-  );
-}

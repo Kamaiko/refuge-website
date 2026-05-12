@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
+import BgGradient from "@/components/common/BgGradient";
 
 const EYEBROW = "Et eux, qu'en pensent-ils ?";
 const QUOTE = `Un séjour à ${SITE_CONFIG.brandMark} au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau suspendu.`;
@@ -109,6 +111,20 @@ export default function Feedback() {
       id="feedback"
       className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-32 md:pb-48 min-h-[100svh] flex flex-col"
     >
+      {/* Symmetric counterpart to the Activités base-noir → gris-tan
+          fade. The top 45% of Feedback runs gris-tan → base-noir so
+          the carousel's warm bg melts smoothly back into the rest of
+          the page's pure black. Bumped from the original 25% — the
+          shorter band read as a too-sharp seam at the section
+          boundary; 45% lets the eye drift through the transition
+          rather than catching the edge. */}
+      <BgGradient
+        from="var(--color-gris-tan)"
+        to="var(--color-base-noir)"
+        direction="down"
+        className="bottom-[55%]"
+      />
+
       {/* Eyebrow — top-left */}
       <p className="text-creme text-lg md:text-xl font-semibold tracking-tight">
         <WordSplit text={EYEBROW} />
@@ -125,9 +141,12 @@ export default function Feedback() {
 
       {/* Author — bottom-left, avatar + name + location */}
       <div ref={authorRef} className="flex items-center gap-4 mt-12 will-change-transform">
-        <span
-          aria-hidden
-          className="inline-block h-12 w-12 rounded-full bg-gris-tan-soft shrink-0"
+        <Image
+          src="/images/PhotoPat.jpg"
+          alt="Patrick Patenaude"
+          width={96}
+          height={96}
+          className="h-12 w-12 rounded-full object-cover shrink-0"
         />
         <div className="flex flex-col leading-tight">
           <span className="text-creme text-sm">Patrick P.</span>

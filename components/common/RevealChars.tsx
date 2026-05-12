@@ -9,6 +9,12 @@ import { cn } from "@/lib/utils";
  *    `aria-label` on the wrapper (per-glyph spans are `aria-hidden`).
  *  - `play`: imperative trigger. Flip from false → true to slide the
  *    glyphs in; true → false plays a faster reverse-out.
+ *  - `style`: inline style applied to the root span. Useful for
+ *    gradient + `background-clip: text` effects that Tailwind v4
+ *    utilities don't reliably compile through deeply nested
+ *    transformed children. Internal `visibility: hidden` (managed by
+ *    the mount effect) takes precedence over any user-supplied
+ *    `visibility`.
  *  - `charClassName`: applied to each per-glyph mask span if you need
  *    extra alignment / leading control.
  *  - `stagger`: per-character delay in seconds. Default 0 (all glyphs
@@ -18,6 +24,7 @@ type Props = {
   text: string;
   play: boolean;
   className?: string;
+  style?: React.CSSProperties;
   charClassName?: string;
   duration?: number;
   delay?: number;
@@ -38,6 +45,7 @@ export default function RevealChars({
   text,
   play,
   className,
+  style,
   charClassName,
   duration = 0.9,
   delay = 0,
@@ -89,7 +97,10 @@ export default function RevealChars({
       ref={ref}
       className={className}
       aria-label={text}
-      style={{ visibility: "hidden" }}
+      // User style spread first, then `visibility: hidden` overrides —
+      // visibility is internally managed (revealed by the mount effect
+      // via `gsap.set`), so callers can't accidentally override it.
+      style={{ ...style, visibility: "hidden" }}
     >
       {segments.map((seg, si) => {
         if (seg.type === "space") {

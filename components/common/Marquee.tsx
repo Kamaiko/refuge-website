@@ -29,6 +29,24 @@ type Props = {
    *  fire — the marquee keeps its current direction. Default `"top 80%"`
    *  (top of ribbon at 80% from viewport top before flips kick in). */
   directionalStart?: string;
+  /** If true, the ticker pauses while the cursor is hovering anywhere
+   *  inside the wrap's bounding rect, even when the cursor is stationary
+   *  during a scroll. Implementation tracks the cursor's last known
+   *  position via a global `mousemove` listener and re-runs the
+   *  hit-test on every `scroll` event — so a still cursor sliding
+   *  "under" the marquee via scroll (or the marquee sliding "out
+   *  from under" the cursor) is detected the same as a real
+   *  pointerenter/leave.
+   *
+   *  Direction-flip state is unaffected — a scroll that changes
+   *  direction while paused still queues the new direction tween,
+   *  which applies when motion resumes. */
+  pauseOnHover?: boolean;
+  /** Called whenever the pause state changes (cursor enters/leaves
+   *  the wrap's hit area). Lets a parent component synchronise other
+   *  UI to the same source of truth — typically a color crossfade
+   *  on the marquee text. */
+  onPauseChange?: (paused: boolean) => void;
 };
 
 /** Infinite horizontal marquee. Duplicates `text` enough times to fill the
@@ -44,6 +62,8 @@ export default function Marquee({
   directional = false,
   scrollBoost = false,
   directionalStart = "top 80%",
+  pauseOnHover = false,
+  onPauseChange,
 }: Props) {
   const wrap = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
@@ -51,6 +71,10 @@ export default function Marquee({
   // via the effect below — writing to a ref (instead of state) keeps the
   // ticker running without a re-render or position reset on viewport flip.
   const speedRef = useRef(speed);
+  // Live pause flag for the ticker. Toggled by pointer-enter / leave when
+  // `pauseOnHover` is true. Ref, not state, so the ticker reads the latest
+  // value every frame without re-rendering the component.
+  const pausedRef = useRef(false);
   const isMobile = useMediaQuery(MQ.belowMd);
 
   useEffect(() => {
@@ -90,6 +114,10 @@ export default function Marquee({
       const setX = gsap.quickSetter(t, "x", "px") as (value: number) => void;
 
       const tickerFn = (_time: number, deltaTime: number) => {
+        // Hover-pause short-circuit. Don't reset lastY / boost so a quick
+        // pause-resume doesn't produce a jolt; the boost state stays valid
+        // and the ribbon picks up the exact same x as when it paused.
+        if (pausedRef.current) return;
         const dt = deltaTime / 1000;
         if (scrollBoost) {
           const y = window.scrollY;
@@ -108,8 +136,68 @@ export default function Marquee({
 
       gsap.ticker.add(tickerFn);
 
+      // Pause-on-hover wiring. Naive pointerenter/leave miss two cases :
+      //  1) Cursor parked over the wrap before any movement — no enter
+      //     event has fired yet.
+      //  2) Page scrolls while the cursor stays still — the wrap slides
+      //     in or out from under a stationary cursor, but the browser
+      //     fires no enter/leave events because the cursor itself
+      //     didn't move.
+      //
+      // Fix : track the cursor's last known viewport position via a
+      // global `mousemove` listener, then re-hit-test against the
+      // wrap's current bounding rect on every scroll event. The state
+      // change is reported via `onPauseChange` so a parent component
+      // (typically the Cta wrapper driving a color crossfade) stays in
+      // sync with the marquee's internal pause flag.
+      let removeHover: (() => void) | null = null;
+      if (pauseOnHover && wrap.current) {
+        const el = wrap.current;
+        // Cursor coords seeded out-of-bounds so the first scroll before
+        // any mouse movement reads as "not hovering" (no false pause).
+        let cursorX = -1;
+        let cursorY = -1;
+
+        const setPaused = (next: boolean) => {
+          if (next === pausedRef.current) return;
+          pausedRef.current = next;
+          onPauseChange?.(next);
+        };
+
+        const hitTest = () => {
+          if (cursorX < 0) {
+            setPaused(false);
+            return;
+          }
+          const rect = el.getBoundingClientRect();
+          const inside =
+            cursorX >= rect.left &&
+            cursorX <= rect.right &&
+            cursorY >= rect.top &&
+            cursorY <= rect.bottom;
+          setPaused(inside);
+        };
+
+        const onMouseMove = (e: MouseEvent) => {
+          cursorX = e.clientX;
+          cursorY = e.clientY;
+          hitTest();
+        };
+        const onScroll = () => hitTest();
+
+        window.addEventListener("mousemove", onMouseMove, { passive: true });
+        window.addEventListener("scroll", onScroll, { passive: true });
+        removeHover = () => {
+          window.removeEventListener("mousemove", onMouseMove);
+          window.removeEventListener("scroll", onScroll);
+        };
+      }
+
       if (!directional || !wrap.current) {
-        return () => gsap.ticker.remove(tickerFn);
+        return () => {
+          gsap.ticker.remove(tickerFn);
+          removeHover?.();
+        };
       }
 
       let currentDir = 1;
@@ -124,13 +212,14 @@ export default function Marquee({
         onUpdate: (self) => {
           if (self.direction !== currentDir) {
             currentDir = self.direction;
-            // 0.35s is short enough to feel responsive to a scroll flick
-            // but still smooths the +/- velocity crossing — without an
-            // ease, the ribbon would snap from +N to -N in a single frame
-            // and look broken.
+            // 0.2s is short enough to feel near-immediate in response
+            // to a scroll-direction flick while still smoothing the
+            // +/- velocity crossing — without an ease, the ribbon
+            // would snap from +N to -N in a single frame and look
+            // broken. Previously 0.35s, which felt sluggish.
             gsap.to(dirState, {
               value: currentDir,
-              duration: 0.35,
+              duration: 0.2,
               ease: "power2.out",
               overwrite: true,
             });
@@ -141,9 +230,10 @@ export default function Marquee({
       return () => {
         st.kill();
         gsap.ticker.remove(tickerFn);
+        removeHover?.();
       };
     },
-    { scope: wrap, dependencies: [directional, scrollBoost, directionalStart] },
+    { scope: wrap, dependencies: [directional, scrollBoost, directionalStart, pauseOnHover] },
   );
 
   return (
