@@ -202,7 +202,7 @@ export default function Hebergements() {
       ref={sectionRef}
       id="refuges"
       className="relative w-full bg-gris-tan overflow-hidden"
-      style={{ height: "100svh" }}
+      style={{ height: "100lvh" }}
     >
       <div
         ref={marqueeWrapRef}

@@ -109,7 +109,7 @@ export default function Feedback() {
     <section
       ref={sectionRef}
       id="feedback"
-      className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-32 md:pb-48 min-h-[100svh] flex flex-col"
+      className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-20 md:pb-48 flex flex-col"
     >
       {/* Symmetric counterpart to the Activités base-noir → gris-tan
           fade. The top 45% of Feedback runs gris-tan → base-noir so
@@ -134,7 +134,7 @@ export default function Feedback() {
           a tighter leading. Smaller display size than the original 5.5vw so
           the quote reads as one calm block instead of dominating. */}
       <div className="flex-1 flex items-center mt-16 md:mt-24">
-        <p className="text-creme text-2xl md:text-4xl lg:text-[3.8vw] font-light leading-[0.98] tracking-[-0.02em] max-w-[75vw]">
+        <p className="text-creme text-2xl xs:text-3xl md:text-4xl lg:text-[3.8vw] font-light leading-snug tracking-[-0.02em] max-w-[75vw]">
           <WordSplit text={QUOTE} />
         </p>
       </div>

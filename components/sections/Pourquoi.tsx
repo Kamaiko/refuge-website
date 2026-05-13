@@ -388,21 +388,23 @@ export default function Pourquoi() {
           a 50/50 column layout below 768px, so we drop it entirely on
           mobile and let the user scroll through the three slides
           naturally. */}
-      <div className="md:hidden flex flex-col gap-12 px-3 py-16">
+      <div className="md:hidden flex flex-col gap-8 px-3 py-16">
         {SLIDES.map((slide, i) => (
-          <article key={slide.title} className="flex flex-col gap-3">
-            <div className="bg-gris-tan rounded-[28px] p-7 flex flex-col gap-6">
-              <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
-                {slide.title}
-              </h3>
-              <div className="flex items-end justify-between gap-4">
-                <SlideIndicators current={i + 1} total={SLIDES.length} active />
-                <p className="text-creme-dim text-base leading-relaxed max-w-sm text-right">
-                  {slide.body}
-                </p>
-              </div>
+          // One unified grey card per slide : title at top, indicators +
+          // body in the middle, image at bottom (with its own rounded
+          // corners). Mirrors the capsules.moyra.co mobile pattern — the
+          // image is part of the card, not a separate panel below.
+          <article key={slide.title} className="bg-gris-tan rounded-[28px] p-7 flex flex-col gap-6">
+            <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
+              {slide.title}
+            </h3>
+            <div className="flex items-end justify-between gap-4">
+              <SlideIndicators current={i + 1} total={SLIDES.length} active />
+              <p className="text-creme-dim text-base leading-relaxed max-w-sm text-right">
+                {slide.body}
+              </p>
             </div>
-            <div className="relative aspect-[4/5] w-full rounded-[28px] overflow-hidden">
+            <div className="relative aspect-[16/10] w-full rounded-[20px] overflow-hidden">
               <Image
                 src={slide.image}
                 alt=""

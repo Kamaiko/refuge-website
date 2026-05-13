@@ -170,25 +170,30 @@ export default function Carousel() {
     // halfway through Activités above; Feedback below snaps back to
     // bg-base-noir at the section boundary.
     <section ref={sectionRef} className="relative w-full bg-gris-tan overflow-hidden z-[95]">
-      {/* Mobile : vertical stack. The pin / scrub does not apply below md,
-          so we render the same 3 cards as a column with natural scroll. */}
-      <div className="md:hidden flex flex-col gap-8 px-3 py-16">
-        {CARDS.map((c, i) => (
-          <article
-            key={c.titre}
-            className="relative aspect-[4/5] w-full overflow-hidden rounded-[40px]"
-          >
-            <Image
-              src={c.image}
-              alt=""
-              fill
-              sizes="100vw"
-              unoptimized
-              className="object-cover"
-            />
-            <CardOverlay card={c} index={i} total={CARDS.length} mobile />
-          </article>
-        ))}
+      {/* Mobile : horizontal thumb-swipe scroll. The pin / scrub doesn't
+          apply below md, but we still want the carousel feeling — so the
+          3 cards live in a horizontal overflow-x track with snap-mandatory.
+          `w-[85vw]` lets the edge of the next card peek on the right, hinting
+          at swipeability. Native scroll = touch-friendly, no pin hijack. */}
+      <div className="md:hidden py-16">
+        <div className="overflow-x-auto snap-x snap-mandatory flex gap-4 px-3 no-scrollbar">
+          {CARDS.map((c, i) => (
+            <article
+              key={c.titre}
+              className="snap-center shrink-0 w-[85vw] aspect-[4/5] relative overflow-hidden rounded-[40px]"
+            >
+              <Image
+                src={c.image}
+                alt=""
+                fill
+                sizes="85vw"
+                unoptimized
+                className="object-cover"
+              />
+              <CardOverlay card={c} index={i} total={CARDS.length} mobile />
+            </article>
+          ))}
+        </div>
       </div>
 
       {/* Desktop : pinned horizontal track. The track holds 3 cards of

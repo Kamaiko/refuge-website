@@ -113,12 +113,13 @@ export default function Cta() {
       >
         <Marquee
           text={MARQUEE_TEXT}
-          speed={360}
-          mobileSpeed={240}
+          speed={220}
+          mobileSpeed={160}
           directional
+          scrollBoost
           pauseOnHover
           onPauseChange={setHovered}
-          className="text-[14vw] md:text-[11vw] font-medium leading-[1.05] tracking-[-0.04em] pb-[0.12em]"
+          className="text-[11vw] md:text-[9vw] font-medium leading-[1.05] tracking-[-0.04em] pb-[0.12em]"
         />
       </div>
 
@@ -135,7 +136,7 @@ export default function Cta() {
               override back to `text-creme-dim` to preserve their
               previous cream tint as a distinct "actionable" tone
               against the warmer paragraph. */}
-          <p className="text-creme-terre/70 text-2xl xs:text-3xl md:text-4xl lg:text-5xl font-medium leading-snug max-w-3xl">
+          <p className="text-creme-terre/70 text-lg xs:text-xl md:text-3xl lg:text-4xl font-medium leading-snug max-w-3xl">
             Ce site est un concept de portfolio par&nbsp;
             <a
               href="https://www.linkedin.com/in/patrickpatenaude"

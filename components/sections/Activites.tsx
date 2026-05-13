@@ -220,7 +220,7 @@ export default function Activites() {
                   <span className="text-creme text-xl md:text-2xl font-medium tracking-tight">
                     {n.label}
                   </span>
-                  <span className="text-creme-dim text-sm md:text-base font-medium tracking-wide">
+                  <span className="text-creme-terre/70 text-sm md:text-base font-medium tracking-wide">
                     {n.duration}
                   </span>
                 </div>
@@ -239,7 +239,7 @@ export default function Activites() {
             ))}
           </ul>
 
-          <p className="text-creme-terre/70 max-w-xl text-xl md:text-3xl font-medium leading-snug">
+          <p className="text-creme-terre/70 max-w-xl text-base md:text-2xl font-medium leading-snug">
             On peut sortir une heure ou disparaître deux jours. Le territoire ne s&apos;impose pas — il propose. Chaque activité se choisit comme on choisit la lumière du moment : par envie, pas par programme.
           </p>
         </div>
