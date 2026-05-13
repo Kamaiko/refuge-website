@@ -115,11 +115,27 @@ body::-webkit-scrollbar,
    `color-mix()`, to rule out engine-specific gotchas where
    `color-mix(in oklab, …)` on top of CSS variables fails to compile
    inside a `background-image` declaration. */
-.aquilon-wordmark-fill,
-.aquilon-wordmark-fill .rc-glyph {
-  background-image: linear-gradient(to bottom, rgb(201 197 189), rgb(244 239 231));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+@layer components {
+  .aquilon-wordmark-fill {
+    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 65%, rgb(244 239 231) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .aquilon-wordmark-fill .rc-glyph {
+    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 65%, rgb(244 239 231) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  /* The last per-glyph mask is the `®` glyph — shrink + raise it so the
+     character reads as a superscript instead of a same-size letter. Stays
+     within the per-glyph RevealChars animation since it's still a regular
+     mask in the sequence. */
+  .aquilon-wordmark-fill:last-child {
+    font-size: 0.32em;
+    vertical-align: text-top;
+  }
 }

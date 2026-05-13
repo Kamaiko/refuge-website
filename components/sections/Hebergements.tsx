@@ -366,7 +366,7 @@ function RefugeCardContent({
         play={play}
         delay={0.1}
         duration={1.1}
-        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.04em]"
+        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.02em]"
       />
       <div className="max-w-3xl">
         <p

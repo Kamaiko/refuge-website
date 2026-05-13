@@ -69,7 +69,7 @@ export default function Footer() {
   return (
     <footer
       ref={sectionRef}
-      className="relative w-full px-8 md:px-12 pt-10 md:pt-14 pb-4 md:pb-6"
+      className="relative w-full px-8 md:px-12 pt-10 md:pt-14 pb-0"
     >
       {/* Tan delimiter — `creme-terre/70` matches the brand's secondary
           text tone used in Choisir, Carousel subtitles, and Cta's
@@ -111,20 +111,14 @@ export default function Footer() {
           every glyph shares the same line-height. */}
       <div className="overflow-hidden text-center">
         <RevealChars
-          text={SITE_CONFIG.name}
+          text={SITE_CONFIG.brandMark}
           play={play}
           stagger={0}
           delay={0.1}
           duration={1.0}
-          className="inline-block align-bottom leading-[0.85] tracking-[0.01em] text-[22vw] font-bold"
+          className="block leading-[0.92] tracking-[0.01em] text-[24vw] font-bold"
           charClassName="aquilon-wordmark-fill"
         />
-        <span
-          aria-hidden
-          className="aquilon-wordmark-fill inline-block align-bottom text-[6vw] font-bold leading-[0.85] ml-[0.05em]"
-        >
-          ®
-        </span>
       </div>
     </footer>
   );
