@@ -378,9 +378,11 @@ function RefugeCardContent({
           className="mt-8 flex flex-nowrap items-center gap-4 md:gap-6"
         >
           {/* Compact "+" CTA. tabIndex={-1}: Tab skips this flourish; the
-              Header Réserver CTA is the keyboard path.
-              Entrance: scales 0 → 1 from center via the GSAP useEffect
-              above (back.out overshoot).
+              Header Réserver CTA is the keyboard path. The wrapping
+              `plusBtnWrapRef` scales 0 → 1 from center on entrance ;
+              the surrounding `ctaRowRef` is currently untweened — kept
+              in the JSX as a hook for a future re-introduction of the
+              row-level fade.
               Hover (Tailwind, independent of `play`): a cream disc grows
               from center over the gris-tan base, the "+" glyph rotates
               135° (lands as ×), and the whole button scales 1 → 1.1.

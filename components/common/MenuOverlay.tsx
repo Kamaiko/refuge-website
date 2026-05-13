@@ -11,6 +11,7 @@ import { BP } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
 import { NAV } from "@/lib/data/nav";
 import Marquee from "./Marquee";
+import SocialIcons from "./SocialIconLink";
 
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;
@@ -57,9 +58,6 @@ export default function MenuOverlay() {
   const navRef = useRef<HTMLUListElement>(null);
   const socialsRef = useRef<HTMLDivElement>(null);
   const conceptRef = useRef<HTMLParagraphElement>(null);
-
-  const socialIconCls =
-    "inline-flex h-14 w-14 items-center justify-center rounded-full border border-creme/20 text-creme/70 hover:text-creme hover:border-creme/60 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-gris-tan";
 
   useGSAP(() => {
     if (backdropRef.current) {
@@ -336,49 +334,11 @@ export default function MenuOverlay() {
             </ul>
 
             <div className="mt-auto flex flex-col gap-4 md:flex-row md:items-center md:gap-8">
+              {/* `socialsRef` stays — the GSAP entrance staggers the icons
+                  via `socialsRef.current.querySelectorAll('a')`, which
+                  matches the anchors rendered by SocialIcons. */}
               <div ref={socialsRef} className="flex items-center gap-4 shrink-0">
-                <a
-                  href="https://www.instagram.com/patrickpatenaude/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Instagram — Patrick Patenaude"
-                  className={socialIconCls}
-                >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.5" />
-                    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.5" />
-                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.linkedin.com/in/patrickpatenaude"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="LinkedIn — Patrick Patenaude"
-                  className={socialIconCls}
-                >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </a>
-                <a
-                  href="https://github.com/Kamaiko"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="GitHub — Patrick Patenaude"
-                  className={socialIconCls}
-                >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </a>
+                <SocialIcons tone="on-gris-tan" />
               </div>
               <p ref={conceptRef} className="text-creme-dim text-sm md:text-base font-semibold max-w-xl leading-relaxed">
                 Ce site web est juste un concept de projet réalisé par moi pour démontrer mes capacités.

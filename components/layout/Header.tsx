@@ -7,6 +7,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { useMenu } from "@/components/common/MenuContext";
 import { useReservePanel } from "@/components/common/ReservePanelContext";
+import { useMapOverlay } from "@/components/common/MapOverlayContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import HamburgerIcon from "@/components/common/HamburgerIcon";
 import { SITE_CONFIG } from "@/lib/constants";
@@ -41,6 +42,7 @@ const getHideAt = () => Math.max(80, window.innerHeight * 0.6);
 export default function Header() {
   const { toggle: menuToggle, isOpen: menuIsOpen } = useMenu();
   const { open: openReservePanel, isOpen: reserveIsOpen } = useReservePanel();
+  const { isOpen: mapIsOpen } = useMapOverlay();
   const reserveRef = useRef<HTMLButtonElement>(null);
   const brandRef = useRef<HTMLAnchorElement>(null);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
@@ -288,18 +290,24 @@ export default function Header() {
     const footer = document.querySelector("footer");
     const menu = menuBtnRef.current;
     if (!footer || !menu) return;
+    let currentOpacity = -1; // sentinel — first crossing always tweens
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const inFooter = entry.intersectionRatio >= 0.3;
-        menu.style.pointerEvents = inFooter ? "none" : "";
+        const target = entry.isIntersecting ? 0 : 1;
+        // Single threshold is enough — the callback only branches on the
+        // 0.3 boundary, so the extra threshold ticks ([0, 0.5, 1]) were
+        // just creating redundant tween constructions on every crossing.
+        if (target === currentOpacity) return;
+        currentOpacity = target;
+        menu.style.pointerEvents = target === 0 ? "none" : "";
         gsap.to(menu, {
-          opacity: inFooter ? 0 : 1,
+          opacity: target,
           duration: 0.4,
           ease: "power2.out",
           overwrite: "auto",
         });
       },
-      { threshold: [0, 0.3, 0.5, 1] },
+      { threshold: 0.3 },
     );
     observer.observe(footer);
     return () => observer.disconnect();
@@ -391,7 +399,7 @@ export default function Header() {
         // so the backdrop covers the Menu (visible through the blur but
         // not clickable). Pointer-events disabled in the same condition.
         className={`menu-cta group opacity-0 fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
-          reserveMaskActive ? "z-[150] pointer-events-none" : "z-[300]"
+          reserveMaskActive || mapIsOpen ? "z-[150] pointer-events-none" : "z-[300]"
         }`}
       >
         {/* items-start clips the wheel from the top so only "Menu" shows at rest. */}

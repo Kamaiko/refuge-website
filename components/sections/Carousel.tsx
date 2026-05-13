@@ -173,10 +173,11 @@ export default function Carousel() {
       {/* Mobile : horizontal thumb-swipe scroll. The pin / scrub doesn't
           apply below md, but we still want the carousel feeling — so the
           3 cards live in a horizontal overflow-x track with snap-mandatory.
-          Layout matches the capsules.moyra.co mobile pattern : image
-          (with niveau pill + indicators overlay) on top, title + body
-          below in plain text. `w-[85vw]` lets the edge of the next card
-          peek on the right, hinting at swipeability. */}
+          Card layout : image (with niveau pill + indicators overlay) on
+          top, title + body below in plain text — keeps the photo as the
+          primary anchor and offloads body text into legible vertical
+          rhythm. `w-[85vw]` lets the edge of the next card peek on the
+          right, hinting at swipeability. */}
       <div className="md:hidden py-16">
         <div className="overflow-x-auto snap-x snap-mandatory flex gap-4 px-3 no-scrollbar">
           {CARDS.map((c, i) => (
