@@ -117,14 +117,14 @@ body::-webkit-scrollbar,
    inside a `background-image` declaration. */
 @layer components {
   .aquilon-wordmark-fill {
-    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 55%, rgb(244 239 231) 100%);
+    background-image: linear-gradient(to bottom, rgb(205 190 165), rgb(244 239 231));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
   .aquilon-wordmark-fill .rc-glyph {
-    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 55%, rgb(244 239 231) 100%);
+    background-image: linear-gradient(to bottom, rgb(205 190 165), rgb(244 239 231));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -134,7 +134,11 @@ body::-webkit-scrollbar,
      character reads as a superscript instead of a same-size letter. Stays
      within the per-glyph RevealChars animation since it's still a regular
      mask in the sequence. */
-  .aquilon-wordmark-fill:last-child {
+  /* Footer-scoped : shrink the LAST mask in the AquilonReveal so the
+     ® reads as a superscript. Scoped under `.aquilon-footer-wordmark`
+     so it doesn't also fire on the last letter of Hebergements titles
+     (which now reuse `.aquilon-wordmark-fill` for the same gradient). */
+  .aquilon-footer-wordmark .aquilon-wordmark-fill:last-child {
     font-size: 0.32em;
     vertical-align: text-top;
   }

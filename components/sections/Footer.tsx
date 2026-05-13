@@ -3,8 +3,7 @@
 import { useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "@/lib/gsap";
-import { SITE_CONFIG } from "@/lib/constants";
-import RevealChars from "@/components/common/RevealChars";
+import AquilonReveal from "@/components/common/AquilonReveal";
 
 /**
  * Closing footer. Tan delimiter line, single-row credit + copyright,
@@ -75,29 +74,22 @@ export default function Footer() {
         <span>Tous droits réservés © 2026</span>
       </div>
 
-      {/* `SITE_CONFIG.brandMark` is "Aquilon®" — the ® is the last
-          glyph inside RevealChars; a `:last-child` rule on
-          `aquilon-wordmark-fill` shrinks + raises it to superscript
-          position without breaking its slide-in reveal. `stagger: 0`
-          + `delay: 0.1` plays every glyph in unison after a tiny
-          pause; `overflow-hidden` clips the per-glyph offscreen-right
-          start state (`xPercent: 110`).
-          The wrapper's `h-[1em]` (where `1em` resolves against its
-          own `text-[24vw]`) crops the line-box at the descender
-          bottom, removing the leading-bottom gap that would otherwise
-          leave visible empty space below the wordmark. RevealChars
-          inherits `font-size: 24vw` from the wrapper, so `leading-[1.0]`
-          on it resolves to the same 24vw and keeps the descender
-          inside the clip. */}
-      <div className="overflow-hidden text-center h-[1em] text-[24vw]">
-        <RevealChars
-          text={SITE_CONFIG.brandMark}
+      {/* Big wordmark. Wrapper's `h-[1em]` (resolves against the
+          `text-[24vw]` font-size on the same element) crops the
+          line-box at the descender bottom so there's no leading-bottom
+          gap below the wordmark. The `aquilon-footer-wordmark` marker
+          class scopes the `:last-child` shrink rule in globals.css to
+          this instance only, so the ® reads as a superscript here
+          without affecting Hebergements titles that reuse the same
+          gradient via `aquilon-wordmark-fill`. */}
+      <div className="aquilon-footer-wordmark overflow-hidden text-center h-[1em] text-[24vw]">
+        <AquilonReveal
           play={play}
-          stagger={0}
-          delay={0.1}
-          duration={1.0}
+          mode="wipe-and-slide"
           className="block leading-[1.0] tracking-[0.01em] font-bold"
           charClassName="aquilon-wordmark-fill"
+          ease="power2.inOut"
+          duration={1.0}
         />
       </div>
     </footer>
