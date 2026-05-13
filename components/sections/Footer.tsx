@@ -70,7 +70,7 @@ export default function Footer() {
       {/* Top info row : author credit on the left, copyright on the
           right. Stacks vertically on tiny mobile so the long French
           credit string isn't truncated. */}
-      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-16 md:mt-24 mb-12 md:mb-20 text-creme-dim text-lg md:text-2xl font-medium">
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-16 md:mt-24 mb-12 md:mb-20 text-creme-dim text-sm md:text-2xl font-medium">
         <span>Site web fait par&nbsp;—&nbsp;Patrick Patenaude</span>
         <span>Tous droits réservés © 2026</span>
       </div>
