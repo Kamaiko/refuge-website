@@ -78,10 +78,9 @@ export default function Footer() {
           `text-[24vw]` font-size on the same element) crops the
           line-box at the descender bottom so there's no leading-bottom
           gap below the wordmark. The `aquilon-footer-wordmark` marker
-          class scopes the `:last-child` shrink rule in globals.css to
-          this instance only, so the ® reads as a superscript here
-          without affecting Hebergements titles that reuse the same
-          gradient via `aquilon-wordmark-fill`. */}
+          class scopes the `:last-child` shrink rule in globals.css so
+          the ® reads as a superscript here without affecting other
+          components. */}
       <div className="aquilon-footer-wordmark overflow-hidden text-center h-[1em] text-[24vw]">
         <AquilonReveal
           play={play}

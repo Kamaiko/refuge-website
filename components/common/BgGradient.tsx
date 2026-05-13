@@ -11,24 +11,32 @@ export default function BgGradient({
   from,
   to,
   direction = "down",
+  toAt,
   noiseOpacity = 0,
   className,
 }: {
   from: string;
   to: string;
   direction?: "down" | "up";
+  /** Percent (0–100) at which the `to` color is fully reached. The
+   *  gradient then holds `to` from that percent through 100%. Use to
+   *  ensure a solid landing color in a specific zone (e.g. so a child
+   *  overlay can match a flat color without a band). */
+  toAt?: number;
   /** SVG noise dither. Default 0 (OKLAB alone is clean on most displays). */
   noiseOpacity?: number;
   className?: string;
 }) {
   const angle = direction === "down" ? 180 : 0;
+  const stops =
+    toAt != null ? `${from}, ${to} ${toAt}%, ${to}` : `${from}, ${to}`;
   return (
     <>
       <div
         aria-hidden
         className={cn("absolute inset-0 pointer-events-none", className)}
         style={{
-          background: `linear-gradient(${angle}deg in oklab, ${from}, ${to})`,
+          background: `linear-gradient(${angle}deg in oklab, ${stops})`,
         }}
       />
       {noiseOpacity > 0 ? (

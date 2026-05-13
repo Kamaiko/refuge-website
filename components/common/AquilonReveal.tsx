@@ -11,13 +11,16 @@ import { SITE_CONFIG } from "@/lib/constants";
  *  Three modes for A/B/C testing :
  *   - `slide`         : glyph translates xPercent 110 → 0 inside a
  *                       fixed mask. Same as RevealChars baseline.
- *   - `wipe`          : mask clip-path wipes right → left
- *                       (`inset(0% 0% 0% 100%)` → `inset(0% 0% 0% 0%)`);
- *                       glyph stays at xPercent: 0 the whole time.
- *   - `wipe-and-slide`: both happen at once — mask clip-path wipes
- *                       AND glyph translates a small distance
- *                       (xPercent 65 → 0). Most "cinematic" of the
- *                       three. */
+ *   - `wipe`          : a real curtain element (a span overlay)
+ *                       translates right → left across the mask
+ *                       (xPercent: 0 → -100). The letter behind sits
+ *                       at its natural position and the curtain's
+ *                       trailing edge reveals it.
+ *   - `wipe-and-slide`: curtain + a small glyph slide in the same
+ *                       direction (xPercent: 10 → 0). The curtain is
+ *                       the primary visible motion; the slide is a
+ *                       secondary cinematic flourish during the
+ *                       reveal. */
 export type AquilonRevealMode = "slide" | "wipe" | "wipe-and-slide";
 
 type Props = {
@@ -39,53 +42,32 @@ export default function AquilonReveal({
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
-  // Both clip-path stops use `%` units so GSAP can interpolate
-  // between them — mixing unitless 0 with `100%` breaks the tween
-  // and the wipe just pops to the final state instead of animating.
-  // The 100% is on the LEFT inset (`inset(top right bottom left)`),
-  // so the wipe reveals right → left as that left-clip recedes from
-  // 100% to 0% — the right edge of each glyph appears first.
-  const initialClip = "inset(0% 0% 0% 100%)";
-  const finalClip = "inset(0% 0% 0% 0%)";
-  // Positive xPercent : the glyph starts RIGHT of its natural position
-  // and slides leftward into place. Same direction as the wipe-reveal
-  // (right → left) so the two motions read as one cohesive entry.
-  const slideStartX = mode === "wipe-and-slide" ? 65 : 110;
+  const slideStartX = mode === "wipe-and-slide" ? 10 : 110;
 
-  // Initial state — paint the mask as fully clipped (for wipe modes)
-  // or push the glyphs offscreen-right (for slide mode), then make
-  // the root visible. Without this, the very first frame after mount
-  // would flash the natural-position text before the play effect
-  // pulls it back to its initial state.
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const masks = root.querySelectorAll<HTMLElement>(".aq-mask");
+    const curtains = root.querySelectorAll<HTMLElement>(".aq-curtain");
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
-    if (!masks.length) return;
     if (mode === "slide") {
+      gsap.set(curtains, { xPercent: -100 });
       gsap.set(glyphs, { xPercent: slideStartX });
     } else if (mode === "wipe") {
-      gsap.set(masks, { clipPath: initialClip });
+      gsap.set(curtains, { xPercent: 0 });
     } else {
-      gsap.set(masks, { clipPath: initialClip });
+      gsap.set(curtains, { xPercent: 0 });
       gsap.set(glyphs, { xPercent: slideStartX });
     }
     gsap.set(root, { visibility: "visible" });
-    // mode + slideStartX never change at runtime here — safe to depend
-    // only on mount.
+    // mode + slideStartX never change at runtime here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Drive forward / reverse on play change. Reverse uses half-duration
-  // so a quick scroll-up-then-down feels responsive instead of waiting
-  // for a full reverse tween to finish.
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const masks = root.querySelectorAll<HTMLElement>(".aq-mask");
+    const curtains = root.querySelectorAll<HTMLElement>(".aq-curtain");
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
-    if (!masks.length) return;
     const tweenDuration = play ? duration : duration * 0.5;
     const tweenEase = play ? ease : "expo.out";
 
@@ -98,8 +80,8 @@ export default function AquilonReveal({
       });
     }
     if (mode === "wipe" || mode === "wipe-and-slide") {
-      gsap.to(masks, {
-        clipPath: play ? finalClip : initialClip,
+      gsap.to(curtains, {
+        xPercent: play ? -100 : 0,
         duration: tweenDuration,
         ease: tweenEase,
         overwrite: true,
@@ -119,9 +101,18 @@ export default function AquilonReveal({
         <span
           key={i}
           aria-hidden
-          className={`aq-mask inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
+          className={`aq-mask relative inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
         >
           <span className="rc-glyph inline-block">{ch}</span>
+          {/* Curtain overlay — a real DOM element that translates to
+              uncover the glyph. `bg-gris-tan` matches the page bg in
+              the footer area so the curtain blends with the
+              surrounding band ; only its trailing edge is visible
+              as it slides off. */}
+          <span
+            aria-hidden
+            className="aq-curtain absolute inset-0 bg-gris-tan"
+          />
         </span>
       ))}
     </span>

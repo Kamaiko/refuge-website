@@ -41,6 +41,7 @@ export default function Home() {
             from="var(--color-base-noir)"
             to="var(--color-gris-tan)"
             direction="down"
+            toAt={55}
             className="top-[40%] -z-10"
           />
           <Cta />
