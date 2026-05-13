@@ -35,18 +35,19 @@ export default function Footer() {
       if (!sectionRef.current) return;
       const entryTrigger = ScrollTrigger.create({
         trigger: sectionRef.current,
-        start: "top 85%",
+        start: "top 55%",
         onEnter: () => setPlay(true),
       });
-      // Exit `start` must be reachable by the footer's top edge. At
-      // page bottom the footer's top sits at ~(1 - footerH/viewportH)
-      // * 100%, so the threshold has to be larger than that — `top
-      // 60%` is reachable within ~10-15% of upward scroll.
+      // Exit fires later than entry — when scrolling up, the wordmark
+      // should be (almost) out of view before the reverse plays, so the
+      // user doesn't see the letters unwind in front of them. No
+      // `onEnter` here : scroll-down through 80% would otherwise
+      // pre-empt the real entry trigger at 55% and play the animation
+      // before the wordmark is visible.
       const exitTrigger = ScrollTrigger.create({
         trigger: sectionRef.current,
-        start: "top 60%",
+        start: "top 80%",
         onLeaveBack: () => setPlay(false),
-        onEnter: () => setPlay(true),
       });
       return () => {
         entryTrigger.kill();
