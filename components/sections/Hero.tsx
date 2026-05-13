@@ -69,12 +69,18 @@ export default function Hero() {
     >
       <div className="relative h-full w-full overflow-hidden rounded-[60px]">
         <div ref={mediaRef} className="absolute inset-0 will-change-transform">
+          {/* `preload="metadata"` (not the default "auto") so the 4.3MB video
+              doesn't compete with the poster + critical path for bandwidth.
+              The browser loads just enough to start playback when autoplay
+              triggers ; the poster stays visible until then, and the poster
+              is itself preloaded via the `<link>` hint in app/layout.tsx. */}
           <video
             className="h-full w-full object-cover"
             autoPlay
             muted
             loop
             playsInline
+            preload="metadata"
             aria-hidden="true"
             poster="/images/hero-shape.avif"
           >

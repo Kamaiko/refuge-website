@@ -54,6 +54,19 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${hostGrotesk.variable} antialiased`}>
       <body>
+        {/* Preload the Hero video's poster image — it's the LCP element on
+            first paint (the video buffers behind it). React 19 hoists
+            standalone `<link>` tags to <head> automatically, so this is the
+            cleanest way to inject a resource hint without dropping out of
+            the App Router metadata pattern. `fetchPriority="high"` tells
+            the browser to schedule this preload ahead of other resources. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/images/hero-shape.avif"
+          type="image/avif"
+          fetchPriority="high"
+        />
         <MenuProvider>
           <ReservePanelProvider>
             <SmoothScroll>{children}</SmoothScroll>
