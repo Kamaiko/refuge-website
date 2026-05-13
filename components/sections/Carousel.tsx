@@ -68,10 +68,9 @@ export default function Carousel() {
       mm.add(
         {
           isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
-          isMobile: `(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`,
         },
         (ctx) => {
-          const { isDesktop } = ctx.conditions as { isDesktop: boolean; isMobile: boolean };
+          const { isDesktop } = ctx.conditions as { isDesktop: boolean };
           if (!isDesktop) return; // mobile uses the vertical stack JSX below
 
           // Track layout : 3 cards at 75vw each = 225vw total.
@@ -82,39 +81,23 @@ export default function Carousel() {
           // -55.5556% of the 225vw-wide track.
           const TRACK_END_PERCENT = -55.5556;
 
-          // Single timeline so the track translation and the inner pans
-          // share one ScrollTrigger (no duplicate triggers competing
+          // Single timeline so the track translation and the inner
+          // pans share one ScrollTrigger (no duplicates competing
           // for the same scroll range). Three phases :
           //
           //   ┌ HOLD_START ┬────── ACTIVE ──────┬─ HOLD_END ─┐
-          //   0        0.03                 0.92          1.0
+          //   0        0.03                 0.95          1.0
           //
-          // HOLD_START dropped to 0.03 (was 0.10) : the idle phase
-          // between pin engagement and motion start was the real
-          // source of the "snap" feeling — the user arrives at the
-          // pin with momentum, the pin engages, and then the timeline
-          // sits idle for the next ~0.8 viewport of scroll before
-          // anything moves. Cutting HOLD_START to ~0.24 viewport
-          // means motion starts essentially as soon as the pin grabs,
-          // so the momentum has somewhere to land. HOLD_END kept at
-          // 0.05 — a small exit cushion is still useful.
+          // HOLD_START is small (0.03) so motion starts almost
+          // immediately after the pin grabs — leaves no idle frames
+          // where the user feels momentum stall against a frozen
+          // timeline. HOLD_END is a small exit cushion so a fast
+          // scroll past doesn't snap the pin release.
           //
-          // `power2.inOut` is a softer ease than `expo.inOut` — its
-          // peak in the middle of the active phase is broader / less
-          // pointy, so the cards spend more of the scroll travelling
-          // at a moderate speed instead of a brief sprint. Combined
-          // with the +=800% pin length and the inner-pan parallax,
-          // motion reads as deliberate rather than rushed.
-          //
-          // No `anticipatePin` — earlier attempts (1, 2, 3) all
-          // produced a vertical-axis snap at pin engagement. The
-          // mechanism : ScrollTrigger pre-aligns the scroll position
-          // via an internal scrollTo call N viewports ahead of the
-          // trigger, and that scrollTo overwrites Lenis' in-flight
-          // momentum tween → micro-collision visible as a snap.
-          // Hebergements has the same pin+scrub pattern WITHOUT
-          // anticipatePin and feels clean, so we follow the same
-          // recipe here.
+          // No `anticipatePin` — it overwrites Lenis' in-flight
+          // momentum tween via an internal `scrollTo`, producing a
+          // visible vertical snap at pin engagement. Hebergements
+          // uses the same pin+scrub pattern without it.
           const HOLD_START = 0.03;
           const ACTIVE = 0.92;
           const HOLD_END = 0.05;
@@ -123,39 +106,10 @@ export default function Carousel() {
             scrollTrigger: {
               trigger: section,
               start: "top top",
-              // Pin trimmed from +=800% → +=600% to match Hebergements'
-              // tempo (which also uses +=600% on desktop). The earlier
-              // 800% felt sluggish — same translation distance over a
-              // longer scroll = slower perceived motion. 600% lands
-              // closer to the project's established pace for pinned
-              // scrub sections.
               end: "+=600%",
               pin: true,
               scrub: 1,
             },
-          });
-
-          // Inner-pan scale set via GSAP rather than inline style — when
-          // GSAP also animates xPercent on the same element, mixing an
-          // inline CSS transform with GSAP-managed transforms can drop
-          // the scale (GSAP overwrites the entire transform). Setting
-          // scale here puts everything in GSAP's transform store so
-          // scale + xPercent compose into the same matrix cleanly.
-          //
-          // Card 2 (the LAST one) gets an extra zoom bump because its
-          // source AVIF reads slightly looser at full bleed than the
-          // first two — 1.22 vs 1.15 tightens the framing visibly
-          // without skewing the parallax-slow effect.
-          //
-          // Math : scale 1.22 → inner-pan spans -11% to 111% of
-          // article width. xPercent: +8 shifts it to -3% to 119%.
-          // 3% safety margin on the left means no gris-tan strip ever
-          // peeks through the rounded-clip at end-of-tween.
-          [0, 1, 2].forEach((i) => {
-            const el = innerPanRefs.current[i];
-            if (!el) return;
-            const scale = i === 2 ? 1.22 : 1.15;
-            gsap.set(el, { scale, transformOrigin: "center" });
           });
 
           tl.fromTo(
@@ -165,21 +119,20 @@ export default function Carousel() {
             HOLD_START,
           );
 
-          // Internal pan on ALL three cards — uniform rightward xPercent
-          // translates the image INSIDE its container as the track
-          // moves leftward, producing a parallax-slow effect (image
-          // appears to drift slower than the card frame). Applied to
-          // card 0 too so it doesn't read as "moving left" against
-          // the rightward drift of cards 1 and 2.
-          //
-          // Bumped from +5 to +8 to make the pan visibly land — at +5
-          // with scale 1.08 the parallax was barely perceptible. +8
-          // with scale 1.15 (above) keeps the inner-pan covering the
-          // article through the full travel while making the depth
-          // effect actually read.
+          // Per-card setup + inner-pan parallax. Scale is set via GSAP
+          // (not inline style) so GSAP's transform compose with the
+          // animated `xPercent` instead of being overwritten. Card 2
+          // gets a tighter scale because its source AVIF reads a touch
+          // looser at full bleed. Uniform `xPercent: +8` translates the
+          // image rightward as the track moves left, producing a
+          // parallax-slow effect on all three cards — applied to card
+          // 0 too so it doesn't drift "left" against the rightward
+          // motion of cards 1 and 2.
           [0, 1, 2].forEach((i) => {
             const el = innerPanRefs.current[i];
             if (!el) return;
+            const scale = i === 2 ? 1.22 : 1.15;
+            gsap.set(el, { scale, transformOrigin: "center" });
             tl.fromTo(
               el,
               { xPercent: 0 },

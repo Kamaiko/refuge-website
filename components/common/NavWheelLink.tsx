@@ -12,9 +12,6 @@ import { gsap } from "@/lib/gsap";
  * Menu↔Close pill in {@link Header} (`yPercent: 0 → -50`, `0.55s`
  * `expo.inOut`), but the bottom layer carries the same text in a different
  * color rather than a different word.
- *
- * Reduced-motion: GSAP detects `prefers-reduced-motion: reduce` and the
- * wheel snaps in zero duration; the result is a plain color swap.
  */
 export default function NavWheelLink({
   label,

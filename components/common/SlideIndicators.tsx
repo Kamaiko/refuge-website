@@ -33,22 +33,22 @@ export default function SlideIndicators({
   const chips =
     tone === "strong"
       ? [
-          { value: current, tone: "border-creme/70 text-creme" },
-          { value: total, tone: "border-creme/35 text-creme/55" },
+          { value: current, classes: "border-creme/70 text-creme" },
+          { value: total, classes: "border-creme/35 text-creme/55" },
         ]
       : [
-          { value: current, tone: "border-creme-terre/40 text-creme-terre/85" },
-          { value: total, tone: "border-creme-terre/20 text-creme-terre/40" },
+          { value: current, classes: "border-creme-terre/40 text-creme-terre/85" },
+          { value: total, classes: "border-creme-terre/20 text-creme-terre/40" },
         ];
   return (
     <div
       aria-hidden
       className={`flex items-center gap-2 shrink-0 ${marginXClass} mb-2 md:mb-3 transition-opacity duration-500 ${active ? "opacity-100" : "opacity-0"}`}
     >
-      {chips.map(({ value, tone }, i) => (
+      {chips.map(({ value, classes }, i) => (
         <span
           key={i}
-          className={`inline-flex h-14 w-14 items-center justify-center rounded-full border text-sm font-medium tracking-wide ${tone}`}
+          className={`inline-flex h-14 w-14 items-center justify-center rounded-full border text-sm font-medium tracking-wide ${classes}`}
         >
           {fmt(value)}
         </span>

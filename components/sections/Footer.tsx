@@ -9,28 +9,23 @@ import RevealChars from "@/components/common/RevealChars";
 /**
  * Closing footer. Tan delimiter line, single-row credit + copyright,
  * then a massive {@link RevealChars} wordmark that animates its glyphs
- * in/out as the section's top edge enters / exits the viewport.
+ * in/out as the section enters / exits the viewport.
  *
- * The wordmark fills with a vertical `creme-dim/45 → creme` gradient
- * applied INLINE on the RevealChars root span (via the `style` prop).
- * Tailwind v4's `bg-clip-text` + `text-transparent` utility combo
- * didn't reliably paint the gradient through the deeply nested
- * transformed children of RevealChars — inline style guarantees the
- * background image + clip + transparent fill resolve in every engine.
+ * The wordmark fills with a tan → creme vertical gradient applied
+ * per-glyph via the `.aquilon-wordmark-fill` CSS class on each
+ * RevealChars mask (see `app/globals.css`). Applying the gradient on
+ * the outer span doesn't reach RevealChars' transformed descendants
+ * reliably in Tailwind v4; per-glyph application sidesteps that.
  *
- * Two ScrollTriggers : the entry trigger fires at `top 85%` (the
- * moment the footer's top edge crosses 85% from viewport top going
- * down — footer just appearing from below). The exit trigger fires
- * its `onLeaveBack` at `top 30%`, so when the user scrolls UP the
- * reverse animation plays while the footer is still mostly visible
- * (instead of waiting until the footer has nearly disappeared at the
- * bottom of the viewport). Its `onEnter` re-asserts play=true to
- * handle the bounce-back case where the user scrolled up past the
- * exit, then scrolls back down without going above the entry start.
+ * Two ScrollTriggers : entry at `top 85%` plays the slide-in; exit
+ * at `top 60%` plays the reverse-out on scroll-up. The exit also
+ * listens to `onEnter` to re-trigger play=true if the user bounces
+ * back down without crossing the entry threshold above.
  *
- * Sits inside a parent that owns the `base-noir → gris-tan` background
- * gradient spanning the CTA's lower half + this entire footer (see
- * `app/page.tsx`), so this section's bg stays transparent.
+ * Sits inside the `relative isolate` wrapper in `app/page.tsx` that
+ * owns the `base-noir → gris-tan` background gradient spanning the
+ * CTA's lower half + this entire footer — so this section's own bg
+ * stays transparent.
  */
 export default function Footer() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -44,14 +39,10 @@ export default function Footer() {
         start: "top 85%",
         onEnter: () => setPlay(true),
       });
-      // Exit position must lie at a `top X%` the footer's top can
-      // actually reach. The footer is at the very bottom of the page,
-      // so at page bottom its top sits at roughly `(1 - footerHeight/
-      // viewportHeight) * 100%` — typically ~40-50%. The previous
-      // "top 30%" was unreachable (footer top never goes below that
-      // baseline) and the trigger never fired its onLeaveBack. "top
-      // 60%" gives a small but reachable scroll-up distance from the
-      // bottom (~10-15% of viewport upward) for the reverse to fire.
+      // Exit `start` must be reachable by the footer's top edge. At
+      // page bottom the footer's top sits at ~(1 - footerH/viewportH)
+      // * 100%, so the threshold has to be larger than that — `top
+      // 60%` is reachable within ~10-15% of upward scroll.
       const exitTrigger = ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top 60%",
@@ -79,44 +70,33 @@ export default function Footer() {
       {/* Top info row : author credit on the left, copyright on the
           right. Stacks vertically on tiny mobile so the long French
           credit string isn't truncated. */}
-      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-6 mb-12 md:mb-20 text-creme-dim text-sm md:text-base font-medium">
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-10 md:mt-14 mb-12 md:mb-20 text-creme-dim text-base md:text-lg font-medium">
         <span>Site web fait par&nbsp;—&nbsp;Patrick Patenaude</span>
         <span>Tous droits réservés © 2026</span>
       </div>
 
-      {/* Big wordmark. "Aquilon" + a separate, smaller ® span tucked
-          to the bottom-right. Splitting them lets the ® keep its own
-          font-size and vertical-align without participating in the
-          per-glyph RevealChars animation (which would scale it up to
-          match the main letters). Both elements use the same
-          `aquilon-wordmark-fill` class, so the gradient is consistent
-          across the whole word.
-          - `inline-block` + `text-center` on the wrapper centers the
-            two pieces as one horizontal unit.
-          - `align-bottom` on both keeps their bottom edges aligned to
-            the line-box bottom — visually the ® sits at the lower-
-            right corner of "Aquilon".
-          - `tracking-[0.01em]` adds the tiny letter-spacing the user
-            asked for, replacing the earlier tight `-0.04em` kerning.
-          - `stagger: 0` + `delay: 0.1` plays all glyphs in unison
-            after a tiny pause.
-
-          Gradient + clip-text applied PER-GLYPH via the
-          `aquilon-wordmark-fill` CSS class on each RevealChars mask
-          span (charClassName). Applying it on the outer span (whether
-          via Tailwind utilities OR inline style) never painted —
-          background-clip: text doesn't reach through deeply nested
-          transformed descendants reliably. Per-glyph clip works on a
-          simple leaf-like element and is identical visually since
-          every glyph shares the same line-height. */}
-      <div className="overflow-hidden text-center">
+      {/* `SITE_CONFIG.brandMark` is "Aquilon®" — the ® is the last
+          glyph inside RevealChars; a `:last-child` rule on
+          `aquilon-wordmark-fill` shrinks + raises it to superscript
+          position without breaking its slide-in reveal. `stagger: 0`
+          + `delay: 0.1` plays every glyph in unison after a tiny
+          pause; `overflow-hidden` clips the per-glyph offscreen-right
+          start state (`xPercent: 110`).
+          The wrapper's `h-[1em]` (where `1em` resolves against its
+          own `text-[24vw]`) crops the line-box at the descender
+          bottom, removing the leading-bottom gap that would otherwise
+          leave visible empty space below the wordmark. RevealChars
+          inherits `font-size: 24vw` from the wrapper, so `leading-[1.0]`
+          on it resolves to the same 24vw and keeps the descender
+          inside the clip. */}
+      <div className="overflow-hidden text-center h-[1em] text-[24vw]">
         <RevealChars
           text={SITE_CONFIG.brandMark}
           play={play}
           stagger={0}
           delay={0.1}
           duration={1.0}
-          className="block leading-[0.92] tracking-[0.01em] text-[24vw] font-bold"
+          className="block leading-[1.0] tracking-[0.01em] font-bold"
           charClassName="aquilon-wordmark-fill"
         />
       </div>

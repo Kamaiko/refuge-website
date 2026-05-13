@@ -10,7 +10,7 @@ Site portfolio Awwwards-level. **Marque fictive** d'hébergements premium en Cha
 
 **Tonalité de marque** : poétique, contemplative, sobre. Texte court, lyrique, évocateur (FR seulement).
 
-**Nom de marque définitif** : TBD (à finaliser après premiers visuels AI).
+**Nom de marque définitif** : Aquilon (vent du nord en latin/littéraire). Voir la section « Note sur le nom de marque » plus bas pour le contexte et la procédure de rename.
 
 ## Règles IP — strictes
 
@@ -216,8 +216,8 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 - Tokens design + folder structure
 - Dev server tourne sur http://localhost:3001
 
-✅ **Phase 3 (avancée) — Sections + Animations** complète :
-**Sections actuelles** (7, post-refactor) : Hero, Manifeste, Médaillons, Choisir, Capsules, MarqueeBrand, Feedback. Suppression définitive de Lieu, Concept, Unites (ancien), Activites, Galerie, Journal, FAQ, Reservation, Footer.
+✅ **Phase 3 — Sections + Animations** complète :
+**Sections actuelles** (11) : `Hero → Manifeste → Medaillons → Choisir → Hebergements → MarqueeBrand → Pourquoi → Activites → Carousel → Feedback → Cta → Footer` (Cta + Footer partagent un wrapper `relative isolate` avec un BgGradient base-noir→gris-tan).
 - Header : Reserve top-right (simple fade-in, scroll-out direction-based) + Menu bottom-center (cream pill grows around inner gris-tan circle, iOS wheel Menu↔Close)
 - MenuOverlay (clip-path **inset arrondi** expand depuis bouton — pas de cercles)
 - ReservePanel (slide-in from right, OKLAB transitions via `<BgGradient>`)
@@ -227,11 +227,13 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
   - `SmoothScroll` (Lenis + GSAP sync, panel-aware lock)
   - `MenuContext` + `MenuOverlay`, `ReservePanelContext` + `ReservePanel`
   - `RevealText` (2 modes : lines, words)
-  - `RevealChars` (per-char slide right→left, word-aware splitting)
+  - `RevealChars` (per-char slide right→left, word-aware splitting) — utilisé par Hebergements, Pourquoi, Footer
   - `CurtainReveal` (sharp horizontal cut, dual-clipped layers, anti-fringe)
-  - `Marquee` (directional scroll-aware wordmark loop)
-  - `BrandMark` (wordmark + ® subscript)
-  - `BgTransition` (named export `<BgGradient>` OKLAB inline gradient + SVG noise)
+  - `Marquee` (directional scroll-aware wordmark loop, optionnel `pauseOnHover` avec hit-test scroll + curseur)
+  - `BrandMark` (wordmark + ® subscript — **non utilisé actuellement** ; le Footer utilise un mécanisme `:last-child` CSS scoped par `.aquilon-wordmark-fill`)
+  - `BgGradient` (linear gradient overlay OKLAB)
+  - `SlideIndicators` (chips 01/03 paginés, prop `tone: "muted" | "strong"`)
+  - `NavWheelLink` (iOS-wheel hover flip pour les nav links du Cta)
   - `CustomCursor`
 
 ⏳ **Phase 2 — Assets AI** (à faire par Patrick) :
