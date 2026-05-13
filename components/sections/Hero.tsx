@@ -97,6 +97,7 @@ export default function Hero() {
           <div className="flex-1 flex items-start pt-32 md:pt-0">
             <h1
               ref={wordmarkRef}
+              style={{ opacity: 0 }}
               className="text-creme font-semibold leading-[0.85] tracking-[-0.04em] text-[18vw] md:text-[15vw]"
             >
               <BrandMark />
@@ -108,6 +109,7 @@ export default function Hero() {
           <div className="flex flex-col gap-6 pb-36 md:flex-row md:items-end md:justify-between md:gap-16 md:pb-12">
             <p
               ref={taglineRef}
+              style={{ opacity: 0 }}
               className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
             >
               {TAGLINE}
@@ -115,6 +117,7 @@ export default function Hero() {
 
             <p
               ref={subcopyRef}
+              style={{ opacity: 0 }}
               className="text-creme max-w-md text-lg font-semibold leading-snug md:text-2xl"
             >
               {SUBCOPY}
