@@ -315,9 +315,8 @@ function RefugeCardContent({
   useGSAP(
     () => {
       gsap.set(descRef.current, { opacity: 0, x: 40 });
-      gsap.set(ctaRowRef.current, { opacity: 0 });
       gsap.set(plusBtnWrapRef.current, { scale: 0 });
-      gsap.set(capacityRef.current, { x: 40 });
+      gsap.set(capacityRef.current, { opacity: 0, x: 40 });
     },
     { scope: cardRef },
   );
@@ -333,16 +332,14 @@ function RefugeCardContent({
     () => {
       if (play) {
         gsap.to(descRef.current, { opacity: 1, x: 0, duration: 0.9, delay: 0.1, ease: "power2.out" });
-        gsap.to(ctaRowRef.current, { opacity: 1, duration: 0.7, delay: 0.18, ease: "power2.out" });
         gsap.to(plusBtnWrapRef.current, { scale: 1, duration: 0.95, delay: 0.22, ease: "elastic.out(0.7, 0.5)" });
-        gsap.to(capacityRef.current, { x: 0, duration: 0.9, delay: 0.26, ease: "power2.out" });
+        gsap.to(capacityRef.current, { opacity: 1, x: 0, duration: 0.9, delay: 0.26, ease: "power2.out" });
       } else {
         // Exit collapses simultaneously — staggering the hide reads as
         // sluggish. Match durations/eases to the entrance for symmetry.
         gsap.to(descRef.current, { opacity: 0, x: 40, duration: 0.9, ease: "power2.out" });
-        gsap.to(ctaRowRef.current, { opacity: 0, duration: 0.7, ease: "power2.out" });
         gsap.to(plusBtnWrapRef.current, { scale: 0, duration: 0.6, ease: "power2.in" });
-        gsap.to(capacityRef.current, { x: 40, duration: 0.9, ease: "power2.out" });
+        gsap.to(capacityRef.current, { opacity: 0, x: 40, duration: 0.9, ease: "power2.out" });
       }
     },
     { scope: cardRef, dependencies: [play] },

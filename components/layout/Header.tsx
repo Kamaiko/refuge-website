@@ -331,15 +331,15 @@ export default function Header() {
           // Tailwind `hover:scale` would lose to it (inline wins over CSS).
           className="reserve-cta group opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme font-medium text-base-noir will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
-          <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-sm md:text-lg font-medium text-base-noir whitespace-nowrap">
+          <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-base md:text-xl font-semibold text-base-noir whitespace-nowrap">
             Réserver
           </span>
           <span
             style={{ height: circleH, width: circleH }}
             className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
           >
-            <ArrowDiagonalIcon size={16} className="text-creme/85 md:hidden" />
-            <ArrowDiagonalIcon size={20} className="text-creme/85 hidden md:block" />
+            <ArrowDiagonalIcon size={22} className="text-creme/85 md:hidden" />
+            <ArrowDiagonalIcon size={28} className="text-creme/85 hidden md:block" />
           </span>
         </button>
       </header>
@@ -371,7 +371,7 @@ export default function Header() {
         <span
           ref={labelAreaRef}
           style={{ width: 0, height: circleH }}
-          className="inline-flex items-start text-sm md:text-lg font-medium text-base-noir overflow-hidden will-change-[width]"
+          className="inline-flex items-start text-base md:text-xl font-semibold text-base-noir overflow-hidden will-change-[width]"
         >
           <span className="block pl-8 pr-5 md:pl-12 md:pr-8 whitespace-nowrap">
             <span ref={wheelRef} className="block will-change-transform">
