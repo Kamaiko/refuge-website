@@ -106,7 +106,7 @@ export default function Carousel() {
             scrollTrigger: {
               trigger: section,
               start: "top top",
-              end: "+=600%",
+              end: "+=350%",
               pin: true,
               scrub: 1,
             },

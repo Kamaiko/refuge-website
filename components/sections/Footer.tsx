@@ -35,7 +35,7 @@ export default function Footer() {
       if (!sectionRef.current) return;
       const entryTrigger = ScrollTrigger.create({
         trigger: sectionRef.current,
-        start: "top 55%",
+        start: "top 80%",
         onEnter: () => setPlay(true),
       });
       // Exit fires later than entry — when scrolling up, the wordmark
@@ -70,7 +70,7 @@ export default function Footer() {
       {/* Top info row : author credit on the left, copyright on the
           right. Stacks vertically on tiny mobile so the long French
           credit string isn't truncated. */}
-      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-10 md:mt-14 mb-12 md:mb-20 text-creme-dim text-base md:text-lg font-medium">
+      <div className="flex flex-col xs:flex-row xs:items-center xs:justify-between gap-2 mt-16 md:mt-24 mb-12 md:mb-20 text-creme-dim text-lg md:text-2xl font-medium">
         <span>Site web fait par&nbsp;—&nbsp;Patrick Patenaude</span>
         <span>Tous droits réservés © 2026</span>
       </div>
