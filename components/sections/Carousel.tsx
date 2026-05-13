@@ -173,24 +173,46 @@ export default function Carousel() {
       {/* Mobile : horizontal thumb-swipe scroll. The pin / scrub doesn't
           apply below md, but we still want the carousel feeling — so the
           3 cards live in a horizontal overflow-x track with snap-mandatory.
-          `w-[85vw]` lets the edge of the next card peek on the right, hinting
-          at swipeability. Native scroll = touch-friendly, no pin hijack. */}
+          Layout matches the capsules.moyra.co mobile pattern : image
+          (with niveau pill + indicators overlay) on top, title + body
+          below in plain text. `w-[85vw]` lets the edge of the next card
+          peek on the right, hinting at swipeability. */}
       <div className="md:hidden py-16">
         <div className="overflow-x-auto snap-x snap-mandatory flex gap-4 px-3 no-scrollbar">
           {CARDS.map((c, i) => (
             <article
               key={c.titre}
-              className="snap-center shrink-0 w-[85vw] aspect-[4/5] relative overflow-hidden rounded-[40px]"
+              className="snap-center shrink-0 w-[85vw] flex flex-col gap-5"
             >
-              <Image
-                src={c.image}
-                alt=""
-                fill
-                sizes="85vw"
-                unoptimized
-                className="object-cover"
-              />
-              <CardOverlay card={c} index={i} total={CARDS.length} mobile />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px]">
+                <Image
+                  src={c.image}
+                  alt=""
+                  fill
+                  sizes="85vw"
+                  unoptimized
+                  className="object-cover"
+                />
+                {/* Niveau pill — overlay top-right of the image */}
+                <span className="absolute top-4 right-4 inline-flex items-center rounded-pill border border-creme/40 bg-base-noir/30 backdrop-blur-sm px-4 py-1.5 text-xs font-medium tracking-wide text-creme">
+                  {c.niveau}
+                </span>
+                {/* Indicators — overlay bottom-left of the image */}
+                <div className="absolute bottom-2 left-2">
+                  <SlideIndicators
+                    current={i + 1}
+                    total={CARDS.length}
+                    active
+                    tone="strong"
+                  />
+                </div>
+              </div>
+              <h3 className="text-creme text-3xl font-medium leading-tight tracking-tight">
+                {c.titre}
+              </h3>
+              <p className="text-creme-terre/70 text-base leading-snug">
+                {c.sous}
+              </p>
             </article>
           ))}
         </div>

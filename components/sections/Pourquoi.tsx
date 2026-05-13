@@ -390,21 +390,25 @@ export default function Pourquoi() {
           naturally. */}
       <div className="md:hidden flex flex-col gap-8 px-3 py-16">
         {SLIDES.map((slide, i) => (
-          // One unified grey card per slide : title at top, indicators +
-          // body in the middle, image at bottom (with its own rounded
-          // corners). Mirrors the capsules.moyra.co mobile pattern — the
-          // image is part of the card, not a separate panel below.
-          <article key={slide.title} className="bg-gris-tan rounded-[28px] p-7 flex flex-col gap-6">
-            <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
-              {slide.title}
-            </h3>
-            <div className="flex items-end justify-between gap-4">
-              <SlideIndicators current={i + 1} total={SLIDES.length} active />
-              <p className="text-creme-dim text-base leading-relaxed max-w-sm text-right">
-                {slide.body}
-              </p>
+          // One unified grey card per slide : text at top (padded), image
+          // flush to the card's bottom edges (rounded corners come from
+          // the parent card's `rounded-[28px]` + `overflow-hidden`, so the
+          // image's bottom-left and bottom-right are clipped to the card's
+          // outer radius — top of the image sits straight where it meets
+          // the text padding zone). Mirrors the capsules.moyra.co pattern.
+          <article key={slide.title} className="bg-gris-tan rounded-[28px] overflow-hidden flex flex-col">
+            <div className="p-7 flex flex-col gap-6">
+              <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
+                {slide.title}
+              </h3>
+              <div className="flex items-end justify-between gap-4">
+                <SlideIndicators current={i + 1} total={SLIDES.length} active />
+                <p className="text-creme-dim text-base leading-relaxed max-w-sm text-right">
+                  {slide.body}
+                </p>
+              </div>
             </div>
-            <div className="relative aspect-[16/10] w-full rounded-[20px] overflow-hidden">
+            <div className="relative aspect-[16/10] w-full">
               <Image
                 src={slide.image}
                 alt=""

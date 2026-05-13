@@ -278,15 +278,13 @@ export default function Header() {
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
-  // Mobile-only : fade the Menu pill out when the footer is in view, so
-  // the giant Aquilon wordmark doesn't get visually clipped by the pill.
-  // Desktop has a wider canvas and the pill clears the wordmark line —
-  // no hiding needed there. IntersectionObserver on the footer is cheap
-  // (no scroll listener); threshold 0.3 fires when ~30% of the footer
-  // has entered the viewport, which lines up with the Aquilon line
-  // becoming visible.
+  // Fade the Menu pill out when the footer enters view, so the giant
+  // Aquilon wordmark isn't visually clipped by the pill. Applies on
+  // every viewport — the pill overlaps the wordmark on desktop too.
+  // IntersectionObserver on the footer is cheap (no scroll listener);
+  // threshold 0.3 fires when ~30% of the footer has entered the viewport,
+  // which lines up with the Aquilon line becoming visible.
   useEffect(() => {
-    if (!isMobile) return;
     const footer = document.querySelector("footer");
     const menu = menuBtnRef.current;
     if (!footer || !menu) return;
@@ -305,7 +303,7 @@ export default function Header() {
     );
     observer.observe(footer);
     return () => observer.disconnect();
-  }, [isMobile]);
+  }, []);
 
   // Mutual-exclusion is now handled by stacking order, not state coupling:
   // - Reserve open → Menu CTA z-index drops below the Reserve backdrop and
