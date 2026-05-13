@@ -117,14 +117,14 @@ body::-webkit-scrollbar,
    inside a `background-image` declaration. */
 @layer components {
   .aquilon-wordmark-fill {
-    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 65%, rgb(244 239 231) 100%);
+    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 55%, rgb(244 239 231) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
   .aquilon-wordmark-fill .rc-glyph {
-    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 65%, rgb(244 239 231) 100%);
+    background-image: linear-gradient(to bottom, rgb(205 190 165) 0%, rgb(205 190 165) 55%, rgb(244 239 231) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
