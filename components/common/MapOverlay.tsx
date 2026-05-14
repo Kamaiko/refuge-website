@@ -144,6 +144,17 @@ export default function MapOverlay() {
 
   useGSAP(
     () => {
+      // Skip the transition animation on the very first run. useGSAP
+      // fires on mount with the initial isOpen (false), which would
+      // otherwise enter the close branch and animate the clip-path
+      // from p=1 (fullscreen) to p=0 — visible as a ghost exit
+      // animation on every page refresh. The initial-state useGSAP
+      // above already set everything to the correct closed state.
+      if (!hasMountedRef.current) {
+        hasMountedRef.current = true;
+        return;
+      }
+
       const backdrop = backdropRef.current;
       const box = boxRef.current;
       const card = cardRef.current;
@@ -307,6 +318,15 @@ export default function MapOverlay() {
   // this creates a proper keyboard-only flow: Tab cycles only inside
   // the overlay, Escape (or the explicit Close button) restores focus
   // to where the user was. Same contract as MenuOverlay.
+  // Skip the open/close GSAP effect on first mount — useGSAP runs its
+  // body on initial render (with isOpen=false) and would otherwise enter
+  // the `else` branch, where the close tween starts the clip-path proxy
+  // at p=1 (fullscreen) and animates to p=0 (invisible). The user sees
+  // that as an unwanted exit animation on every page refresh. The
+  // initial-state useGSAP above already set the clip-path to the
+  // closed state, so we don't need the close tween to fire on mount.
+  const hasMountedRef = useRef(false);
+
   const previousFocusRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (isOpen) {
