@@ -388,7 +388,18 @@ export default function MapOverlay() {
           announce the overlay as a modal to screen readers; the page
           behind it is already inerted by SmoothScroll. z-index sits
           just under MenuOverlay (z-290) so the Menu can still overlay
-          the map if both happen to open. */}
+          the map if both happen to open.
+
+          The inline `clipPath` on `style` collapses the visible region
+          to a 0×0 point at viewport center BEFORE any GSAP code runs —
+          otherwise the first browser paint after mount would show the
+          fullscreen iframe (the box is `fixed inset-0` and the iframe
+          is always mounted with the map URL loaded), producing a
+          brief flash on every page refresh. After mount, useGSAP
+          overwrites this inline style via direct DOM manipulation;
+          React's reconciliation never re-applies the original JSX
+          style as long as the prop hasn't changed, so GSAP's values
+          persist. */}
       <div
         ref={boxRef}
         role="dialog"
@@ -400,6 +411,7 @@ export default function MapOverlay() {
         className={`fixed inset-0 z-[280] bg-base-noir ${
           isOpen ? "pointer-events-auto" : "pointer-events-none"
         }`}
+        style={{ clipPath: "inset(50% 50% 50% 50% round 0px)" }}
         aria-hidden={!isOpen}
       >
         {/* The iframe is always mounted with the real URL — Google Maps
