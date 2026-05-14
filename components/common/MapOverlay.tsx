@@ -9,6 +9,8 @@ import { useReservePanel } from "./ReservePanelContext";
 import { PANEL } from "@/lib/motion";
 import { SITE_CONFIG } from "@/lib/constants";
 import { CTA } from "@/lib/cta-dimensions";
+import { MQ } from "@/lib/breakpoints";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 /** Approximate coordinates of L'Acropole des Draveurs trail, within
  *  Parc national des Hautes-Gorges-de-la-Rivière-Malbaie (Charlevoix-Est).
@@ -28,21 +30,10 @@ const MAP_EMBED_URL = `https://maps.google.com/maps?ll=${PIN.lat},${PIN.lng}&z=$
 /** Gap between the open box and the viewport edges — same `inset-4`
  *  value the ReservePanel uses, for a coherent fullscreen-panel rhythm. */
 const GAP = 16;
-/** Border-radius the box settles to at the fully-open state — same
- *  value the MenuOverlay uses, so the fullscreen-overlay family of
- *  surfaces (Menu, Map) lands on the same softness. */
+/** Border-radius the box settles to at the fully-open state — same value
+ *  the MenuOverlay uses, so the fullscreen-overlay family lands on the
+ *  same softness. */
 const RADIUS_OPEN = 60;
-/** Initial size of the visible region at p=0. Set to 0 so the box is
- *  genuinely empty at rest (no residual capsule sitting at viewport
- *  center between opens) and so the open animation starts from
- *  invisibility — gating visibility with `autoAlpha` instead would
- *  introduce a one-frame "static initial state" paint before the tween
- *  begins, which reads as jank. The "capsule" feel at the start of the
- *  animation still emerges naturally from the cap-driven radius
- *  formula in `buildClipPath`: in the first ~10% of progress the box
- *  is wide-but-short and the radius equals half its height, which IS
- *  the geometry of a perfect pill. */
-const INITIAL_SIZE = 0;
 
 /** Iframe over-extension on each side. The Google Maps embed renders
  *  attribution + "Ouvrir dans Maps" link + zoom + keyboard-shortcuts UI
@@ -53,20 +44,51 @@ const INITIAL_SIZE = 0;
  *  center (which is where our custom SVG pin sits). */
 const IFRAME_BLEED = { x: 160, y: 100 } as const;
 
+/** ARIA id linking the box's `aria-labelledby` to the Aquilon brand
+ *  span at the top-left of the card — gives screen readers a stable
+ *  accessible name without forcing us to ship a separate label string. */
+const TITLE_ID = "map-overlay-title";
+
+/** Build the clip-path string for a given progress p ∈ [0, 1]. Hoisted
+ *  out of the component because it depends only on `window` + module
+ *  constants — keeping it outside means a single function reference is
+ *  re-used across renders, and no lint warnings about stale closures.
+ *
+ *  At p=0 the visible region collapses to a 0×0 point at viewport
+ *  center (so the box is genuinely empty at rest); at p=1 it's a
+ *  `GAP`-inset rectangle with `RADIUS_OPEN` corners.
+ *
+ *  The radius formula mirrors the MenuOverlay (and Hebergements card
+ *  reveal) exactly: `target = cap + (RADIUS_OPEN - cap) * p`, clamped
+ *  to `cap`. The effect is that, while the box's shorter side is <
+ *  2 × RADIUS_OPEN, the radius equals the cap (= half shorter side =
+ *  perfect capsule). Past that, the radius lerps DOWN from the growing
+ *  cap toward RADIUS_OPEN — corners feel more rounded mid-animation
+ *  than at rest, and ease into 60 px by the time the box reaches its
+ *  open extent. */
+function buildClipPath(p: number): string {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const top = (1 - p) * (vh / 2) + p * GAP;
+  const left = (1 - p) * (vw / 2) + p * GAP;
+  const bottom = top;
+  const right = left;
+  const width = vw - left - right;
+  const height = vh - top - bottom;
+  const cap = Math.min(width, height) / 2;
+  const target = cap + (RADIUS_OPEN - cap) * p;
+  const radius = Math.min(target, cap);
+  return `inset(${top}px ${right}px ${bottom}px ${left}px round ${radius}px)`;
+}
+
 /**
  * Fullscreen Map overlay. A `clip-path: inset(... round ...)` mask grows
- * from an 8px disc at the viewport center into a fullscreen rounded card
- * (`inset(16px) round 28px`), mirroring the Menu overlay's
- * physical-box-growth feel but driven by clip-path so the iframe
- * underneath stays at its final size — the Google Maps tile mosaic is
- * already loaded and painted behind the growing mask, not flashed white
- * while the iframe boots after the animation starts.
- *
- * The radius is cap-driven (`min(cap, RADIUS_OPEN)`) so when the box is
- * small the corners stay at the natural maximum (= a perfect circle).
- * Once the box grows past `2 × RADIUS_OPEN` on the shorter side, the
- * radius settles to 28px — the rounded-card aesthetic of the rest of
- * the site.
+ * from a 0×0 point at viewport center into a fullscreen rounded card
+ * (`inset(16px) round 60px`), mirroring the MenuOverlay's box-growth
+ * feel but driven by clip-path so the iframe underneath stays at its
+ * final size — the Google Maps tile mosaic is already loaded and
+ * painted behind the growing mask, not flashed white while the iframe
+ * boots after the animation starts.
  *
  * The iframe has `pointer-events: none` so the user can't pan or zoom —
  * the map is a static illustration of where the refuges are, and our
@@ -76,56 +98,40 @@ const IFRAME_BLEED = { x: 160, y: 100 } as const;
  * attribution, zoom controls, keyboard shortcuts) renders off-screen
  * and is clipped by the box's mask.
  *
+ * Accessibility: role="dialog" + aria-modal + aria-labelledby give
+ * screen readers a proper modal-context signal; focus is saved on the
+ * trigger element on open and restored on close (mirrors MenuOverlay's
+ * contract). Click on the backdrop, the explicit Close pill, and the
+ * Escape key all dismiss the overlay. A `prefers-reduced-motion:
+ * reduce` branch skips every tween and snaps directly to final state.
+ *
  * Driven by {@link useMapOverlay} — must sit inside a `MapOverlayProvider`.
  */
 export default function MapOverlay() {
   const { isOpen, close } = useMapOverlay();
   const { open: openReservePanel } = useReservePanel();
+  const isMobile = useMediaQuery(MQ.belowMd);
+
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
-  /** Build the clip-path string for a given progress p ∈ [0, 1]. At p=0
-   *  the visible region collapses to a 0×0 point at viewport center
-   *  (box is genuinely empty at rest); at p=1 it's a `GAP`-inset
-   *  rectangle with `RADIUS_OPEN` corners.
-   *
-   *  The radius formula mirrors the MenuOverlay (and Hebergements card
-   *  reveal) exactly: `target = cap + (RADIUS_OPEN - cap) * p`, clamped
-   *  to `cap`. The effect is that, while the box's shorter side is <
-   *  2 × RADIUS_OPEN, the radius equals the cap (= half shorter side =
-   *  perfect capsule). Past that, the radius lerps DOWN from the
-   *  growing cap toward RADIUS_OPEN — so the corners feel more rounded
-   *  mid-animation than at rest, and ease into 60 px by the time the
-   *  box reaches its open extent. */
-  const buildClipPath = (p: number) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const halfInit = INITIAL_SIZE / 2;
-    const top = (1 - p) * (vh / 2 - halfInit) + p * GAP;
-    const left = (1 - p) * (vw / 2 - halfInit) + p * GAP;
-    const bottom = top;
-    const right = left;
-    const width = vw - left - right;
-    const height = vh - top - bottom;
-    const cap = Math.min(width, height) / 2;
-    const target = cap + (RADIUS_OPEN - cap) * p;
-    const radius = Math.min(target, cap);
-    return `inset(${top}px ${right}px ${bottom}px ${left}px round ${radius}px)`;
-  };
+  // Pill dimensions for the bottom-center Close button track the same
+  // mobile/desktop tiers as the Menu CTA (so the user perceives the
+  // Menu pill morphing into the Close pill).
+  const pillH = isMobile ? CTA.pillH.mobile : CTA.pillH.desktop;
+  const circleH = isMobile ? CTA.circleH.mobile : CTA.circleH.desktop;
+  const pillBottom = isMobile ? CTA.bottom.mobile : CTA.bottom.desktop;
 
   // Initial state — clip-path is written synchronously before paint so
-  // the box is collapsed to a 0×0 point at viewport center. We
-  // deliberately do NOT touch `autoAlpha` on the box: the original
-  // "no-jank" version of this overlay let the box stay at default
-  // opacity 1, with the clip-path alone gating visibility. Reintroducing
-  // an `autoAlpha 0 → 1` set at open time created a one-frame paint
-  // where the box was visible at its initial clip-path before the tween
-  // started moving it — perceived as jank. Keeping autoAlpha untouched
-  // means the very first onUpdate is the first paint, and the animation
-  // reads as continuous from frame zero.
+  // the box is collapsed to a 0×0 point at viewport center. We do NOT
+  // touch `autoAlpha` on the box: pairing an opacity tween with the
+  // clip-path tween adds a one-frame paint at the initial state before
+  // the tween moves it, which reads as jank. Letting the box stay at
+  // default opacity 1 + clip-path-only visibility means the very first
+  // onUpdate is the first paint.
   useGSAP(() => {
     if (boxRef.current) {
       boxRef.current.style.clipPath = buildClipPath(0);
@@ -145,108 +151,129 @@ export default function MapOverlay() {
       const closePill = closeRef.current;
       if (!box || !backdrop) return;
 
-      if (isOpen) {
-        gsap.to(backdrop, {
-          autoAlpha: 1,
-          duration: 0.3,
-          ease: PANEL.ease,
-          overwrite: true,
-        });
+      const mm = gsap.matchMedia();
 
-        // The box's autoAlpha stays at its default (1) — see the
-        // initial-state useGSAP above for why we don't gate visibility
-        // with opacity. The clip-path tween alone reveals the box.
-        const proxy = { p: 0 };
-        gsap.to(proxy, {
-          p: 1,
-          duration: 0.85,
-          ease: PANEL.ease,
-          overwrite: true,
-          onUpdate: () => {
-            box.style.clipPath = buildClipPath(proxy.p);
-          },
-        });
+      // Reduced motion: snap directly to the open / closed state with
+      // no tweens. Mirrors the contract MenuOverlay and Feedback follow.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        if (isOpen) {
+          box.style.clipPath = buildClipPath(1);
+          gsap.set(backdrop, { autoAlpha: 1 });
+          if (card) gsap.set(card, { autoAlpha: 1, y: 0 });
+          if (pin) gsap.set(pin, { autoAlpha: 1, scale: 1, y: 0 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 1, y: 0 });
+        } else {
+          box.style.clipPath = buildClipPath(0);
+          gsap.set(backdrop, { autoAlpha: 0 });
+          if (card) gsap.set(card, { autoAlpha: 0, y: -16 });
+          if (pin) gsap.set(pin, { autoAlpha: 0, scale: 0.4, y: 8 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 0, y: 24 });
+        }
+      });
 
-        if (card) {
-          gsap.to(card, {
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        if (isOpen) {
+          gsap.to(backdrop, {
             autoAlpha: 1,
-            y: 0,
-            duration: 0.7,
+            duration: 0.3,
+            ease: PANEL.ease,
+            overwrite: true,
+          });
+
+          const proxy = { p: 0 };
+          gsap.to(proxy, {
+            p: 1,
+            duration: 0.85,
+            ease: PANEL.ease,
+            overwrite: true,
+            onUpdate: () => {
+              box.style.clipPath = buildClipPath(proxy.p);
+            },
+          });
+
+          if (card) {
+            gsap.to(card, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.7,
+              delay: 0.4,
+              ease: PANEL.ease,
+              overwrite: true,
+            });
+          }
+          if (pin) {
+            gsap.to(pin, {
+              autoAlpha: 1,
+              scale: 1,
+              y: 0,
+              duration: 0.75,
+              delay: 0.5,
+              ease: "back.out(1.7)",
+              overwrite: true,
+            });
+          }
+          if (closePill) {
+            gsap.to(closePill, {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.6,
+              delay: 0.55,
+              ease: PANEL.ease,
+              overwrite: true,
+            });
+          }
+        } else {
+          if (closePill) {
+            gsap.to(closePill, {
+              autoAlpha: 0,
+              y: 24,
+              duration: 0.25,
+              ease: PANEL.closeEase,
+              overwrite: true,
+            });
+          }
+          if (pin) {
+            gsap.to(pin, {
+              autoAlpha: 0,
+              scale: 0.4,
+              duration: 0.25,
+              ease: PANEL.closeEase,
+              overwrite: true,
+            });
+          }
+          if (card) {
+            gsap.to(card, {
+              autoAlpha: 0,
+              y: -16,
+              duration: 0.25,
+              ease: PANEL.closeEase,
+              overwrite: true,
+            });
+          }
+
+          const proxy = { p: 1 };
+          gsap.to(proxy, {
+            p: 0,
+            duration: 0.65,
+            ease: PANEL.closeEase,
+            delay: 0.15,
+            overwrite: true,
+            onUpdate: () => {
+              box.style.clipPath = buildClipPath(proxy.p);
+            },
+          });
+
+          gsap.to(backdrop, {
+            autoAlpha: 0,
+            duration: 0.35,
+            ease: PANEL.closeEase,
             delay: 0.4,
-            ease: PANEL.ease,
             overwrite: true,
           });
         }
-        if (pin) {
-          gsap.to(pin, {
-            autoAlpha: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.75,
-            delay: 0.5,
-            ease: "back.out(1.7)",
-            overwrite: true,
-          });
-        }
-        if (closePill) {
-          gsap.to(closePill, {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.6,
-            delay: 0.55,
-            ease: PANEL.ease,
-            overwrite: true,
-          });
-        }
-      } else {
-        if (closePill) {
-          gsap.to(closePill, {
-            autoAlpha: 0,
-            y: 24,
-            duration: 0.25,
-            ease: PANEL.closeEase,
-            overwrite: true,
-          });
-        }
-        if (pin) {
-          gsap.to(pin, {
-            autoAlpha: 0,
-            scale: 0.4,
-            duration: 0.25,
-            ease: PANEL.closeEase,
-            overwrite: true,
-          });
-        }
-        if (card) {
-          gsap.to(card, {
-            autoAlpha: 0,
-            y: -16,
-            duration: 0.25,
-            ease: PANEL.closeEase,
-            overwrite: true,
-          });
-        }
+      });
 
-        const proxy = { p: 1 };
-        gsap.to(proxy, {
-          p: 0,
-          duration: 0.65,
-          ease: PANEL.closeEase,
-          delay: 0.15,
-          overwrite: true,
-          onUpdate: () => {
-            box.style.clipPath = buildClipPath(proxy.p);
-          },
-        });
-
-        gsap.to(backdrop, {
-          autoAlpha: 0,
-          duration: 0.35,
-          ease: PANEL.closeEase,
-          delay: 0.4,
-          overwrite: true,
-        });
-      }
+      return () => mm.revert();
     },
     { dependencies: [isOpen] },
   );
@@ -273,23 +300,80 @@ export default function MapOverlay() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
+  // Focus management — save the trigger that opened the overlay, move
+  // focus to the Close pill once the overlay reaches its open state,
+  // restore focus to the trigger on close. Paired with the `inert`
+  // attribute SmoothScroll applies to <main> when any overlay is open,
+  // this creates a proper keyboard-only flow: Tab cycles only inside
+  // the overlay, Escape (or the explicit Close button) restores focus
+  // to where the user was. Same contract as MenuOverlay.
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
+      // Delay so the overlay has been rendered and made focusable.
+      const id = window.setTimeout(() => {
+        closeRef.current?.focus();
+      }, 50);
+      return () => window.clearTimeout(id);
+    }
+    if (previousFocusRef.current) {
+      previousFocusRef.current.focus();
+      previousFocusRef.current = null;
+    }
+  }, [isOpen]);
+
+  // The "Prêt à réserver ?" card link closes the map and opens the
+  // Reserve panel — a small lag so the close clip-path tween starts
+  // before the panel slide-in arrives, otherwise the two animations
+  // collide visually. The timer ID is tracked in a ref and cleared on
+  // unmount or re-entry so a fast unmount can't fire `openReservePanel`
+  // against a stale component tree.
+  const relayTimerRef = useRef<number | null>(null);
+  const handleReserveRelay = () => {
+    close();
+    if (relayTimerRef.current !== null) {
+      window.clearTimeout(relayTimerRef.current);
+    }
+    relayTimerRef.current = window.setTimeout(() => {
+      openReservePanel();
+      relayTimerRef.current = null;
+    }, 250);
+  };
+  useEffect(() => {
+    return () => {
+      if (relayTimerRef.current !== null) {
+        window.clearTimeout(relayTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <>
       {/* Backdrop noir — sits beneath the clipped box so the page behind
-          dims uniformly during the reveal. */}
+          dims uniformly during the reveal. `onClick={close}` gives the
+          user a click-outside-to-dismiss escape hatch; pointer-events
+          are flipped via React className so they snap exactly when
+          isOpen changes (no GSAP delay). */}
       <div
         ref={backdropRef}
-        className="fixed inset-0 z-[279] bg-base-noir/85 invisible pointer-events-none"
+        onClick={close}
+        className={`fixed inset-0 z-[279] bg-base-noir/85 invisible ${
+          isOpen ? "pointer-events-auto" : "pointer-events-none"
+        }`}
         aria-hidden
       />
 
-      {/* The clipped box. Pointer-events are wired through the React
-          className (not GSAP) so they flip instantly on isOpen change —
-          no chance of catching stray clicks during the close animation.
-          z-index sits just under MenuOverlay (z-290) so the Menu can
-          still overlay the map if both happen to open. */}
+      {/* The clipped box. role="dialog" + aria-modal + aria-labelledby
+          announce the overlay as a modal to screen readers; the page
+          behind it is already inerted by SmoothScroll. z-index sits
+          just under MenuOverlay (z-290) so the Menu can still overlay
+          the map if both happen to open. */}
       <div
         ref={boxRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={TITLE_ID}
         // data-lenis-prevent: opt the overlay out of Lenis interception
         // so any future scrollable content inside reads native scroll.
         data-lenis-prevent
@@ -301,15 +385,12 @@ export default function MapOverlay() {
         {/* The iframe is always mounted with the real URL — Google Maps
             starts loading on first paint of the page, so by the time
             the user clicks the trigger the tiles are already cached and
-            painted underneath the mask. We over-extend the iframe past
-            every edge of the box (negative top/left + larger
-            width/height) so the embed's native UI chrome — Open in
-            Maps, "Données cartographiques", zoom controls, keyboard
-            shortcuts — renders off-screen, in the strip the clip-path
-            cuts away. The iframe has `pointer-events: none` so the user
-            can't pan or zoom: the map is a static illustration, and our
-            SVG pin at viewport center stays anchored to a precise
-            lat/lng instead of behaving like a viewfinder. */}
+            painted underneath the mask. The iframe is over-extended
+            past every edge of the box so the embed's native UI chrome
+            (Open in Maps, attribution, zoom controls, keyboard
+            shortcuts) renders off-screen and is clipped by the box's
+            mask. `pointer-events: none` keeps it non-interactive so the
+            SVG pin at viewport center remains anchored to the lat/lng. */}
         <iframe
           src={MAP_EMBED_URL}
           title="Carte — emplacement des refuges Aquilon en Charlevoix"
@@ -346,13 +427,15 @@ export default function MapOverlay() {
 
         {/* Aquilon info card — top-left, dark rounded card. Scaled ~50%
             larger than the inline version so it reads as a deliberate
-            anchor against the wide-open map: wider container, bigger
-            title type, taller thumbnails. */}
+            anchor against the wide-open map. */}
         <div
           ref={cardRef}
           className="absolute top-4 left-4 md:top-8 md:left-8 w-[min(33rem,calc(100vw-2rem))] rounded-[60px] bg-base-noir/95 text-creme p-9 md:p-10 backdrop-blur-md shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]"
         >
-          <div className="flex items-baseline gap-1 text-[2.25rem] md:text-[2.625rem] font-semibold leading-none">
+          <div
+            id={TITLE_ID}
+            className="flex items-baseline gap-1 text-[2.25rem] md:text-[2.625rem] font-semibold leading-none"
+          >
             <span>{SITE_CONFIG.name}</span>
             <sup className="text-sm text-creme-dim font-normal">®</sup>
           </div>
@@ -363,12 +446,7 @@ export default function MapOverlay() {
           </p>
           <button
             type="button"
-            onClick={() => {
-              close();
-              // Defer slightly so the close clip-path tween starts before the
-              // Reserve panel slide-in — they read as a relay, not a clash.
-              window.setTimeout(() => openReservePanel(), 250);
-            }}
+            onClick={handleReserveRelay}
             className="mt-6 inline-flex text-base md:text-lg text-creme underline decoration-creme/40 underline-offset-4 hover:decoration-creme transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir rounded-sm"
           >
             Prêt à réserver&nbsp;?
@@ -397,10 +475,10 @@ export default function MapOverlay() {
           </div>
         </div>
 
-        {/* Custom pin — viewport-center overlay. Because the iframe is
-            non-interactive (no panning, no zooming), the pin's screen
-            position is permanently bound to the lat/lng we centered the
-            map on; it never drifts off the geographic anchor. */}
+        {/* Custom pin — viewport-center overlay. The iframe is
+            non-interactive (no panning, no zooming) so the pin's
+            screen position is permanently bound to the lat/lng we
+            centered the map on. */}
         <div
           ref={pinRef}
           aria-hidden
@@ -431,43 +509,44 @@ export default function MapOverlay() {
           </svg>
         </div>
 
-        {/* Close pill — bottom-center, dimensions mirror the Menu CTA. */}
-        <div
+        {/* Close pill — bottom-center, dimensions mirror the Menu CTA
+            across mobile/desktop tiers so the user perceives the Menu
+            pill morphing into the Close pill. */}
+        <button
           ref={closeRef}
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{ bottom: CTA.bottom.desktop }}
+          type="button"
+          onClick={close}
+          aria-label="Fermer la carte"
+          style={{
+            height: pillH,
+            paddingRight: CTA.pillPaddingRight,
+            bottom: pillBottom,
+          }}
+          className="group absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-pill bg-creme font-medium text-base-noir transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
-          <button
-            type="button"
-            onClick={close}
-            aria-label="Fermer la carte"
-            style={{ height: CTA.pillH.desktop, paddingRight: CTA.pillPaddingRight }}
-            className="group inline-flex items-center rounded-pill bg-creme font-medium text-base-noir transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          <span className="pl-8 pr-5 md:pl-12 md:pr-8 text-lg md:text-2xl whitespace-nowrap">
+            Fermer
+          </span>
+          <span
+            style={{ height: circleH, width: circleH }}
+            className="inline-flex items-center justify-center rounded-full bg-gris-tan text-creme-terre/70 shrink-0 transition-colors group-hover:bg-base-noir group-hover:text-creme-terre"
           >
-            <span className="pl-8 pr-5 md:pl-12 md:pr-8 text-lg md:text-2xl whitespace-nowrap">
-              Fermer
-            </span>
-            <span
-              style={{ height: CTA.circleH.desktop, width: CTA.circleH.desktop }}
-              className="inline-flex items-center justify-center rounded-full bg-gris-tan text-creme-terre/70 shrink-0 transition-colors group-hover:bg-base-noir group-hover:text-creme-terre"
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 30 30"
+              fill="none"
+              aria-hidden
             >
-              <svg
-                width="30"
-                height="30"
-                viewBox="0 0 30 30"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M7 7l16 16M23 7L7 23"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
-          </button>
-        </div>
+              <path
+                d="M7 7l16 16M23 7L7 23"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+        </button>
       </div>
     </>
   );
