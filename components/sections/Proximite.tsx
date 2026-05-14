@@ -4,6 +4,12 @@ import { useEffect, useRef } from "react";
 import RevealText from "@/components/common/RevealText";
 import { useMapOverlay } from "@/components/common/MapOverlayContext";
 
+/** IntersectionObserver rootMargin for the iframe preload trigger.
+ *  See the effect below for the full rationale — a smaller margin
+ *  let Google Maps' internal fade-in collide with the clip-path
+ *  reveal animation on the very first click. */
+const IFRAME_PRELOAD_MARGIN = "1500px";
+
 /**
  * Transition copy block before the `Pourquoi Aquilon ?` marquee.
  * A small eyebrow centered above a large headline; the last clause of
@@ -36,15 +42,20 @@ export default function Proximite() {
   const { open, preload } = useMapOverlay();
   const sectionRef = useRef<HTMLElement>(null);
 
-  // Preload the Google Maps iframe as soon as the user shows intent to
-  // reach the section — IntersectionObserver fires when the section is
-  // ~200 px from entering the viewport, giving the iframe time to
-  // buffer its tiles before the user reads the copy and clicks. The
-  // observer disconnects after the first hit so we don't keep firing
-  // `preload()` on every scroll past. The button's `onPointerEnter`
-  // below also calls `preload()` for desktop users that hover before
-  // clicking — both signals are no-ops once `preloaded` is already
-  // true on the context.
+  // Preload the Google Maps iframe well before the user actually
+  // reaches Proximite. The 1500 px rootMargin fires the observer when
+  // the section is still ~1.5 viewports below the fold — typically
+  // while the user is mid-way through Hebergements' pinned scroll.
+  // That head start lets the iframe (a) negotiate the embed JS, (b)
+  // fetch its tile mosaic, AND (c) finish Google Maps' own internal
+  // fade-in transition before the user clicks the trigger. With a
+  // smaller margin, Google's CSS fade-in was still running while our
+  // clip-path reveal animation played, so the user saw a white iframe
+  // through the growing mask on the first click.
+  //
+  // The observer disconnects after the first hit. The button's
+  // `onPointerEnter` below is a second, cheaper signal for desktop
+  // hover — both are no-ops once `preloaded` is true on the context.
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -55,7 +66,7 @@ export default function Proximite() {
           io.disconnect();
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: IFRAME_PRELOAD_MARGIN },
     );
     io.observe(section);
     return () => io.disconnect();

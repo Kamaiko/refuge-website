@@ -38,7 +38,9 @@ export function MapOverlayProvider({ children }: { children: ReactNode }) {
   const close = useCallback(() => setIsOpen(false), []);
   // Memoize the value object so consumers (SmoothScroll, Header,
   // MapOverlay, Proximite) don't re-render on every parent render —
-  // only when isOpen or preloaded actually flips.
+  // only when isOpen or preloaded actually flips. The callbacks are
+  // already stable (empty-deps useCallback), so the only real value
+  // triggers are isOpen and preloaded.
   const value = useMemo(
     () => ({ isOpen, preloaded, open, close, preload }),
     [isOpen, preloaded, open, close, preload],

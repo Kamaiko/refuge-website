@@ -66,9 +66,7 @@ const TITLE_ID = "map-overlay-title";
  *  cap toward RADIUS_OPEN — corners feel more rounded mid-animation
  *  than at rest, and ease into 60 px by the time the box reaches its
  *  open extent. */
-function buildClipPath(p: number): string {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+function buildClipPath(p: number, vw: number, vh: number): string {
   const top = (1 - p) * (vh / 2) + p * GAP;
   const left = (1 - p) * (vw / 2) + p * GAP;
   const bottom = top;
@@ -79,6 +77,16 @@ function buildClipPath(p: number): string {
   const target = cap + (RADIUS_OPEN - cap) * p;
   const radius = Math.min(target, cap);
   return `inset(${top}px ${right}px ${bottom}px ${left}px round ${radius}px)`;
+}
+
+/** Read `window.innerWidth/Height` once. Inside an onUpdate that fires
+ *  at ~60 fps for the entire tween, each read after a previous frame's
+ *  `style.clipPath` write would force a layout recalc — the exact
+ *  pattern Lighthouse's "Forced reflow" insight was attributing to
+ *  this overlay (~300 ms cumulative). Calling sites cache these dims
+ *  in their closure and pass them down to `buildClipPath`. */
+function readViewport(): { vw: number; vh: number } {
+  return { vw: window.innerWidth, vh: window.innerHeight };
 }
 
 /**
@@ -128,13 +136,6 @@ export default function MapOverlay() {
   // unmounted tree.
   const relayTimerRef = useRef<number | null>(null);
 
-  // Lazy-mount the Google Maps iframe — the embed pulls ~30 requests /
-  // ~1 MB on first load and sets cookies on the user's browser.
-  // Mounting only after `preloaded` has been signalled by the trigger
-  // section (Proximite, on viewport intersect or hover) keeps the
-  // cost off every visitor's initial paint; once mounted, the iframe
-  // stays in the tree so subsequent opens are instant.
-
   // Pill dimensions for the bottom-center Close button track the same
   // mobile/desktop tiers as the Menu CTA (so the user perceives the
   // Menu pill morphing into the Close pill).
@@ -151,7 +152,8 @@ export default function MapOverlay() {
   // onUpdate is the first paint.
   useGSAP(() => {
     if (boxRef.current) {
-      boxRef.current.style.clipPath = buildClipPath(0);
+      const { vw, vh } = readViewport();
+      boxRef.current.style.clipPath = buildClipPath(0, vw, vh);
     }
     if (backdropRef.current) gsap.set(backdropRef.current, { autoAlpha: 0 });
     if (cardRef.current) gsap.set(cardRef.current, { autoAlpha: 0, y: -16 });
@@ -182,23 +184,29 @@ export default function MapOverlay() {
       const closePill = closeRef.current;
       if (!box || !backdrop) return;
 
+      // Cache viewport dims once per matchMedia activation — inside
+      // an onUpdate that fires 60 fps × 0.85 s, reading `window`
+      // dims after each frame's clip-path write would force a layout
+      // recalc (the exact Forced reflow pattern Lighthouse flagged).
+      const { vw, vh } = readViewport();
+
       const mm = gsap.matchMedia();
 
       // Reduced motion: snap directly to the open / closed state with
       // no tweens. Mirrors the contract MenuOverlay and Feedback follow.
       mm.add("(prefers-reduced-motion: reduce)", () => {
         if (isOpen) {
-          box.style.clipPath = buildClipPath(1);
+          box.style.clipPath = buildClipPath(1, vw, vh);
           gsap.set(backdrop, { autoAlpha: 1 });
           if (card) gsap.set(card, { autoAlpha: 1, y: 0 });
           if (pin) gsap.set(pin, { autoAlpha: 1, scale: 1, y: 0 });
-          if (closePill) gsap.set(closePill, { autoAlpha: 1, xPercent: -50, y: 0 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 1, y: 0 });
         } else {
-          box.style.clipPath = buildClipPath(0);
+          box.style.clipPath = buildClipPath(0, vw, vh);
           gsap.set(backdrop, { autoAlpha: 0 });
           if (card) gsap.set(card, { autoAlpha: 0, y: -16 });
           if (pin) gsap.set(pin, { autoAlpha: 0, scale: 0.4, y: 8 });
-          if (closePill) gsap.set(closePill, { autoAlpha: 0, xPercent: -50, y: 24 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 0, y: 24 });
         }
       });
 
@@ -218,7 +226,7 @@ export default function MapOverlay() {
             ease: PANEL.ease,
             overwrite: true,
             onUpdate: () => {
-              box.style.clipPath = buildClipPath(proxy.p);
+              box.style.clipPath = buildClipPath(proxy.p, vw, vh);
             },
           });
 
@@ -244,9 +252,12 @@ export default function MapOverlay() {
             });
           }
           if (closePill) {
+            // `xPercent: -50` is already on the close pill from the
+            // initial-state gsap.set; we don't repeat it on every
+            // animate-to (GSAP preserves transform components per
+            // property unless overwritten).
             gsap.to(closePill, {
               autoAlpha: 1,
-              xPercent: -50,
               y: 0,
               duration: 0.6,
               delay: 0.55,
@@ -258,7 +269,6 @@ export default function MapOverlay() {
           if (closePill) {
             gsap.to(closePill, {
               autoAlpha: 0,
-              xPercent: -50,
               y: 24,
               duration: 0.25,
               ease: PANEL.closeEase,
@@ -292,7 +302,7 @@ export default function MapOverlay() {
             delay: 0.15,
             overwrite: true,
             onUpdate: () => {
-              box.style.clipPath = buildClipPath(proxy.p);
+              box.style.clipPath = buildClipPath(proxy.p, vw, vh);
             },
           });
 
@@ -317,7 +327,8 @@ export default function MapOverlay() {
   useEffect(() => {
     const onResize = () => {
       if (isOpen || !boxRef.current) return;
-      boxRef.current.style.clipPath = buildClipPath(0);
+      const { vw, vh } = readViewport();
+      boxRef.current.style.clipPath = buildClipPath(0, vw, vh);
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
