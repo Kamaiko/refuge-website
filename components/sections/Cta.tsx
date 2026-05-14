@@ -112,7 +112,7 @@ export default function Cta() {
         <Marquee
           text={MARQUEE_TEXT}
           speed={220}
-          mobileSpeed={160}
+          mobileSpeed={90}
           directional
           scrollBoost
           pauseOnHover

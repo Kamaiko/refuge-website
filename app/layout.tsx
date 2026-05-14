@@ -6,6 +6,8 @@ import { MenuProvider } from "@/components/common/MenuContext";
 import MenuOverlay from "@/components/common/MenuOverlay";
 import { ReservePanelProvider } from "@/components/common/ReservePanelContext";
 import ReservePanel from "@/components/common/ReservePanel";
+import { MapOverlayProvider } from "@/components/common/MapOverlayContext";
+import MapOverlay from "@/components/common/MapOverlay";
 import { SITE_CONFIG } from "@/lib/constants";
 import "./globals.css";
 
@@ -69,10 +71,13 @@ export default function RootLayout({
         />
         <MenuProvider>
           <ReservePanelProvider>
-            <SmoothScroll>{children}</SmoothScroll>
-            <MenuOverlay />
-            <ReservePanel />
-            <CustomCursor />
+            <MapOverlayProvider>
+              <SmoothScroll>{children}</SmoothScroll>
+              <MenuOverlay />
+              <ReservePanel />
+              <MapOverlay />
+              <CustomCursor />
+            </MapOverlayProvider>
           </ReservePanelProvider>
         </MenuProvider>
       </body>

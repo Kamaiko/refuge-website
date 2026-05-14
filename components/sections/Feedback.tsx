@@ -37,10 +37,15 @@ export default function Feedback() {
       const author = authorRef.current;
 
       const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // Desktop + mobile share the same easing/scrub but mobile fires
+      // the trigger earlier — on phones the section enters the viewport
+      // and is mostly visible before the desktop `top 50%` window opens,
+      // leaving the words held off-screen for an awkwardly long beat.
+      // Pulling start up to `top 85%` lets the reveal begin as the
+      // section header just clears the fold.
+      const setup = ({ start, end }: { start: string; end: string }) => {
         if (!words.length) return;
 
-        // Initial offscreen-below + invisible + blurred state.
         gsap.set(words, {
           yPercent: 110,
           opacity: 0,
@@ -48,17 +53,6 @@ export default function Feedback() {
         });
         if (author) gsap.set(author, { opacity: 0, y: 20 });
 
-        // Single tween across every word, staggered. Scrub 0.5 lets the
-        // motion lag the scroll input slightly — feels more deliberate
-        // than a 1:1 mapping while still giving full reverse on up-scroll.
-        // `each: 0.04` ≈ a tight wave that reads as 30+ discrete reveals
-        // for the long quote, but compresses naturally for the short
-        // eyebrow (5 words). `from: "start"` cascades left-to-right,
-        // top-to-bottom in document order.
-        // Stagger + scrub lag together: stagger gives each word its own
-        // slot in the reveal sequence; scrub lag (1.4s) holds the tween
-        // back from snapping when the user scroll-blasts past, so even a
-        // fast scroll produces a perceptible cascade instead of a flash.
         gsap.to(words, {
           yPercent: 0,
           opacity: 1,
@@ -67,14 +61,12 @@ export default function Feedback() {
           stagger: { each: 0.09, from: "start" },
           scrollTrigger: {
             trigger: section,
-            start: "top 50%",
-            end: "center 60%",
+            start,
+            end,
             scrub: 1.4,
           },
         });
 
-        // Author block fades in last, on its own slim ScrollTrigger so
-        // it doesn't compete with the word stagger for visual attention.
         if (author) {
           gsap.to(author, {
             opacity: 1,
@@ -88,6 +80,13 @@ export default function Feedback() {
             },
           });
         }
+      };
+
+      mm.add("(prefers-reduced-motion: no-preference) and (min-width: 768px)", () => {
+        setup({ start: "top 50%", end: "center 60%" });
+      });
+      mm.add("(prefers-reduced-motion: no-preference) and (max-width: 767px)", () => {
+        setup({ start: "top 85%", end: "center 70%" });
       });
 
       mm.add("(prefers-reduced-motion: reduce)", () => {

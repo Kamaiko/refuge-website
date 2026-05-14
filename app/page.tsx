@@ -4,6 +4,7 @@ import Manifeste from "@/components/sections/Manifeste";
 import Medaillons from "@/components/sections/Medaillons";
 import Choisir from "@/components/sections/Choisir";
 import Hebergements from "@/components/sections/Hebergements";
+import Proximite from "@/components/sections/Proximite";
 import MarqueeBrand from "@/components/sections/MarqueeBrand";
 import Pourquoi from "@/components/sections/Pourquoi";
 import Activites from "@/components/sections/Activites";
@@ -23,6 +24,7 @@ export default function Home() {
         <Medaillons />
         <Choisir />
         <Hebergements />
+        <Proximite />
         <MarqueeBrand />
         <Pourquoi />
         <Activites />

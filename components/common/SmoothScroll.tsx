@@ -6,6 +6,7 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SECTION_LOCK_EVENT, type SectionLockDetail } from "@/lib/section-lock";
 import { useMenu } from "./MenuContext";
 import { useReservePanel } from "./ReservePanelContext";
+import { useMapOverlay } from "./MapOverlayContext";
 
 /**
  * Owns the global Lenis smooth-scroll lifecycle and synchronises it with
@@ -27,6 +28,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   const lenisRef = useRef<Lenis | null>(null);
   const { isOpen: menuIsOpen } = useMenu();
   const { isOpen: reserveIsOpen } = useReservePanel();
+  const { isOpen: mapIsOpen } = useMapOverlay();
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -108,7 +110,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   // delta. `touch-action` does NOT inherit, so panel children keep
   // their default and remain touch-scrollable.
   useEffect(() => {
-    const anyOpen = menuIsOpen || reserveIsOpen;
+    const anyOpen = menuIsOpen || reserveIsOpen || mapIsOpen;
     const lenis = lenisRef.current;
     const main = document.querySelector("main");
     const html = document.documentElement;
@@ -135,7 +137,7 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       html.style.touchAction = "";
       main?.removeAttribute("inert");
     };
-  }, [menuIsOpen, reserveIsOpen]);
+  }, [menuIsOpen, reserveIsOpen, mapIsOpen]);
 
   return <>{children}</>;
 }
