@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -108,7 +108,7 @@ function buildClipPath(p: number): string {
  * Driven by {@link useMapOverlay} — must sit inside a `MapOverlayProvider`.
  */
 export default function MapOverlay() {
-  const { isOpen, close } = useMapOverlay();
+  const { isOpen, close, preloaded } = useMapOverlay();
   const { open: openReservePanel } = useReservePanel();
   const isMobile = useMediaQuery(MQ.belowMd);
 
@@ -128,19 +128,12 @@ export default function MapOverlay() {
   // unmounted tree.
   const relayTimerRef = useRef<number | null>(null);
 
-  // Lazy-mount the Google Maps iframe — Google's embed pulls ~30
-  // requests / ~1 MB on first load and sets cookies on the user's
-  // browser. Mounting only after the first open keeps the cost off
-  // every visitor's initial paint; once mounted it stays in the tree
-  // so subsequent opens are instant.
-  const [hasOpenedOnce, setHasOpenedOnce] = useState(false);
-  useEffect(() => {
-    // External-system sync (lazy-mount on first open); setState in
-    // effect is intentional, identical to ReservePanel's mask-active
-    // pattern in Header.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isOpen) setHasOpenedOnce(true);
-  }, [isOpen]);
+  // Lazy-mount the Google Maps iframe — the embed pulls ~30 requests /
+  // ~1 MB on first load and sets cookies on the user's browser.
+  // Mounting only after `preloaded` has been signalled by the trigger
+  // section (Proximite, on viewport intersect or hover) keeps the
+  // cost off every visitor's initial paint; once mounted, the iframe
+  // stays in the tree so subsequent opens are instant.
 
   // Pill dimensions for the bottom-center Close button track the same
   // mobile/desktop tiers as the Menu CTA (so the user perceives the
@@ -438,7 +431,7 @@ export default function MapOverlay() {
             clipped by the box's mask. `pointer-events: none` keeps
             it non-interactive so the SVG pin at viewport center
             stays anchored to the lat/lng. */}
-        {hasOpenedOnce && <iframe
+        {preloaded && <iframe
           src={MAP_EMBED_URL}
           title="Carte — emplacement des refuges Aquilon en Charlevoix"
           referrerPolicy="no-referrer-when-downgrade"

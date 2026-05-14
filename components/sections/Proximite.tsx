@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import RevealText from "@/components/common/RevealText";
 import { useMapOverlay } from "@/components/common/MapOverlayContext";
 
@@ -32,10 +33,37 @@ import { useMapOverlay } from "@/components/common/MapOverlayContext";
  * + underlined CTA), original copy adapted to Charlevoix.
  */
 export default function Proximite() {
-  const { open } = useMapOverlay();
+  const { open, preload } = useMapOverlay();
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // Preload the Google Maps iframe as soon as the user shows intent to
+  // reach the section — IntersectionObserver fires when the section is
+  // ~200 px from entering the viewport, giving the iframe time to
+  // buffer its tiles before the user reads the copy and clicks. The
+  // observer disconnects after the first hit so we don't keep firing
+  // `preload()` on every scroll past. The button's `onPointerEnter`
+  // below also calls `preload()` for desktop users that hover before
+  // clicking — both signals are no-ops once `preloaded` is already
+  // true on the context.
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          preload();
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(section);
+    return () => io.disconnect();
+  }, [preload]);
 
   return (
     <section
+      ref={sectionRef}
       id="proximite"
       className="relative w-full bg-base-noir px-5 md:px-10 py-32 md:py-48 flex flex-col items-center text-center overflow-hidden"
     >
@@ -58,6 +86,7 @@ export default function Proximite() {
         <button
           type="button"
           onClick={open}
+          onPointerEnter={preload}
           aria-label="Voir l'emplacement sur la carte — deux heures de route depuis Québec"
           className="group relative mt-3 md:mt-5 block w-fit mx-auto text-creme-terre/70 hover:text-creme transition-colors duration-300 leading-[1.05] tracking-[-0.02em] xs:whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-4 focus-visible:ring-offset-base-noir rounded-sm"
           // Clamp keeps the link readable down to ~360 px viewport
