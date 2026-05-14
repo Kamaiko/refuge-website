@@ -53,3 +53,6 @@ public/videos/hero-loop-[A-Z].mp4
 # IDE
 /.vscode/
 /.idea/
+
+# Claude Code local state (per-user settings, harness logs)
+/.claude/
