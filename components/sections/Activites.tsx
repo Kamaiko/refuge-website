@@ -6,7 +6,7 @@ import { gsap } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
 import BgGradient from "@/components/common/BgGradient";
 
-const LINES = ["Découvrez les activités", "du fjord"] as const;
+const LINES = ["Découvrez les", "activités du fjord"] as const;
 
 /** Three commitment tiers shown as labelled progress bars below the title.
  *  `fill` is a 0..1 fraction — the bar's filled length relative to the

@@ -163,7 +163,10 @@ export default function MapOverlay() {
     if (backdropRef.current) gsap.set(backdropRef.current, { autoAlpha: 0 });
     if (cardRef.current) gsap.set(cardRef.current, { autoAlpha: 0, y: -16 });
     if (pinRef.current) gsap.set(pinRef.current, { autoAlpha: 0, scale: 0.4, y: 8 });
-    if (closeRef.current) gsap.set(closeRef.current, { autoAlpha: 0, y: 24 });
+    // `xPercent: -50` keeps the close pill horizontally centered while
+    // GSAP also animates `y` — Tailwind's `-translate-x-1/2` would get
+    // wiped the moment GSAP writes its own `transform` matrix.
+    if (closeRef.current) gsap.set(closeRef.current, { autoAlpha: 0, xPercent: -50, y: 24 });
   }, []);
 
   useGSAP(
@@ -196,13 +199,13 @@ export default function MapOverlay() {
           gsap.set(backdrop, { autoAlpha: 1 });
           if (card) gsap.set(card, { autoAlpha: 1, y: 0 });
           if (pin) gsap.set(pin, { autoAlpha: 1, scale: 1, y: 0 });
-          if (closePill) gsap.set(closePill, { autoAlpha: 1, y: 0 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 1, xPercent: -50, y: 0 });
         } else {
           box.style.clipPath = buildClipPath(0);
           gsap.set(backdrop, { autoAlpha: 0 });
           if (card) gsap.set(card, { autoAlpha: 0, y: -16 });
           if (pin) gsap.set(pin, { autoAlpha: 0, scale: 0.4, y: 8 });
-          if (closePill) gsap.set(closePill, { autoAlpha: 0, y: 24 });
+          if (closePill) gsap.set(closePill, { autoAlpha: 0, xPercent: -50, y: 24 });
         }
       });
 
@@ -250,6 +253,7 @@ export default function MapOverlay() {
           if (closePill) {
             gsap.to(closePill, {
               autoAlpha: 1,
+              xPercent: -50,
               y: 0,
               duration: 0.6,
               delay: 0.55,
@@ -261,6 +265,7 @@ export default function MapOverlay() {
           if (closePill) {
             gsap.to(closePill, {
               autoAlpha: 0,
+              xPercent: -50,
               y: 24,
               duration: 0.25,
               ease: PANEL.closeEase,
@@ -564,7 +569,7 @@ export default function MapOverlay() {
             paddingRight: CTA.pillPaddingRight,
             bottom: pillBottom,
           }}
-          className="group absolute left-1/2 -translate-x-1/2 inline-flex items-center rounded-pill bg-creme font-medium text-base-noir transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="group absolute left-1/2 inline-flex items-center rounded-pill bg-creme font-medium text-base-noir transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="pl-8 pr-5 md:pl-12 md:pr-8 text-lg md:text-2xl whitespace-nowrap">
             Fermer
