@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
@@ -14,14 +15,16 @@ const SUBCOPY = `Passez du temps de qualité dans nos emplacements au Québec av
  *  parallaxes (scale 1.1 → 1.0) on scroll via a scrubbed ScrollTrigger.
  *  Reduced-motion: skips entrance + parallax tweens, copy lands at rest.
  *
- *  LCP strategy: the AVIF poster is preloaded via a `<link rel="preload">`
- *  in `app/layout.tsx` and rendered through the video's `poster` attribute.
- *  The video itself uses `preload="none"` + no `autoplay` so the browser
- *  never pulls the 4 MB MP4 on the critical path; instead we call
- *  `.load()` + `.play()` from a `window.load` listener, deferring the
- *  video until after the LCP timestamp has settled on the poster. Net
- *  effect: poster paints fast (~600 ms on Slow 4G simulation) and is
- *  measured as LCP; the video swaps in ~500-1000 ms later. */
+ *  LCP strategy — the poster is rendered as a real `<img>` element
+ *  underneath the `<video>`, instead of relying on the video's `poster`
+ *  attribute. That way Chrome's LCP API unambiguously measures the
+ *  `<img>` (a plain image element with a known src) rather than the
+ *  containing `<video>` (which the heuristic was previously picking,
+ *  even when no video frame had painted). The `<video>` itself is
+ *  `preload="none"` + no `autoplay` + `opacity: 0` at mount, so it
+ *  contributes nothing to the first paint. After `window.load`, the
+ *  effect calls `.load()` then `.play()`; the `canplay` listener fades
+ *  the video in over 600 ms once enough has buffered. */
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const wordmarkRef = useRef<HTMLHeadingElement>(null);
@@ -29,6 +32,7 @@ export default function Hero() {
   const subcopyRef = useRef<HTMLParagraphElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoReady, setVideoReady] = useState(false);
 
   // Defer the video's network + decode work until after the page has
   // fully loaded. Reduced-motion users keep the poster permanently;
@@ -38,6 +42,9 @@ export default function Hero() {
     if (!video) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    const onCanPlay = () => setVideoReady(true);
+    video.addEventListener("canplay", onCanPlay, { once: true });
+
     const start = () => {
       video.load();
       // `.play()` can reject on engines that gate autoplay even with
@@ -46,12 +53,17 @@ export default function Hero() {
       video.play().catch(() => {});
     };
 
+    let timerId: number | undefined;
     if (document.readyState === "complete") {
-      const id = window.setTimeout(start, 0);
-      return () => window.clearTimeout(id);
+      timerId = window.setTimeout(start, 0);
+    } else {
+      window.addEventListener("load", start, { once: true });
     }
-    window.addEventListener("load", start, { once: true });
-    return () => window.removeEventListener("load", start);
+    return () => {
+      video.removeEventListener("canplay", onCanPlay);
+      window.removeEventListener("load", start);
+      if (timerId !== undefined) window.clearTimeout(timerId);
+    };
   }, []);
 
   useGSAP(
@@ -103,21 +115,37 @@ export default function Hero() {
     >
       <div className="relative h-full w-full overflow-hidden rounded-[60px]">
         <div ref={mediaRef} className="absolute inset-0 will-change-transform">
-          {/* `preload="none"` + no `autoplay` so the browser doesn't touch
-              the 4 MB MP4 on the critical path. The AVIF poster (preloaded
-              via `<link>` in app/layout.tsx) is the only thing painted on
-              first frame; Lighthouse's LCP measurement settles on it
-              before the JS-driven `.load()` + `.play()` in the effect
-              above kicks the video into motion. */}
+          {/* Poster as a real <img> via next/image — this is what
+              Lighthouse measures as LCP. The same file is preloaded by
+              the <link rel="preload"> in app/layout.tsx so it's already
+              in cache by the time React renders this element. `priority`
+              tells next/image to add `fetchpriority="high"` and skip the
+              default lazy loading. */}
+          <Image
+            src="/images/hero-shape.avif"
+            alt=""
+            aria-hidden
+            fill
+            priority
+            sizes="100vw"
+            unoptimized
+            className="object-cover"
+          />
+          {/* Video layered above the poster but invisible at mount —
+              `preload="none"` + no `autoplay` means the browser doesn't
+              touch the 4 MB MP4 on the critical path. The effect above
+              swaps `videoReady → true` once the `canplay` event fires,
+              fading the video over the poster. */}
           <video
             ref={videoRef}
-            className="h-full w-full object-cover"
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+              videoReady ? "opacity-100" : "opacity-0"
+            }`}
             muted
             loop
             playsInline
             preload="none"
             aria-hidden="true"
-            poster="/images/hero-shape.avif"
           >
             <source src="/videos/hero-loop.mp4?v=5" type="video/mp4" />
           </video>
