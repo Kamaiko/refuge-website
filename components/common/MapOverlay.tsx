@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -39,9 +39,9 @@ const RADIUS_OPEN = 60;
  *  attribution + "Ouvrir dans Maps" link + zoom + keyboard-shortcuts UI
  *  at the iframe's true corners — by inflating the iframe past every
  *  edge of the box and letting the box's clip-path crop the overflow,
- *  those UI chrome elements end up rendered off-screen. Symmetric on
- *  all four sides so the map's CSS center stays aligned with the box
- *  center (which is where our custom SVG pin sits). */
+ *  those UI chrome elements end up rendered off-screen. Symmetric per
+ *  axis so the map's CSS center stays aligned with the box center
+ *  (which is where our custom SVG pin sits). */
 const IFRAME_BLEED = { x: 160, y: 100 } as const;
 
 /** ARIA id linking the box's `aria-labelledby` to the Aquilon brand
@@ -117,6 +117,30 @@ export default function MapOverlay() {
   const cardRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+
+  // Skip the open/close GSAP effect on first mount — see the relevant
+  // useGSAP below for why.
+  const hasMountedRef = useRef(false);
+  // Saved focus target for the open/close cycle (restored on close).
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  // Map → Reserve panel relay timer ID, so we can clear it on unmount
+  // or re-entry instead of letting a stale firing arrive against an
+  // unmounted tree.
+  const relayTimerRef = useRef<number | null>(null);
+
+  // Lazy-mount the Google Maps iframe — Google's embed pulls ~30
+  // requests / ~1 MB on first load and sets cookies on the user's
+  // browser. Mounting only after the first open keeps the cost off
+  // every visitor's initial paint; once mounted it stays in the tree
+  // so subsequent opens are instant.
+  const [hasOpenedOnce, setHasOpenedOnce] = useState(false);
+  useEffect(() => {
+    // External-system sync (lazy-mount on first open); setState in
+    // effect is intentional, identical to ReservePanel's mask-active
+    // pattern in Header.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isOpen) setHasOpenedOnce(true);
+  }, [isOpen]);
 
   // Pill dimensions for the bottom-center Close button track the same
   // mobile/desktop tiers as the Menu CTA (so the user perceives the
@@ -311,27 +335,14 @@ export default function MapOverlay() {
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, close]);
 
-  // Focus management — save the trigger that opened the overlay, move
-  // focus to the Close pill once the overlay reaches its open state,
-  // restore focus to the trigger on close. Paired with the `inert`
-  // attribute SmoothScroll applies to <main> when any overlay is open,
-  // this creates a proper keyboard-only flow: Tab cycles only inside
-  // the overlay, Escape (or the explicit Close button) restores focus
-  // to where the user was. Same contract as MenuOverlay.
-  // Skip the open/close GSAP effect on first mount — useGSAP runs its
-  // body on initial render (with isOpen=false) and would otherwise enter
-  // the `else` branch, where the close tween starts the clip-path proxy
-  // at p=1 (fullscreen) and animates to p=0 (invisible). The user sees
-  // that as an unwanted exit animation on every page refresh. The
-  // initial-state useGSAP above already set the clip-path to the
-  // closed state, so we don't need the close tween to fire on mount.
-  const hasMountedRef = useRef(false);
-
-  const previousFocusRef = useRef<HTMLElement | null>(null);
+  // Focus management — save the trigger element on open, focus the
+  // Close pill once the overlay is mounted/focusable, restore focus on
+  // close. Paired with the `inert` attribute SmoothScroll applies to
+  // <main> when any overlay is open, this creates a proper
+  // keyboard-only flow. Same contract as MenuOverlay.
   useEffect(() => {
     if (isOpen) {
       previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-      // Delay so the overlay has been rendered and made focusable.
       const id = window.setTimeout(() => {
         closeRef.current?.focus();
       }, 50);
@@ -343,13 +354,10 @@ export default function MapOverlay() {
     }
   }, [isOpen]);
 
-  // The "Prêt à réserver ?" card link closes the map and opens the
+  // The "Prêt à réserver ?" card link closes the map then opens the
   // Reserve panel — a small lag so the close clip-path tween starts
   // before the panel slide-in arrives, otherwise the two animations
-  // collide visually. The timer ID is tracked in a ref and cleared on
-  // unmount or re-entry so a fast unmount can't fire `openReservePanel`
-  // against a stale component tree.
-  const relayTimerRef = useRef<number | null>(null);
+  // collide visually.
   const handleReserveRelay = () => {
     close();
     if (relayTimerRef.current !== null) {
@@ -414,16 +422,18 @@ export default function MapOverlay() {
         style={{ clipPath: "inset(50% 50% 50% 50% round 0px)" }}
         aria-hidden={!isOpen}
       >
-        {/* The iframe is always mounted with the real URL — Google Maps
-            starts loading on first paint of the page, so by the time
-            the user clicks the trigger the tiles are already cached and
-            painted underneath the mask. The iframe is over-extended
-            past every edge of the box so the embed's native UI chrome
-            (Open in Maps, attribution, zoom controls, keyboard
-            shortcuts) renders off-screen and is clipped by the box's
-            mask. `pointer-events: none` keeps it non-interactive so the
-            SVG pin at viewport center remains anchored to the lat/lng. */}
-        <iframe
+        {/* Iframe is mounted lazily — only after the user first opens
+            the overlay. Once mounted it stays in the tree, so later
+            re-opens are instant (tiles cached). This keeps the
+            ~30-request / ~1-MB Google Maps embed off the initial
+            page weight for every visitor that never clicks the
+            trigger. Over-extended past every edge of the box so the
+            embed's native UI chrome (Open in Maps, attribution, zoom
+            controls, keyboard shortcuts) renders off-screen and is
+            clipped by the box's mask. `pointer-events: none` keeps
+            it non-interactive so the SVG pin at viewport center
+            stays anchored to the lat/lng. */}
+        {hasOpenedOnce && <iframe
           src={MAP_EMBED_URL}
           title="Carte — emplacement des refuges Aquilon en Charlevoix"
           referrerPolicy="no-referrer-when-downgrade"
@@ -455,7 +465,7 @@ export default function MapOverlay() {
             //  - `contrast` 1.02 : a hair of contrast for edges.
             filter: "hue-rotate(-22deg) sepia(0.2) saturate(0.9) brightness(0.92) contrast(1.02)",
           }}
-        />
+        />}
 
         {/* Aquilon info card — top-left, dark rounded card. Scaled ~50%
             larger than the inline version so it reads as a deliberate

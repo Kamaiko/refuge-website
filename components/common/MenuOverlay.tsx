@@ -11,7 +11,7 @@ import { BP } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
 import { NAV } from "@/lib/data/nav";
 import Marquee from "./Marquee";
-import SocialIcons from "./SocialIconLink";
+import SocialIcons from "./SocialIcons";
 
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;

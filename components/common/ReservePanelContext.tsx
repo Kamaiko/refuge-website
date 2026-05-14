@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 /** Open/close state of the right-side Reserve panel and its imperative
  *  controls. Consumed by Header (Reserve CTA), Hebergements (per-card Reserve
@@ -21,8 +21,10 @@ export function ReservePanelProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
+  // Memoize so consumers don't re-render on every parent render.
+  const value = useMemo(() => ({ isOpen, open, close }), [isOpen, open, close]);
   return (
-    <ReservePanelContext.Provider value={{ isOpen, open, close }}>
+    <ReservePanelContext.Provider value={value}>
       {children}
     </ReservePanelContext.Provider>
   );

@@ -1,4 +1,4 @@
-import { SOCIALS, SOCIAL_LABELS } from "@/lib/data/socials";
+import { SOCIALS, SOCIAL_LABELS, SOCIAL_OWNER } from "@/lib/data/socials";
 
 /** Tone variants reflect the surface the row of icons sits on :
  *  - `on-noir` : darker border (`creme-dim/60`, border-2), used by {@link Cta}
@@ -32,7 +32,7 @@ export default function SocialIcons({ tone }: { tone: Tone }) {
           href={s.href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`${SOCIAL_LABELS[s.id]} — ${s.ariaSuffix}`}
+          aria-label={`${SOCIAL_LABELS[s.id]} — ${SOCIAL_OWNER}`}
           className={linkCls}
         >
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>

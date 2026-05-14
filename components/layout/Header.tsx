@@ -294,9 +294,8 @@ export default function Header() {
     const observer = new IntersectionObserver(
       ([entry]) => {
         const target = entry.isIntersecting ? 0 : 1;
-        // Single threshold is enough — the callback only branches on the
-        // 0.3 boundary, so the extra threshold ticks ([0, 0.5, 1]) were
-        // just creating redundant tween constructions on every crossing.
+        // Single threshold (0.3) — the callback only branches on
+        // intersecting vs not, no need for extra crossing ticks.
         if (target === currentOpacity) return;
         currentOpacity = target;
         menu.style.pointerEvents = target === 0 ? "none" : "";

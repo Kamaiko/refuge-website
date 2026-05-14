@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 /** Open/close state of the fullscreen Map overlay, plus imperative controls.
  *  Consumed by Proximite (underlined CTA in the section copy) and
@@ -22,8 +22,12 @@ export function MapOverlayProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const open = useCallback(() => setIsOpen(true), []);
   const close = useCallback(() => setIsOpen(false), []);
+  // Memoize the value object so consumers (SmoothScroll, Header,
+  // MapOverlay, Proximite) don't re-render on every parent render —
+  // only when isOpen actually flips.
+  const value = useMemo(() => ({ isOpen, open, close }), [isOpen, open, close]);
   return (
-    <MapOverlayContext.Provider value={{ isOpen, open, close }}>
+    <MapOverlayContext.Provider value={value}>
       {children}
     </MapOverlayContext.Provider>
   );

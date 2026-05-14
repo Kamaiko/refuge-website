@@ -7,7 +7,7 @@ import { SITE_CONFIG } from "@/lib/constants";
 import { NAV } from "@/lib/data/nav";
 import Marquee from "@/components/common/Marquee";
 import NavWheelLink from "@/components/common/NavWheelLink";
-import SocialIcons from "@/components/common/SocialIconLink";
+import SocialIcons from "@/components/common/SocialIcons";
 
 const MARQUEE_TEXT = "Réservez votre refuge";
 
