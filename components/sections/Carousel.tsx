@@ -12,6 +12,13 @@ type Card = {
   sous: string;
   niveau: string;
   image: string;
+  /** Per-card image scale. Recycled assets aren't all framed for the
+   *  card's aspect ratio — most need a small zoom to crop dead edges
+   *  out. `activite1.ancien_modele` was shot for this aspect ratio and
+   *  reads correctly at 1×. The desktop parallax pan also relies on
+   *  at least 1.15 so the +8 % x-translation doesn't expose empty
+   *  pixels — values < 1.15 are clamped at the call site below. */
+  zoom: number;
 };
 
 /** Three placeholder activity cards. Photos are temporarily the refuges
@@ -21,19 +28,22 @@ const CARDS: readonly Card[] = [
     titre: "Kayak sur le fjord",
     sous: "Glisser au ras de l'eau, sous la lumière qui change toutes les dix minutes.",
     niveau: "Journée",
-    image: "/images/refuge-galets.avif",
+    image: "/images/recycled_assets/activite1.ancien_modele.png",
+    zoom: 1,
   },
   {
     titre: "Marche en forêt boréale",
     sous: "Sentiers larges, terrain souple. Le silence n'est jamais total — il respire.",
     niveau: "Demi-journée",
-    image: "/images/refuge-aubepine.avif",
+    image: "/images/recycled_assets/weird_angle_oof.png",
+    zoom: 1.3,
   },
   {
     titre: "Sauna nordique",
     sous: "Chaleur dense, puis l'air froid qui pince. Rituel court, effet long.",
     niveau: "Demi-journée",
-    image: "/images/refuge-brume.avif",
+    image: "/images/recycled_assets/fjord_unused2.png",
+    zoom: 1.3,
   },
 ] as const;
 
@@ -121,17 +131,19 @@ export default function Carousel() {
 
           // Per-card setup + inner-pan parallax. Scale is set via GSAP
           // (not inline style) so GSAP's transform compose with the
-          // animated `xPercent` instead of being overwritten. Card 2
-          // gets a tighter scale because its source AVIF reads a touch
-          // looser at full bleed. Uniform `xPercent: +8` translates the
-          // image rightward as the track moves left, producing a
-          // parallax-slow effect on all three cards — applied to card
-          // 0 too so it doesn't drift "left" against the rightward
-          // motion of cards 1 and 2.
-          [0, 1, 2].forEach((i) => {
+          // animated `xPercent` instead of being overwritten. Scale is
+          // `max(card.zoom, 1.15)` — the floor keeps the +8 %
+          // x-translation from exposing empty edges on cards that
+          // already fit the aspect ratio at 1×; cards with a higher
+          // zoom just use their own value. Uniform `xPercent: +8`
+          // translates the image rightward as the track moves left,
+          // producing a parallax-slow effect on all three cards —
+          // applied to card 0 too so it doesn't drift "left" against
+          // the rightward motion of cards 1 and 2.
+          CARDS.forEach((c, i) => {
             const el = innerPanRefs.current[i];
             if (!el) return;
-            const scale = i === 2 ? 1.22 : 1.15;
+            const scale = Math.max(c.zoom, 1.15);
             gsap.set(el, { scale, transformOrigin: "center" });
             tl.fromTo(
               el,
@@ -193,6 +205,10 @@ export default function Carousel() {
                   sizes="85vw"
                   unoptimized
                   className="object-cover"
+                  // Mobile has no parallax pan, so the scale floor isn't
+                  // required — apply the per-card zoom directly. `1` is a
+                  // no-op for cards framed for this aspect ratio.
+                  style={{ transform: `scale(${c.zoom})` }}
                 />
                 {/* Niveau pill — overlay top-right of the image */}
                 <span className="absolute top-4 right-4 inline-flex items-center rounded-pill border border-creme/40 bg-base-noir/30 backdrop-blur-sm px-4 py-1.5 text-xs font-medium tracking-wide text-creme">

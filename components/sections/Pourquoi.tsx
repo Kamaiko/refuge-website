@@ -26,17 +26,17 @@ const SLIDES: readonly Slide[] = [
   {
     title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
     body: "Personne ne vous chronomètre. Le seul calendrier ici, c'est la lumière qui tombe sur le fjord.",
-    image: "/images/refuge-brume.avif",
+    image: "/images/recycled_assets/fjord_unused.png",
   },
   {
     title: "Profitez de la vue—par la grande baie vitrée panoramique",
     body: "Une fenêtre ouverte sur l'eau et le ciel, qui se renouvelle à chaque heure du jour.",
-    image: "/images/refuge-galets.avif",
+    image: "/images/recycled_assets/modele_swamp.png",
   },
   {
     title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
     body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
-    image: "/images/refuge-aubepine.avif",
+    image: "/images/recycled_assets/weird_angle_meh.png",
   },
 ] as const;
 
@@ -416,6 +416,9 @@ export default function Pourquoi() {
                 sizes="100vw"
                 unoptimized
                 className="object-cover"
+                // Recycled assets are framed wider than the card's
+                // 16:10 window; a 1.3× scale crops the dead edges out.
+                style={{ transform: "scale(1.3)" }}
               />
             </div>
           </article>
@@ -463,12 +466,12 @@ export default function Pourquoi() {
           <RoundedFrame>
             {/* Image 2 layer (behind) — dolly target imageScale2Ref. */}
             <div ref={imageScale2Ref} className="absolute inset-0">
-              <SlideImage src={SLIDES[1].image} objectPosition="35% 50%" />
+              <SlideImage src={SLIDES[1].image} objectPosition="50% 50%" scale={1.3} />
             </div>
             {/* Image 1 layer (top) — clip-path target + dolly target. */}
             <div ref={imageLayer1Ref} className="absolute inset-0">
               <div ref={imageScale1Ref} className="absolute inset-0">
-                <SlideImage src={SLIDES[0].image} objectPosition="95% 50%" />
+                <SlideImage src={SLIDES[0].image} objectPosition="50% 50%" scale={1.3} />
               </div>
             </div>
           </RoundedFrame>
@@ -476,7 +479,7 @@ export default function Pourquoi() {
 
         <CardSlot ref={imageCardBRef} side="right" zClass="z-[25]">
           <RoundedFrame>
-            <SlideImage src={SLIDES[2].image} objectPosition="30% 50%" scale={1.5} />
+            <SlideImage src={SLIDES[2].image} objectPosition="50% 50%" scale={1.3} />
           </RoundedFrame>
         </CardSlot>
       </div>
