@@ -103,6 +103,14 @@ export default function RootLayout({
           type="image/avif"
           fetchPriority="high"
         />
+        {/* Pre-warm the connection to Google Maps' embed origin so the
+            iframe mount (deferred to an idle frame in MapOverlay, see
+            its `iframeMounted` effect) finds DNS + TLS already settled.
+            `preconnect` covers DNS + TCP + TLS in modern browsers;
+            `dns-prefetch` is the fallback for engines that don't honor
+            preconnect. Both are tiny requests with no body. */}
+        <link rel="preconnect" href="https://maps.google.com" />
+        <link rel="dns-prefetch" href="https://maps.google.com" />
         {/* Schema.org structured data — React 19 hoists `<script>` tags
             with `type="application/ld+json"` into <head> automatically. */}
         <script
