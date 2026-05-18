@@ -21,6 +21,40 @@ const hostGrotesk = Host_Grotesk({
 const SITE_TITLE = `${SITE_CONFIG.name} — Refuges Charlevoix`;
 const SITE_DESCRIPTION =
   "Trois refuges contemporains posés dans la forêt boréale de Charlevoix, ouverts sur le Saint-Laurent.";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001";
+
+/** Schema.org `LodgingBusiness` structured data — gives Google enough
+ *  context to ship rich snippets (logo, location, price band, photos)
+ *  on search results. Hand-crafted because the site is a single-page
+ *  portfolio without a CMS; a real client site would generate this
+ *  from the lodging CMS instead. The site is a concept (no real
+ *  bookings) so contact/booking-action fields are intentionally
+ *  omitted — adding them would lie to crawlers. */
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "LodgingBusiness",
+  name: SITE_CONFIG.name,
+  description: SITE_DESCRIPTION,
+  url: SITE_URL,
+  image: `${SITE_URL}/images/hero-shape.avif`,
+  address: {
+    "@type": "PostalAddress",
+    addressRegion: "Charlevoix",
+    addressLocality: "QC",
+    addressCountry: "CA",
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: 47.7864,
+    longitude: -70.2497,
+  },
+  priceRange: "$$$",
+  amenityFeature: [
+    { "@type": "LocationFeatureSpecification", name: "Sauna nordique", value: true },
+    { "@type": "LocationFeatureSpecification", name: "Vue sur le fjord", value: true },
+    { "@type": "LocationFeatureSpecification", name: "Foyer extérieur", value: true },
+  ],
+} as const;
 
 export const metadata: Metadata = {
   // Resolves relative URLs (OG images etc.) to absolute. Set
@@ -68,6 +102,12 @@ export default function RootLayout({
           href="/images/hero-shape.avif"
           type="image/avif"
           fetchPriority="high"
+        />
+        {/* Schema.org structured data — React 19 hoists `<script>` tags
+            with `type="application/ld+json"` into <head> automatically. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
         />
         <MenuProvider>
           <ReservePanelProvider>

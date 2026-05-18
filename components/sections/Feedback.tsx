@@ -124,10 +124,10 @@ export default function Feedback() {
         className="bottom-[55%]"
       />
 
-      {/* Eyebrow — top-left */}
-      <p className="text-creme text-lg md:text-xl font-semibold tracking-tight">
+      {/* Eyebrow — top-left. Acts as the section's semantic title. */}
+      <h2 className="text-creme text-lg md:text-xl font-semibold tracking-tight m-0">
         <WordSplit text={EYEBROW} />
-      </p>
+      </h2>
 
       {/* Quote — large, left-aligned, capped at ~75% of viewport width with
           a tighter leading. Smaller display size than the original 5.5vw so

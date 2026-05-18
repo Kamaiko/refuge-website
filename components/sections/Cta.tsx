@@ -30,7 +30,7 @@ const MARQUEE_TEXT = "Réservez votre refuge";
 export default function Cta() {
   const [hovered, setHovered] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
-  const introRef = useRef<HTMLParagraphElement>(null);
+  const introRef = useRef<HTMLHeadingElement>(null);
 
   // Intro fade-in scrubbed over a ~50svh window, identical pattern to the
   // Choisir eyebrow. Pre-hidden via inline style on the element so there's
@@ -79,17 +79,18 @@ export default function Cta() {
       // bg here would paint over it.
       className="relative w-full min-h-[100svh] flex flex-col px-8 md:px-12 pt-24 md:pt-32 pb-32 md:pb-16"
     >
-      {/* Top-left intro copy. Scroll-fade scrubbed via the useGSAP above.
-          Pre-hidden on mount with inline style to prevent SSR flash. */}
-      <p
+      {/* Top-left intro copy. Acts as the section's semantic title.
+          Scroll-fade scrubbed via the useGSAP above. Pre-hidden on
+          mount with inline style to prevent SSR flash. */}
+      <h2
         ref={introRef}
         style={{ opacity: 0 }}
-        className="text-creme text-base md:text-lg font-semibold leading-snug max-w-md"
+        className="text-creme text-base md:text-lg font-semibold leading-snug max-w-md m-0"
       >
         Le moment est venu de ralentir.
         <br />
         Votre refuge vous attend.
-      </p>
+      </h2>
 
       {/* Marquee. Wrapper applies the color transition — text-creme on
           the wrapper cascades to the Marquee's inner spans by

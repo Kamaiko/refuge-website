@@ -28,7 +28,7 @@ const SUBCOPY = `Passez du temps de qualité dans nos emplacements au Québec av
 export default function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
   const wordmarkRef = useRef<HTMLHeadingElement>(null);
-  const taglineRef = useRef<HTMLParagraphElement>(null);
+  const taglineRef = useRef<HTMLHeadingElement>(null);
   const subcopyRef = useRef<HTMLParagraphElement>(null);
   const mediaRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -143,8 +143,7 @@ export default function Hero() {
               default lazy loading. */}
           <Image
             src="/images/hero-shape.avif"
-            alt=""
-            aria-hidden
+            alt="Refuge Aquilon — architecture contemporaine au creux du fjord du Saint-Laurent, en forêt boréale de Charlevoix"
             fill
             priority
             sizes="100vw"
@@ -199,13 +198,13 @@ export default function Hero() {
           {/* pb-36 on mobile clears the floating Menu pill (60px + 48px gap)
               so the subcopy doesn't sit underneath it. */}
           <div className="flex flex-col gap-6 pb-36 md:flex-row md:items-end md:justify-between md:gap-16 md:pb-12">
-            <p
+            <h2
               ref={taglineRef}
               style={{ opacity: 0 }}
-              className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line"
+              className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line m-0"
             >
               {TAGLINE}
-            </p>
+            </h2>
 
             <p
               ref={subcopyRef}

@@ -418,7 +418,7 @@ export default function Pourquoi() {
             <div className="relative aspect-[16/10] w-full rounded-[20px] overflow-hidden">
               <Image
                 src={slide.image}
-                alt=""
+                alt={slide.title}
                 fill
                 sizes="100vw"
                 unoptimized
@@ -469,14 +469,17 @@ export default function Pourquoi() {
 
         <CardSlot ref={imageCardARef} side="right" zClass="z-20">
           <RoundedFrame>
-            {/* Image 2 layer (behind) — dolly target imageScale2Ref. */}
+            {/* Image 2 layer (behind) — dolly target imageScale2Ref.
+                alt stays empty because the foreground image (Image 1)
+                announces the active slide; layered images are visual
+                continuity, not standalone content. */}
             <div ref={imageScale2Ref} className="absolute inset-0">
               <SlideImage src={SLIDES[1].image} />
             </div>
             {/* Image 1 layer (top) — clip-path target + dolly target. */}
             <div ref={imageLayer1Ref} className="absolute inset-0">
               <div ref={imageScale1Ref} className="absolute inset-0">
-                <SlideImage src={SLIDES[0].image} />
+                <SlideImage src={SLIDES[0].image} alt={SLIDES[0].title} />
               </div>
             </div>
           </RoundedFrame>
@@ -484,7 +487,7 @@ export default function Pourquoi() {
 
         <CardSlot ref={imageCardBRef} side="right" zClass="z-[25]">
           <RoundedFrame>
-            <SlideImage src={SLIDES[2].image} />
+            <SlideImage src={SLIDES[2].image} alt={SLIDES[2].title} />
           </RoundedFrame>
         </CardSlot>
       </div>
@@ -547,17 +550,22 @@ function RoundedFrame({ children }: { children: React.ReactNode }) {
  *  X% pulls focal point left, higher X% pulls it right. */
 function SlideImage({
   src,
+  alt = "",
   objectPosition = "50% 50%",
   scale = RECYCLED_ASSET_ZOOM,
 }: {
   src: string;
+  /** Defaults to empty so the layered image stacks used during the
+   *  slide transition don't all announce themselves to screen readers.
+   *  Pass a real label on the foreground image only. */
+  alt?: string;
   objectPosition?: string;
   scale?: number;
 }) {
   return (
     <Image
       src={src}
-      alt=""
+      alt={alt}
       fill
       sizes="50vw"
       unoptimized

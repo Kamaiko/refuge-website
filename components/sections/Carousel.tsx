@@ -210,7 +210,7 @@ export default function Carousel() {
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px]">
                 <Image
                   src={c.image}
-                  alt=""
+                  alt={c.titre}
                   fill
                   sizes="85vw"
                   unoptimized
@@ -309,7 +309,7 @@ export default function Carousel() {
                   >
                     <Image
                       src={c.image}
-                      alt=""
+                      alt={c.titre}
                       fill
                       sizes="100vw"
                       unoptimized

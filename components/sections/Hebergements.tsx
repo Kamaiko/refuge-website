@@ -358,11 +358,12 @@ function RefugeCardContent({
       {/* Title sits OUTSIDE max-w-3xl: at 8vw + tight tracking, the nom
           would otherwise wrap or be clipped by the card's overflow-hidden. */}
       <RevealChars
+        as="h2"
         text={refuge.nom}
         play={play}
         delay={0.1}
         duration={1.1}
-        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.02em]"
+        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.02em] m-0"
       />
       <div className="max-w-3xl">
         <p

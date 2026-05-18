@@ -22,6 +22,10 @@ type Props = {
   duration?: number;
   delay?: number;
   stagger?: number;
+  /** HTML tag the wrapper renders as. Defaults to `<span>` because most
+   *  call sites (subtitles, surnoms) aren't headings — pass `"h2"` or
+   *  `"h3"` for the spots that ARE the section's semantic title. */
+  as?: "span" | "h1" | "h2" | "h3" | "h4";
 };
 
 /**
@@ -42,6 +46,7 @@ export default function RevealChars({
   duration = 0.9,
   delay = 0,
   stagger = 0,
+  as: Tag = "span",
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
 
@@ -85,8 +90,8 @@ export default function RevealChars({
   }
 
   return (
-    <span
-      ref={ref}
+    <Tag
+      ref={ref as React.RefObject<HTMLSpanElement & HTMLHeadingElement>}
       className={className}
       aria-label={text}
       style={{ visibility: "hidden" }}
@@ -112,6 +117,6 @@ export default function RevealChars({
           </span>
         );
       })}
-    </span>
+    </Tag>
   );
 }
