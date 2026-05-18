@@ -16,10 +16,18 @@ type Card = {
    *  card's aspect ratio — most need a small zoom to crop dead edges
    *  out. `activite1.ancien_modele` was shot for this aspect ratio and
    *  reads correctly at 1×. The desktop parallax pan also relies on
-   *  at least 1.15 so the +8 % x-translation doesn't expose empty
-   *  pixels — values < 1.15 are clamped at the call site below. */
+   *  at least `PARALLAX_SCALE_FLOOR` so the +`PARALLAX_X_PERCENT` %
+   *  x-translation doesn't expose empty pixels — values below the
+   *  floor are clamped at the call site. */
   zoom: number;
 };
+
+/** Inner-pan parallax constants. Bound together because the floor is
+ *  the minimum scale needed to absorb the x-translation without
+ *  exposing empty pixels at the trailing edge — change one, audit the
+ *  other. */
+const PARALLAX_SCALE_FLOOR = 1.15;
+const PARALLAX_X_PERCENT = 8;
 
 /** Three placeholder activity cards. Photos are temporarily the refuges
  *  while real activity imagery is generated in Phase 2 (see CLAUDE.md). */
@@ -130,25 +138,21 @@ export default function Carousel() {
           );
 
           // Per-card setup + inner-pan parallax. Scale is set via GSAP
-          // (not inline style) so GSAP's transform compose with the
-          // animated `xPercent` instead of being overwritten. Scale is
-          // `max(card.zoom, 1.15)` — the floor keeps the +8 %
-          // x-translation from exposing empty edges on cards that
-          // already fit the aspect ratio at 1×; cards with a higher
-          // zoom just use their own value. Uniform `xPercent: +8`
-          // translates the image rightward as the track moves left,
-          // producing a parallax-slow effect on all three cards —
-          // applied to card 0 too so it doesn't drift "left" against
-          // the rightward motion of cards 1 and 2.
+          // (not inline style) so GSAP's transform composes with the
+          // animated `xPercent` instead of being overwritten. The
+          // `PARALLAX_SCALE_FLOOR` clamp absorbs the +x translation
+          // without exposing empty edges; cards with a higher zoom
+          // just use their own value. The +x is applied to every card
+          // (including card 0) so the parallax direction stays uniform.
           CARDS.forEach((c, i) => {
             const el = innerPanRefs.current[i];
             if (!el) return;
-            const scale = Math.max(c.zoom, 1.15);
+            const scale = Math.max(c.zoom, PARALLAX_SCALE_FLOOR);
             gsap.set(el, { scale, transformOrigin: "center" });
             tl.fromTo(
               el,
               { xPercent: 0 },
-              { xPercent: 8, ease: "power2.inOut", duration: ACTIVE },
+              { xPercent: PARALLAX_X_PERCENT, ease: "power2.inOut", duration: ACTIVE },
               HOLD_START,
             );
           });

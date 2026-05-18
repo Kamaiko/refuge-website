@@ -46,6 +46,13 @@ const SLIDES: readonly Slide[] = [
 const LABELS = ["slide-0", "slide-1", "slide-2"] as const;
 const LAST_INDEX = SLIDES.length - 1;
 
+/** Image transform-scale applied to every recycled asset in this section.
+ *  The PNG/AVIF sources are framed wider than the card's display window;
+ *  a 1.3× zoom crops the dead edges out on both mobile and desktop. Used
+ *  as the default of `SlideImage` (desktop slides) AND as the inline
+ *  transform of the mobile `<Image>` so the two paths stay in sync. */
+const RECYCLED_ASSET_ZOOM = 1.3;
+
 /**
  * Single source of truth for the carousel's internal text rhythm.
  *
@@ -416,9 +423,7 @@ export default function Pourquoi() {
                 sizes="100vw"
                 unoptimized
                 className="object-cover"
-                // Recycled assets are framed wider than the card's
-                // 16:10 window; a 1.3× scale crops the dead edges out.
-                style={{ transform: "scale(1.3)" }}
+                style={{ transform: `scale(${RECYCLED_ASSET_ZOOM})` }}
               />
             </div>
           </article>
@@ -466,12 +471,12 @@ export default function Pourquoi() {
           <RoundedFrame>
             {/* Image 2 layer (behind) — dolly target imageScale2Ref. */}
             <div ref={imageScale2Ref} className="absolute inset-0">
-              <SlideImage src={SLIDES[1].image} objectPosition="50% 50%" scale={1.3} />
+              <SlideImage src={SLIDES[1].image} />
             </div>
             {/* Image 1 layer (top) — clip-path target + dolly target. */}
             <div ref={imageLayer1Ref} className="absolute inset-0">
               <div ref={imageScale1Ref} className="absolute inset-0">
-                <SlideImage src={SLIDES[0].image} objectPosition="50% 50%" scale={1.3} />
+                <SlideImage src={SLIDES[0].image} />
               </div>
             </div>
           </RoundedFrame>
@@ -479,7 +484,7 @@ export default function Pourquoi() {
 
         <CardSlot ref={imageCardBRef} side="right" zClass="z-[25]">
           <RoundedFrame>
-            <SlideImage src={SLIDES[2].image} objectPosition="50% 50%" scale={1.3} />
+            <SlideImage src={SLIDES[2].image} />
           </RoundedFrame>
         </CardSlot>
       </div>
@@ -543,7 +548,7 @@ function RoundedFrame({ children }: { children: React.ReactNode }) {
 function SlideImage({
   src,
   objectPosition = "50% 50%",
-  scale = 1.3,
+  scale = RECYCLED_ASSET_ZOOM,
 }: {
   src: string;
   objectPosition?: string;
