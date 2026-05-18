@@ -14,8 +14,10 @@ export default function HamburgerIcon({
   className?: string;
 }) {
   // Bar height stays at 2px regardless of `size` — thicker bars at small
-  // sizes look heavy. Vertical gap scales lightly with size.
-  const gap = Math.max(4, Math.round(size * 0.22));
+  // sizes look heavy. Gap = ~15% of width (tighter than the original 22%
+  // which read as three loose stripes instead of one compact glyph),
+  // floored at 3 px so very small sizes still separate.
+  const gap = Math.max(3, Math.round(size * 0.15));
   return (
     <span aria-hidden className={cn("inline-flex flex-col", className)} style={{ gap }}>
       <span style={{ width: size, height: 2, background: "currentColor", borderRadius: 9999 }} />
