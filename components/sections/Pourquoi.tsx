@@ -26,17 +26,17 @@ const SLIDES: readonly Slide[] = [
   {
     title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
     body: "Personne ne vous chronomètre. Le seul calendrier ici, c'est la lumière qui tombe sur le fjord.",
-    image: "/images/recycled_assets/fjord_unused.png",
+    image: "/images/recycled_assets/fjord_unused.avif",
   },
   {
     title: "Profitez de la vue—par la grande baie vitrée panoramique",
     body: "Une fenêtre ouverte sur l'eau et le ciel, qui se renouvelle à chaque heure du jour.",
-    image: "/images/recycled_assets/modele_swamp.png",
+    image: "/images/recycled_assets/modele_swamp.avif",
   },
   {
     title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
     body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
-    image: "/images/recycled_assets/weird_angle_meh.png",
+    image: "/images/recycled_assets/weird_angle_meh.avif",
   },
 ] as const;
 

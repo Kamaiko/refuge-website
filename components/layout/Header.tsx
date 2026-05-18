@@ -419,8 +419,8 @@ export default function Header() {
           style={{ height: circleH, width: circleH }}
           className="inline-flex items-center justify-center rounded-full bg-gris-tan shrink-0"
         >
-          <HamburgerIcon size={26} className="text-creme-terre/70 md:hidden" />
-          <HamburgerIcon size={38} className="text-creme-terre/70 hidden md:inline-flex" />
+          <HamburgerIcon size={24} className="text-creme-terre/70 md:hidden" />
+          <HamburgerIcon size={34} className="text-creme-terre/70 hidden md:inline-flex" />
         </span>
       </button>
     </>
