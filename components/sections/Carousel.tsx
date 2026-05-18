@@ -20,6 +20,11 @@ type Card = {
    *  x-translation doesn't expose empty pixels — values below the
    *  floor are clamped at the call site. */
   zoom: number;
+  /** Optional CSS `object-position` for the underlying `<Image>`.
+   *  Lets a single card crop off-center (e.g., to push the subject
+   *  out of a corner the title would otherwise obscure). Defaults to
+   *  `"50% 50%"` when omitted. */
+  objectPosition?: string;
 };
 
 /** Inner-pan parallax constants. Bound together because the floor is
@@ -33,16 +38,16 @@ const PARALLAX_X_PERCENT = 8;
  *  while real activity imagery is generated in Phase 2 (see CLAUDE.md). */
 const CARDS: readonly Card[] = [
   {
-    titre: "Kayak sur le fjord",
-    sous: "Glisser au ras de l'eau, sous la lumière qui change toutes les dix minutes.",
-    niveau: "Journée",
+    titre: "Marche en forêt boréale",
+    sous: "Sentiers larges, terrain souple. Le silence n'est jamais total — il respire.",
+    niveau: "Demi-journée",
     image: "/images/recycled_assets/activite1.ancien_modele.avif",
     zoom: 1,
   },
   {
-    titre: "Marche en forêt boréale",
-    sous: "Sentiers larges, terrain souple. Le silence n'est jamais total — il respire.",
-    niveau: "Demi-journée",
+    titre: "Kayak sur le fjord",
+    sous: "Glisser au ras de l'eau, sous la lumière qui change toutes les dix minutes.",
+    niveau: "Journée",
     image: "/images/recycled_assets/weird_angle_oof.avif",
     zoom: 1.3,
   },
@@ -51,7 +56,8 @@ const CARDS: readonly Card[] = [
     sous: "Chaleur dense, puis l'air froid qui pince. Rituel court, effet long.",
     niveau: "Demi-journée",
     image: "/images/recycled_assets/fjord_unused2.avif",
-    zoom: 1.3,
+    zoom: 1.8,
+    objectPosition: "15% 50%",
   },
 ] as const;
 
@@ -212,7 +218,12 @@ export default function Carousel() {
                   // Mobile has no parallax pan, so the scale floor isn't
                   // required — apply the per-card zoom directly. `1` is a
                   // no-op for cards framed for this aspect ratio.
-                  style={{ transform: `scale(${c.zoom})` }}
+                  // `objectPosition` is optional; falls back to centered
+                  // when omitted on the card.
+                  style={{
+                    transform: `scale(${c.zoom})`,
+                    objectPosition: c.objectPosition,
+                  }}
                 />
                 {/* Niveau pill — overlay top-right of the image */}
                 <span className="absolute top-4 right-4 inline-flex items-center rounded-pill border border-creme/40 bg-base-noir/30 backdrop-blur-sm px-4 py-1.5 text-xs font-medium tracking-wide text-creme">
@@ -303,6 +314,7 @@ export default function Carousel() {
                       sizes="100vw"
                       unoptimized
                       className="object-cover"
+                      style={{ objectPosition: c.objectPosition }}
                     />
                   </div>
                   <CardOverlay card={c} index={i} total={CARDS.length} />
