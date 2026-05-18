@@ -56,8 +56,8 @@ const CARDS: readonly Card[] = [
     sous: "Chaleur dense, puis l'air froid qui pince. Rituel court, effet long.",
     niveau: "Demi-journée",
     image: "/images/recycled_assets/fjord_unused2.avif",
-    zoom: 1.8,
-    objectPosition: "0% 50%",
+    zoom: 2.8,
+    objectPosition: "100% 50%",
   },
 ] as const;
 
