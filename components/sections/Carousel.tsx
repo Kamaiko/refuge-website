@@ -57,7 +57,7 @@ const CARDS: readonly Card[] = [
     niveau: "Demi-journée",
     image: "/images/recycled_assets/fjord_unused2.avif",
     zoom: 1.8,
-    objectPosition: "15% 50%",
+    objectPosition: "0% 50%",
   },
 ] as const;
 
