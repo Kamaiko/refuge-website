@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -135,35 +135,6 @@ export default function MapOverlay() {
   // or re-entry instead of letting a stale firing arrive against an
   // unmounted tree.
   const relayTimerRef = useRef<number | null>(null);
-
-  // The IntersectionObserver in Proximite flips `preloaded` while the
-  // user is still mid-way through Hebergements' pinned scroll. Mounting
-  // the iframe synchronously at that moment puts a 50–200 ms long task
-  // (Google Maps embed script parse + execute) on a busy frame and
-  // produces a visible scroll stutter. We defer the actual mount one
-  // step further: `preloaded` (intent signal) → `iframeMounted` (DOM
-  // insertion), scheduled via `requestIdleCallback` so the heavy work
-  // lands on a frame where the main thread is free.
-  const [iframeMounted, setIframeMounted] = useState(false);
-  useEffect(() => {
-    if (!preloaded || iframeMounted) return;
-    const ric =
-      typeof window !== "undefined" &&
-      typeof window.requestIdleCallback === "function"
-        ? window.requestIdleCallback
-        : null;
-    const onIdle = () => setIframeMounted(true);
-    if (ric) {
-      const handle = ric(onIdle, { timeout: 2000 });
-      return () => window.cancelIdleCallback(handle);
-    }
-    // Safari fallback — no requestIdleCallback support as of Safari 17.
-    // 200 ms is long enough for the click/scroll handler to settle but
-    // short enough that the iframe is still ready by the time the user
-    // reads Proximite and reaches for the link.
-    const id = window.setTimeout(onIdle, 200);
-    return () => window.clearTimeout(id);
-  }, [preloaded, iframeMounted]);
 
   // Pill dimensions for the bottom-center Close button track the same
   // mobile/desktop tiers as the Menu CTA (so the user perceives the
@@ -471,7 +442,7 @@ export default function MapOverlay() {
             clipped by the box's mask. `pointer-events: none` keeps
             it non-interactive so the SVG pin at viewport center
             stays anchored to the lat/lng. */}
-        {iframeMounted && <iframe
+        {preloaded && <iframe
           src={MAP_EMBED_URL}
           title="Carte — emplacement des refuges Aquilon en Charlevoix"
           referrerPolicy="no-referrer-when-downgrade"
