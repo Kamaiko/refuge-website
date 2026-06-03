@@ -26,17 +26,17 @@ const SLIDES: readonly Slide[] = [
   {
     title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
     body: "Personne ne vous chronomètre. Le seul calendrier ici, c'est la lumière qui tombe sur le fjord.",
-    image: "/images/recycled_assets/fjord_unused.avif",
+    image: "/images/pourquoi-matin.avif",
   },
   {
     title: "Profitez de la vue—par la grande baie vitrée panoramique",
     body: "Une fenêtre ouverte sur l'eau et le ciel, qui se renouvelle à chaque heure du jour.",
-    image: "/images/recycled_assets/modele_swamp.avif",
+    image: "/images/pourquoi-baie.avif",
   },
   {
     title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
     body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
-    image: "/images/recycled_assets/weird_angle_meh.avif",
+    image: "/images/pourquoi-drone.avif",
   },
 ] as const;
 
@@ -46,12 +46,11 @@ const SLIDES: readonly Slide[] = [
 const LABELS = ["slide-0", "slide-1", "slide-2"] as const;
 const LAST_INDEX = SLIDES.length - 1;
 
-/** Image transform-scale applied to every recycled asset in this section.
- *  The PNG/AVIF sources are framed wider than the card's display window;
- *  a 1.3× zoom crops the dead edges out on both mobile and desktop. Used
- *  as the default of `SlideImage` (desktop slides) AND as the inline
- *  transform of the mobile `<Image>` so the two paths stay in sync. */
-const RECYCLED_ASSET_ZOOM = 1.3;
+/** Image transform-scale applied to every slide image. The "why" photos
+ *  are framed 4:5 for the portrait card, so `1` reads correctly — no crop
+ *  needed. Used as the default of `SlideImage` (desktop slides) AND as the
+ *  inline transform of the mobile `<Image>` so the two paths stay in sync. */
+const SLIDE_IMAGE_ZOOM = 1;
 
 /**
  * Single source of truth for the carousel's internal text rhythm.
@@ -423,7 +422,7 @@ export default function Pourquoi() {
                 sizes="100vw"
                 unoptimized
                 className="object-cover"
-                style={{ transform: `scale(${RECYCLED_ASSET_ZOOM})` }}
+                style={{ transform: `scale(${SLIDE_IMAGE_ZOOM})` }}
               />
             </div>
           </article>
@@ -552,7 +551,7 @@ function SlideImage({
   src,
   alt = "",
   objectPosition = "50% 50%",
-  scale = RECYCLED_ASSET_ZOOM,
+  scale = SLIDE_IMAGE_ZOOM,
 }: {
   src: string;
   /** Defaults to empty so the layered image stacks used during the

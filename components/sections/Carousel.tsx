@@ -12,13 +12,13 @@ type Card = {
   sous: string;
   niveau: string;
   image: string;
-  /** Per-card image scale. Recycled assets aren't all framed for the
-   *  card's aspect ratio — most need a small zoom to crop dead edges
-   *  out. `activite1.ancien_modele` was shot for this aspect ratio and
-   *  reads correctly at 1×. The desktop parallax pan also relies on
-   *  at least `PARALLAX_SCALE_FLOOR` so the +`PARALLAX_X_PERCENT` %
-   *  x-translation doesn't expose empty pixels — values below the
-   *  floor are clamped at the call site. */
+  /** Per-card image scale. The activity photos are framed for this
+   *  card's landscape aspect ratio, so `1` is the norm — they read
+   *  correctly without a crop. A higher value is only needed if a
+   *  given asset has dead edges to trim. The desktop parallax pan
+   *  relies on at least `PARALLAX_SCALE_FLOOR` so the
+   *  +`PARALLAX_X_PERCENT` % x-translation doesn't expose empty
+   *  pixels — values below the floor are clamped at the call site. */
   zoom: number;
   /** Optional CSS `object-position` for the underlying `<Image>`.
    *  Lets a single card crop off-center (e.g., to push the subject
@@ -34,30 +34,50 @@ type Card = {
 const PARALLAX_SCALE_FLOOR = 1.15;
 const PARALLAX_X_PERCENT = 8;
 
-/** Three placeholder activity cards. Photos are temporarily the refuges
- *  while real activity imagery is generated in Phase 2 (see CLAUDE.md). */
+/** The five activity cards. Photos are framed for the card's landscape
+ *  aspect ratio (3:2 source, object-cover crop), so `zoom` stays at 1 —
+ *  the desktop parallax floor (`PARALLAX_SCALE_FLOOR`) is applied at the
+ *  call site. The first three carry the "solitude" register, the last two
+ *  the "rassemblement" one; the Activités intro above frames the duality.
+ *  Image paths point at the final AVIFs in /images. */
 const CARDS: readonly Card[] = [
   {
-    titre: "Marche en forêt boréale",
-    sous: "Sentiers larges, terrain souple. Le silence n'est jamais total — il respire.",
-    niveau: "Demi-journée",
-    image: "/images/recycled_assets/activite1.ancien_modele.avif",
+    titre: "Kayak sur le fjord",
+    sous: "Glisser au ras de l'eau, sous une lumière qui change toutes les dix minutes.",
+    niveau: "Journée",
+    image: "/images/activite-kayak.avif",
     zoom: 1,
   },
   {
-    titre: "Kayak sur le fjord",
-    sous: "Glisser au ras de l'eau, sous la lumière qui change toutes les dix minutes.",
+    titre: "Randonnée des sommets",
+    sous: "Monter une heure pour mériter l'horizon. En haut, le monde se tait.",
     niveau: "Journée",
-    image: "/images/recycled_assets/weird_angle_oof.avif",
-    zoom: 1.3,
+    image: "/images/activite-sommet.avif",
+    zoom: 1,
   },
   {
-    titre: "Sauna nordique",
-    sous: "Chaleur dense, puis l'air froid qui pince. Rituel court, effet long.",
+    titre: "Via ferrata",
+    sous: "Suspendu à la roche, le vide sous les pieds — et le calme, étrangement, qui s'installe.",
     niveau: "Demi-journée",
-    image: "/images/recycled_assets/fjord_unused2.avif",
-    zoom: 2.8,
-    objectPosition: "100% 50%",
+    image: "/images/activite-via-ferrata.avif",
+    zoom: 1,
+    // The climber sits in the right third of the 3:2 source; bias the
+    // object-position right so the 4:3 card crop keeps them in frame.
+    objectPosition: "62% 50%",
+  },
+  {
+    titre: "Terrasse en fête",
+    sous: "Quand le soleil s'étire, la terrasse se remplit. Du monde, de la musique, le fjord pour décor.",
+    niveau: "Après-midi",
+    image: "/images/activite-terrasse.avif",
+    zoom: 1,
+  },
+  {
+    titre: "Le feu de minuit",
+    sous: "La nuit tombe, le feu prend. On reste tard, verre à la main, à refaire le monde.",
+    niveau: "Soirée",
+    image: "/images/activite-veillee.avif",
+    zoom: 1,
   },
 ] as const;
 
@@ -97,13 +117,15 @@ export default function Carousel() {
           const { isDesktop } = ctx.conditions as { isDesktop: boolean };
           if (!isDesktop) return; // mobile uses the vertical stack JSX below
 
-          // Track layout : 3 cards at 75vw each = 225vw total.
+          // Track layout : 5 cards at 75vw each = 375vw total.
           // At rest (xPercent: 0), card 0 occupies 0–75vw of viewport
           // and card 1 peeks on the right (75–100vw). At the end of
-          // the active phase, card 2 occupies 25–100vw and card 1
-          // peeks on the left (0–25vw). Translation = -125vw =
-          // -55.5556% of the 225vw-wide track.
-          const TRACK_END_PERCENT = -55.5556;
+          // the active phase, the LAST card (index 4) occupies 25–100vw
+          // and card 3 peeks on the left (0–25vw). The last card's left
+          // edge sits at (N-1)·75 = 300vw in the track and we want it at
+          // 25vw on screen → translate = 25 - 300 = -275vw = -73.3333%
+          // of the 375vw-wide track.
+          const TRACK_END_PERCENT = -73.3333;
 
           // Single timeline so the track translation and the inner
           // pans share one ScrollTrigger (no duplicates competing
@@ -130,16 +152,25 @@ export default function Carousel() {
             scrollTrigger: {
               trigger: section,
               start: "top top",
-              end: "+=350%",
+              // 5 cards travel -275vw (vs -125vw for 3). Scaled from the
+              // old +=350% to preserve the same scrub feel per vw of
+              // travel: 350 × 275/125 = 770. Tune down if the pin feels
+              // too long (it's a 7.7-viewport pin).
+              end: "+=770%",
               pin: true,
-              scrub: 1,
+              // Scrub adds inertia lag at scroll start/stop. 0.8 keeps the
+              // "takes a beat to start" feel but a touch snappier than 1.
+              scrub: 0.8,
             },
           });
 
           tl.fromTo(
             track,
             { xPercent: 0 },
-            { xPercent: TRACK_END_PERCENT, ease: "power2.inOut", duration: ACTIVE },
+            // power1.inOut (gentler than power2) lowers the mid-scroll peak
+            // velocity so the carousel doesn't lurch fast in the middle —
+            // still eases in/out for a soft start and smooth finish.
+            { xPercent: TRACK_END_PERCENT, ease: "power1.inOut", duration: ACTIVE },
             HOLD_START,
           );
 
@@ -158,7 +189,7 @@ export default function Carousel() {
             tl.fromTo(
               el,
               { xPercent: 0 },
-              { xPercent: PARALLAX_X_PERCENT, ease: "power2.inOut", duration: ACTIVE },
+              { xPercent: PARALLAX_X_PERCENT, ease: "power1.inOut", duration: ACTIVE },
               HOLD_START,
             );
           });
@@ -250,8 +281,8 @@ export default function Carousel() {
         </div>
       </div>
 
-      {/* Desktop : pinned horizontal track. The track holds 3 cards of
-          75vw each (total 225vw); ScrollTrigger maps vertical scroll
+      {/* Desktop : pinned horizontal track. The track holds 5 cards of
+          75vw each (total 375vw); ScrollTrigger maps vertical scroll
           progress to xPercent. 75vw per card produces a side-peek of
           the next/previous card at every position — one card occupies
           the centre with adjacent cards visible at ~25vw width on
@@ -260,7 +291,7 @@ export default function Carousel() {
         <div className="h-screen flex items-center">
           <div
             ref={trackRef}
-            className="flex w-[225vw] gap-0 will-change-transform"
+            className="flex w-[375vw] gap-0 will-change-transform"
           >
             {CARDS.map((c, i) => (
               // p-3 (12px) tight inset matching the gap between cards

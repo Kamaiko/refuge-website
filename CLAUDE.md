@@ -236,15 +236,14 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
   - `NavWheelLink` (iOS-wheel hover flip pour les nav links du Cta)
   - `CustomCursor`
 
-⏳ **Phase 2 — Assets AI** (à faire par Patrick) :
+✅ **Phase 2 — Assets (juin 2026, partiel)** — imagerie générée via **Higgsfield CLI** :
 
-- [ ] Générer 3-4 propositions d'architecture (capsule, cube, A-frame) via Nano Banana — prompts dans le catalogue ci-dessus
-- [ ] Sélectionner la forme finale → cette image devient frame init pour image-to-image
-- [ ] Générer les ~30 images (3 unités × 3 angles + paysages + activités + détails + variations)
-- [ ] Générer les ~10 vidéos courtes (Seedance/Kling, prompts dans le catalogue)
-- [ ] Optimiser : images en AVIF (Sharp ou squoosh), vidéos en MP4 H.265 + WebM VP9
-- [ ] Placer dans `public/images/` et `public/videos/` selon les paths déjà référencés dans le code
-- [ ] Mettre à jour `lib/data/unites.ts`, `lib/data/activites.ts` avec les bons paths
+- **Carousel activités** = 5 cartes, données **hardcodées dans `CARDS` (Carousel.tsx)** — PAS dans `lib/data`. Math scroll = fonction de N cartes : `w-[N·75vw]`, `TRACK_END_PERCENT`, `end "+=…%"` (formules commentées dans le fichier). Thème « solitude/rassemblement ». Images : `activite-{kayak,sommet,via-ferrata,terrasse,veillee}.avif`.
+- **Médaillons** = 2 cartes **paysage** (reformées d'ovales 3:4), `medaillon-{feu,rassemblement}.avif`, copy « Le jour pour soi. Le soir, ensemble. »
+- **Pourquoi** = 3 slides **4:5**, `pourquoi-{matin,baie,drone}.avif`, base scale `SLIDE_IMAGE_ZOOM` (Pourquoi.tsx).
+- ⚠️ `public/images/recycled_assets/` **supprimé** (placeholders désuets) — ne plus y référencer.
+- **Pipeline Higgsfield CLI** (auth `higgsfield auth login`) : `higgsfield generate create nano_banana_2 --aspect_ratio <r> --resolution 4k [--image <ref>] --wait --prompt "…"`. Modèle = **Nano Banana Pro** (4 cr/img). Ratios : carousel/médaillons **3:2**, Pourquoi **4:5**. Forme refuge = capsule « **stadium** » (pill horizontal, bouts arrondis) → passer une photo de réf en `--image` pour la verrouiller. Convert AVIF : `ffmpeg -i src -vf scale=2400:-2 -c:v libaom-av1 -still-picture 1 -cpu-used 6 -crf 30 …` (Pourquoi portrait : `scale=1600:-2`). **Détails + prompts : `docs/assets-a-generer.md`.** Sources archivées (gitignoré) : `public/images/_raw/{finals,alternates}/` + `_INDEX.md`.
+- ⏳ Reste à générer : `lieu-charlevoix.avif`, galerie (6 images), vidéos hero/ambiance.
 
 ⏳ **Phase 4 — Polish** (post-assets) :
 

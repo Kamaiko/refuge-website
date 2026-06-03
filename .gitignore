@@ -56,3 +56,7 @@ public/videos/hero-loop-[A-Z].mp4
 
 # Claude Code local state (per-user settings, harness logs)
 /.claude/
+
+# AI raw source assets staged before AVIF conversion (heavy, regenerated)
+public/images/_raw/
+public/videos/_raw/

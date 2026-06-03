@@ -6,7 +6,7 @@ import { gsap } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
 import BgGradient from "@/components/common/BgGradient";
 
-const LINES = ["Découvrez les", "activités du fjord"] as const;
+const LINES = ["Découvrez les", "activités du territoire"] as const;
 
 /** Three commitment tiers shown as labelled progress bars below the title.
  *  `fill` is a 0..1 fraction — the bar's filled length relative to the
@@ -19,7 +19,7 @@ const NIVEAUX = [
 ] as const;
 
 /**
- * "Découvrez les activités du fjord" — editorial typo-only section that
+ * "Découvrez les activités du territoire" — editorial typo-only section that
  * mirrors the {@link Choisir} animation pattern (scroll-scrubbed depth +
  * parallax + per-line clip-path curtain). Bottom block is a 2-column grid
  * on desktop : NIVEAUX progress bars on the left, descriptive paragraph
@@ -186,7 +186,7 @@ export default function Activites() {
           style={{ opacity: 0 }}
           className="text-creme text-xl md:text-2xl font-semibold tracking-tight"
         >
-          Le territoire, à votre rythme
+          Seul, ou tous ensemble
         </p>
 
         <div ref={titleWrapRef} className="mt-16 md:mt-24 will-change-transform">
@@ -240,7 +240,7 @@ export default function Activites() {
           </ul>
 
           <p className="text-creme-terre/70 max-w-xl text-xl md:text-3xl font-medium leading-snug">
-            On peut sortir une heure ou disparaître deux jours. Le territoire ne s&apos;impose pas — il propose. Chaque activité se choisit comme on choisit la lumière du moment : par envie, pas par programme.
+            Se retirer seul au sommet, ou rester tard autour du feu. Le territoire ne choisit pas pour vous — il offre les deux : le silence quand on le cherche, la fête quand elle se présente. Tout se vit par envie, jamais par programme.
           </p>
         </div>
       </div>

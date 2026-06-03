@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import RevealText from "@/components/common/RevealText";
 
-/** Avant-goût section: two oval medallion images parallax in opposite
+/** Avant-goût section: two landscape medallion cards parallax in opposite
  *  directions on scroll, paired with three staggered {@link RevealText}
  *  blocks (eyebrow, headline, supporting copy). Reduced-motion: skips
  *  parallax, medallions sit at rest. */
@@ -65,28 +65,28 @@ export default function Medaillons() {
         <div className="md:col-span-5 relative flex flex-col items-start gap-8 md:gap-10">
           <div
             ref={med1}
-            className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft will-change-transform"
+            className="relative aspect-[4/3] w-[82%] md:w-[88%] max-w-[440px] rounded-[28px] overflow-hidden bg-base-noir-soft will-change-transform"
           >
             <Image
-              src="/images/refuge-aubepine.avif"
+              src="/images/medaillon-rassemblement.avif"
               alt=""
               role="presentation"
               fill
-              sizes="280px"
-              className="object-cover object-[50%_30%]"
+              sizes="440px"
+              className="object-cover object-center"
             />
           </div>
           <div
             ref={med2}
-            className="relative aspect-[3/4] w-[58%] md:w-[70%] max-w-[280px] rounded-[50%] overflow-hidden bg-base-noir-soft self-end will-change-transform"
+            className="relative aspect-[4/3] w-[82%] md:w-[88%] max-w-[440px] rounded-[28px] overflow-hidden bg-base-noir-soft self-end will-change-transform"
           >
             <Image
-              src="/images/refuge-galets.avif"
+              src="/images/medaillon-feu.avif"
               alt=""
               role="presentation"
               fill
-              sizes="280px"
-              className="object-cover object-[65%_55%]"
+              sizes="440px"
+              className="object-cover object-center"
             />
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Medaillons() {
             duration={1.2}
             className="text-creme text-3xl md:text-5xl lg:text-6xl font-light leading-[1.1] tracking-tight"
           >
-            {"Un endroit\npour soi.\nUn endroit\npour faire silence."}
+            {"Le jour pour soi.\nLe soir,\nensemble."}
           </RevealText>
 
           <RevealText
@@ -117,7 +117,7 @@ export default function Medaillons() {
             delay={0.3}
             className="text-creme-dim mt-10 max-w-md text-base leading-relaxed"
           >
-            {"On y arrive presque sans bruit.\nOn en repart avec quelque chose en moins."}
+            {"On vient chercher le silence.\nOn finit par rester pour le feu, les voix, la nuit qui s'étire."}
           </RevealText>
         </div>
       </div>
