@@ -21,7 +21,7 @@ import AquilonReveal from "@/components/common/AquilonReveal";
  * listens to `onEnter` to re-trigger play=true if the user bounces
  * back down without crossing the entry threshold above.
  *
- * Sits inside the `relative isolate` wrapper in `app/page.tsx` that
+ * Sits inside the `relative isolate` wrapper in `src/app/page.tsx` that
  * owns the `base-noir → gris-tan` background gradient spanning the
  * CTA's lower half + this entire footer — so this section's own bg
  * stays transparent.

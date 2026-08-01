@@ -137,7 +137,7 @@ export default function Hero() {
         <div ref={mediaRef} className="absolute inset-0 will-change-transform">
           {/* Poster as a real <img> via next/image — this is what
               Lighthouse measures as LCP. The same file is preloaded by
-              the <link rel="preload"> in app/layout.tsx so it's already
+              the <link rel="preload"> in src/app/layout.tsx so it's already
               in cache by the time React renders this element. `priority`
               tells next/image to add `fetchpriority="high"` and skip the
               default lazy loading. */}

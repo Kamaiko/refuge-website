@@ -37,7 +37,7 @@
   --radius-tight: 8px;
 
   /* Custom breakpoint — adds an `xs:` variant below Tailwind's default `sm:`.
-     Mirrored as a number in lib/breakpoints.ts for JS matchMedia usage —
+     Mirrored as a number in src/lib/breakpoints.ts for JS matchMedia usage —
      edit BOTH places when changing this value. */
   --breakpoint-xs: 24.375rem; /* 390px — tiny mobile (iPhone SE etc.) */
 }

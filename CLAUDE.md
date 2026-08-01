@@ -41,6 +41,12 @@ Site portfolio Awwwards-level. **Marque fictive** d'hébergements premium en Cha
 - **Zod** 4.4.1 (validation forms)
 - **clsx** + **tailwind-merge** (utilitaires class)
 
+**Layout `src/`** : tout le code applicatif vit sous `src/` (`app/`, `components/`,
+`lib/`, `hooks/`, `actions/`). La racine ne garde que la config (`next.config.ts`,
+`tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs`), `public/`, `docs/` et
+les fichiers de projet. L'alias `@/*` pointe sur `./src/*` (`tsconfig.json`).
+⚠️ `public/` **ne peut pas** aller sous `src/` (Next ne le lit qu'à la racine).
+
 ## Décisions verrouillées
 
 | Décision | Choix |
@@ -238,7 +244,7 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 
 ✅ **Phase 2 — Assets (juin 2026, partiel)** — imagerie générée via **Higgsfield CLI** :
 
-- **Carousel activités** = 5 cartes, données **hardcodées dans `CARDS` (Carousel.tsx)** — PAS dans `lib/data`. Math scroll = fonction de N cartes : `w-[N·75vw]`, `TRACK_END_PERCENT`, `end "+=…%"` (formules commentées dans le fichier). Thème « solitude/rassemblement ». Images : `activite-{kayak,sommet,via-ferrata,terrasse,veillee}.avif`.
+- **Carousel activités** = 5 cartes, données **hardcodées dans `CARDS` (Carousel.tsx)** — PAS dans `src/lib/data`. Math scroll = fonction de N cartes : `w-[N·75vw]`, `TRACK_END_PERCENT`, `end "+=…%"` (formules commentées dans le fichier). Thème « solitude/rassemblement ». Images : `activite-{kayak,sommet,via-ferrata,terrasse,veillee}.avif`.
 - **Médaillons** = 2 cartes **paysage** (reformées d'ovales 3:4), `medaillon-{feu,rassemblement}.avif`, copy « Le jour pour soi. Le soir, ensemble. »
 - **Pourquoi** = 3 slides **4:5**, `pourquoi-{matin,baie,drone}.avif`, base scale `SLIDE_IMAGE_ZOOM` (Pourquoi.tsx).
 - ⚠️ `public/images/recycled_assets/` **supprimé** (placeholders désuets) — ne plus y référencer.
@@ -261,9 +267,9 @@ Modern minimalist architecture: a single A-frame triangular cabin with steeply p
 
 ## Note sur le nom de marque
 
-**Aquilon** — vent du nord en latin/littéraire (de l'antiquité romaine). Choisi pour son registre érudit, sa rareté en hospitalité, et l'écho avec le contexte maritime nordique du St-Laurent. À noter : l'un des trois refuges s'appelle quand même "Brume" (slug `brume` dans `lib/data/unites.ts`) — c'est intentionnel, le mot reste utilisé comme nom de produit, pas comme nom de marque.
+**Aquilon** — vent du nord en latin/littéraire (de l'antiquité romaine). Choisi pour son registre érudit, sa rareté en hospitalité, et l'écho avec le contexte maritime nordique du St-Laurent. À noter : l'un des trois refuges s'appelle quand même "Brume" (slug `brume` dans `src/lib/data/unites.ts`) — c'est intentionnel, le mot reste utilisé comme nom de produit, pas comme nom de marque.
 
-**Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `lib/constants.ts`. Les chaînes affichées (eyebrow, marquee, manifeste, feedback) sont actuellement hardcoded — chercher littéralement "Aquilon" pour les retrouver.
+**Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `src/lib/constants.ts`. Les chaînes affichées (eyebrow, marquee, manifeste, feedback) sont actuellement hardcoded — chercher littéralement "Aquilon" pour les retrouver.
 
 ## Verification locale (Wave 1+2 testées)
 
@@ -468,7 +474,7 @@ no humans visible. Editorial interior photography, 50mm lens. [+ style commun]
 2. Convertir images PNG/JPG → AVIF via Sharp (`pnpm dlx sharp-cli` ou squoosh)
 3. Convertir vidéos → MP4 H.265 + WebM VP9 fallback (ffmpeg)
 4. Placer dans `public/images/` et `public/videos/` (slugs cohérents avec les composants)
-5. Mettre à jour les `image: "/images/..."` paths dans `lib/data/*.ts`
+5. Mettre à jour les `image: "/images/..."` paths dans `src/lib/data/*.ts`
 
 ## Références
 

@@ -13,7 +13,7 @@ import { submitReservation, type ReservationState } from "@/actions/reservation"
 const INITIAL_FORM_STATE: ReservationState = { ok: false, message: "" };
 
 /** Subset of `(typeof REFUGES)[number]["slug"]` accepted by the Reserve
- *  form. Mirrors the enum in `actions/reservation.ts`. */
+ *  form. Mirrors the enum in `src/actions/reservation.ts`. */
 type RefugeSlug = "aubepine" | "galets" | "brume";
 
 /** Default departure date offset (in nights) used to pre-fill the form

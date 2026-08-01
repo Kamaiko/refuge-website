@@ -1,12 +1,12 @@
 # Design System — Refuges Charlevoix (Aquilon®)
 
-Source de vérité pour les tokens, la typographie, les radii, le motion et le spacing du site. Tout nouveau composant doit puiser dans ces valeurs (importées depuis `app/globals.css` et `lib/motion.ts`) plutôt que de hardcoder.
+Source de vérité pour les tokens, la typographie, les radii, le motion et le spacing du site. Tout nouveau composant doit puiser dans ces valeurs (importées depuis `src/app/globals.css` et `src/lib/motion.ts`) plutôt que de hardcoder.
 
 ---
 
 ## 1. Palette
 
-Tokens définis dans `app/globals.css` sous `@theme`. Utilisés via classes Tailwind `bg-*`, `text-*`, `border-*` ou variables CSS `var(--color-*)`.
+Tokens définis dans `src/app/globals.css` sous `@theme`. Utilisés via classes Tailwind `bg-*`, `text-*`, `border-*` ou variables CSS `var(--color-*)`.
 
 ### Fonds
 
@@ -49,7 +49,7 @@ Tokens définis dans `app/globals.css` sous `@theme`. Utilisés via classes Tail
 
 ## 2. Typography
 
-Une seule famille : **Host Grotesk** (variable, chargée via `next/font` dans `app/layout.tsx`).
+Une seule famille : **Host Grotesk** (variable, chargée via `next/font` dans `src/app/layout.tsx`).
 
 ### Échelle
 
@@ -107,7 +107,7 @@ Tokens définis dans `globals.css`, utilisables via `rounded-pill`, `rounded-car
 
 ## 4. Motion
 
-Toutes les valeurs JS dans `lib/motion.ts`. Les easings CSS dans `globals.css` (`--ease-cinematic`, `--ease-soft`).
+Toutes les valeurs JS dans `src/lib/motion.ts`. Les easings CSS dans `globals.css` (`--ease-cinematic`, `--ease-soft`).
 
 ### Durations
 

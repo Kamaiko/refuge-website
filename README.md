@@ -52,16 +52,20 @@ Marque, copie et imagerie 100 % originales. Concept design, pas un service réel
 
 <br>
 
+Le code applicatif vit sous `src/` ; la racine ne garde que la configuration et
+les assets statiques.
+
 ```
-app/                # App Router · layout · globals.css (tokens Tailwind v4)
-actions/            # Server Actions (validation Zod)
-components/
+src/app/            # App Router · layout · globals.css (tokens Tailwind v4)
+src/actions/        # Server Actions (validation Zod)
+src/components/
   common/           # Primitives réutilisables · contexts (Menu, Reserve, SmoothScroll)
   layout/           # Header
   sections/         # 7 sections de la page d'accueil
-lib/                # SITE_CONFIG · données refuges · timing GSAP partagé
+src/lib/            # SITE_CONFIG · données refuges · timing GSAP partagé
+src/hooks/          # Hooks React
 docs/               # Documentation et captures
-public/             # Logos · images · vidéos
+public/             # Logos · images · vidéos — reste à la racine
 ```
 
 <br>

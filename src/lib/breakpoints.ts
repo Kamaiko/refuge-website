@@ -1,7 +1,7 @@
 /** Breakpoints in pixels — single source of truth shared between
  *  Tailwind (CSS) and JavaScript (matchMedia / GSAP).
  *
- *  Tailwind reads its breakpoints from `@theme` in `app/globals.css`:
+ *  Tailwind reads its breakpoints from `@theme` in `src/app/globals.css`:
  *    --breakpoint-xs: 24.375rem;  // 390px
  *    (sm/md/lg/xl stay at Tailwind's defaults)
  *
