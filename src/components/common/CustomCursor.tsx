@@ -62,13 +62,14 @@ export default function CustomCursor() {
     window.addEventListener("mousemove", onMove);
     document.addEventListener("mouseover", onOver);
     document.addEventListener("mouseout", onOut);
-    document.documentElement.classList.add("has-custom-cursor");
+    // (Previously also toggled a `has-custom-cursor` class on <html>. The
+    // CSS rule it drove — hiding the native cursor — was removed at some
+    // point but the class kept being set and unset, matching nothing.)
 
     return () => {
       window.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseover", onOver);
       document.removeEventListener("mouseout", onOut);
-      document.documentElement.classList.remove("has-custom-cursor");
     };
   }, []);
 

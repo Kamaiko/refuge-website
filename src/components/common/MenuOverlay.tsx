@@ -10,8 +10,10 @@ import { SITE_CONFIG } from "@/lib/constants";
 import { BP } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
 import { NAV } from "@/lib/data/nav";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import Marquee from "./Marquee";
 import SocialIcons from "./SocialIcons";
+import { useOverlayA11y } from "@/hooks/useOverlayA11y";
 
 /** Margin between the open box and the viewport edges. */
 const GAP = 12;
@@ -52,6 +54,7 @@ function getClosedRect() {
  */
 export default function MenuOverlay() {
   const { isOpen, close } = useMenu();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const imagePanelRef = useRef<HTMLDivElement>(null);
@@ -96,6 +99,43 @@ export default function MenuOverlay() {
       const socialIcons = socialsRef.current?.querySelectorAll("a");
       const concept = conceptRef.current;
       if (!backdrop || !box || !navItems) return;
+
+      // Reduced motion: snap straight to the end state. This overlay's
+      // whole gesture is a small pill growing to fill the screen — the
+      // single largest area of movement on the site, and exactly the kind
+      // of thing that triggers vestibular discomfort. The menu still opens
+      // and closes normally; it just arrives instead of travelling.
+      // Handled as its own short branch rather than by zeroing durations
+      // throughout, so the animated path below is untouched.
+      if (prefersReducedMotion) {
+        gsap.set(backdrop, { autoAlpha: isOpen ? 1 : 0 });
+        gsap.set(
+          box,
+          isOpen
+            ? {
+                top: GAP,
+                left: GAP,
+                right: GAP,
+                bottom: GAP,
+                borderRadius: RADIUS_OPEN,
+                autoAlpha: 1,
+                pointerEvents: "auto",
+              }
+            : {
+                ...getClosedRect(),
+                borderRadius: RADIUS_CLOSED,
+                autoAlpha: 0,
+                pointerEvents: "none",
+              },
+        );
+        if (imagePanel) gsap.set(imagePanel, { xPercent: isOpen ? 0 : 110 });
+        gsap.set(navItems, { yPercent: isOpen ? 0 : 110, opacity: isOpen ? 1 : 0 });
+        if (socialIcons?.length) {
+          gsap.set(socialIcons, { yPercent: isOpen ? 0 : 100, opacity: isOpen ? 1 : 0 });
+        }
+        if (concept) gsap.set(concept, { x: isOpen ? 0 : -16, opacity: isOpen ? 1 : 0 });
+        return;
+      }
 
       // overwrite: true on every tween — a re-toggle mid-animation kills
       // the in-flight tweens and starts the new direction from whatever
@@ -243,7 +283,7 @@ export default function MenuOverlay() {
         });
       }
     },
-    { dependencies: [isOpen] },
+    { dependencies: [isOpen, prefersReducedMotion] },
   );
 
   // Keep the closed-state coordinates in sync with viewport size, so a
@@ -266,36 +306,14 @@ export default function MenuOverlay() {
 
   // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow) —
   // do not duplicate it here.
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, close]);
 
-  // Focus management: save the trigger that opened the menu, move focus
-  // to the first nav link, restore focus to the trigger on close. Paired
-  // with the `inert` attribute on <main> (set by SmoothScroll) this gives
-  // a proper keyboard-only flow — Tab cycles only inside the overlay,
-  // Escape closes and returns focus to where the user was.
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-      // Wait one frame so the overlay has been rendered and is focusable.
-      const id = window.setTimeout(() => {
-        const firstLink = navRef.current?.querySelector("a") as HTMLAnchorElement | null;
-        firstLink?.focus();
-      }, 50);
-      return () => window.clearTimeout(id);
-    }
-    if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
+  // Escape-to-close, plus focus save / move / restore. Focus lands on the
+  // first nav link.
+  useOverlayA11y({
+    isOpen,
+    close,
+    focusTarget: () => navRef.current?.querySelector("a"),
+  });
 
   return (
     <>
@@ -351,7 +369,7 @@ export default function MenuOverlay() {
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
           >
             <Image
-              src="/images/refuge-brume.avif"
+              src="/images/refuges/brume.avif"
               alt=""
               fill
               sizes="25vw"
@@ -368,7 +386,10 @@ export default function MenuOverlay() {
                 text={SITE_CONFIG.brandMark}
                 speed={120}
                 separator="·"
-                className="text-creme/95 text-[18vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em] whitespace-nowrap"
+                // `max-md:text-[18vw]` — the band sits inside the overlay
+                // box, which is inset 12px from each edge, so the shared
+                // 24vw mobile size would overflow it.
+                className="text-creme/95 type-wordmark-band max-md:text-[18vw] whitespace-nowrap"
               />
             </div>
           </div>

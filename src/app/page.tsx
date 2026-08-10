@@ -21,12 +21,20 @@ export default function Home() {
       <main>
         <Hero />
         <Manifeste />
-        <Medaillons />
         <Choisir />
         <Hebergements />
         <Proximite />
         <MarqueeBrand />
         <Pourquoi />
+        {/* Medaillons is the day→evening hinge, so it has to sit AFTER the
+            refuges have been introduced. It used to run third, right after
+            the Manifeste — promising "le soir, ensemble" six sections before
+            anything else picked the thread back up, and directly on top of
+            Hebergements selling "aucun voisin, aucune vue ouverte".
+            Here it reads as an escalation instead: Pourquoi ends on the
+            distance (quinze minutes de marche), Medaillons lights the fire,
+            Activités opens on "Seul, ou tous ensemble". */}
+        <Medaillons />
         <Activites />
         <Carousel />
         <Feedback />

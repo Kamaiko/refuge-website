@@ -36,3 +36,23 @@ export function useMediaQuery(query: string, defaultValue = false): boolean {
 
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
+
+/** True when the user has asked the OS to reduce motion.
+ *
+ *  Use this only to pick a different **layout** — e.g. rendering a
+ *  stacked list instead of a scroll-hijacked track. For animation
+ *  parameters, keep using `gsap.matchMedia()`, which auto-reverts its
+ *  tweens and ScrollTriggers when the preference flips.
+ *
+ *  The two sections that need it (Carousel, Pourquoi) gate their
+ *  desktop track behind a `no-preference` matchMedia branch. Without
+ *  a layout switch, a reduced-motion desktop visitor gets the track
+ *  markup with no ScrollTrigger driving it — leaving every card past
+ *  the first one unreachable.
+ *
+ *  Defaults to `false` on the server and first client render, so the
+ *  animated layout is what hydrates and reduced-motion users reconcile
+ *  to the static one on the first commit. */
+export function usePrefersReducedMotion(): boolean {
+  return useMediaQuery("(prefers-reduced-motion: reduce)");
+}

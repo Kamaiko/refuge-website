@@ -1,6 +1,6 @@
 # CLAUDE.md — Refuges Charlevoix
 
-> Ce fichier permet la reprise de contexte si la conversation crashe. À jour au scaffold initial.
+> Reprise de contexte. À jour au 10 août 2026 — après la passe éditoriale, la régénération complète des images et le ménage de code.
 
 ## Concept
 
@@ -55,7 +55,7 @@ les fichiers de projet. L'alias `@/*` pointe sur `./src/*` (`tsconfig.json`).
 | Région | Charlevoix (fjord, fleuve, montagnes) |
 | Saison dominante | Été + automne |
 | Nombre d'unités | 3 |
-| Architecture | Test 3 formes en Phase 2 (capsule, cube, A-frame) |
+| Architecture | Capsule « stadium » — pill horizontal, bouts arrondis. Canon dans `docs/backlog.md`, réf `assets-raw/refs/canon-capsule.jpg` |
 | Matériau dominant | Bois carbonisé noir (Shou Sugi Ban) |
 | Tonalité | Poétique / contemplative |
 | Langue | Français seulement |
@@ -101,386 +101,138 @@ Réalisée via Playwright le 2026-04-30. Findings techniques uniquement :
 ## Palette tokens (globals.css)
 
 ```css
+/* En usage */
 --color-base-noir: #181717        /* fond principal */
 --color-base-noir-soft: #1F1E1E   /* surfaces secondaires */
 --color-creme: #F4EFE7            /* texte principal */
 --color-creme-dim: #C9C5BD        /* texte secondaire */
+--color-creme-terre: #E8DCC4      /* texte secondaire chaud */
+--color-gris-tan: #2A2725         /* panneaux, cartes */
+--color-gris-tan-soft: #3A3631
+--color-gris-secondaire: #6B6660
+--color-turquoise: #4FB8B0        /* ::selection */
+--color-orange-sunset: #C2410C    /* erreurs de formulaire */
 
---color-vert-sapin: #2D5F4E       /* accent forêt */
---color-vert-sapin-deep: #1F4338  /* accent forêt sombre */
-
---color-turquoise: #4FB8B0        /* accent eau */
---color-turquoise-deep: #2C8A82   /* accent eau profonde */
-
---color-orange-sunset: #C2410C    /* accent sunset */
---color-or-ambre: #D97706         /* accent doré */
-
---color-creme-terre: #E8DCC4      /* surfaces secondaires chaud */
+/* Palette de réserve — déclarée, aucun point d'appel. Gardée volontairement :
+   c'est la palette Charlevoix documentée et le grade des photos est construit
+   autour. Signalée comme telle dans globals.css pour qu'on ne la prenne pas
+   pour un oubli. */
+--color-vert-sapin: #2D5F4E
+--color-vert-sapin-deep: #1F4338
+--color-turquoise-deep: #2C8A82
+--color-or-ambre: #D97706
 ```
 
-## Pipeline d'assets AI
+**Autres tokens** (`@theme` dans `globals.css`) : rayons `--radius-{pill,card,
+soft,frame,hero}` — utiliser ces tokens, pas des `rounded-[Npx]`. Classes
+composants : `.focus-ring` (l'anneau de focus clavier, était recopié 6 fois),
+`.eyebrow`, `.type-section-title`, `.type-wordmark-band`.
 
-### Modèles
-- **Images statiques** : Nano Banana / Gemini Image (image-to-image avec frame init pour cohérence)
-- **Vidéos courtes** : Seedance 2.0 ou Kling 3.0 (5-10s)
-
-### Workflow
-1. Générer 3-4 propositions d'architecture (capsule cylindrique, cube, A-frame)
-2. Sélectionner forme gagnante → devient frame init
-3. Image-to-image avec frame init pour toutes générations subséquentes
-4. Validation manuelle, regénération si incohérent
-5. AVIF (Sharp/squoosh) avant intégration
-6. Vidéos en MP4 H.265 + WebM VP9 fallback
-
-### Liste d'assets à générer (~30 images + 10 vidéos)
-
-**Images (Nano Banana)** :
-- 3 unités × 3 angles (extérieur jour, extérieur crépuscule, intérieur) = 9
-- Paysages Charlevoix (fjord, forêt, fleuve, sommet, lac) = 5
-- Activités (kayak, hike, sauna, observation, gastronomie) = 5
-- Détails (bois carbonisé, brume, feuilles, eau, foyer) = 5
-- Hero / pleine page = 3
-- Réserve / variations = 3
-
-**Vidéos (Seedance/Kling)** :
-- 1 hero loop (architecture + brume)
-- 3 transitions de section
-- 4 activités courtes
-- 2 ambiances
-
-### Prompts de test architecture (Nano Banana)
-
-**Style commun (suffixe)** :
-```
-Setting: Charlevoix, Quebec boreal forest in early autumn, soft morning fog rising from the ground, golden birch and red maple trees, distant view of the St. Lawrence fjord. Architectural photography style, golden hour, soft cinematic lighting, ultra-realistic, hyper-detailed, 35mm lens, shallow depth of field. Single building only, isolated in landscape, no people. Aspect ratio 16:9.
-```
-
-**A — Capsule cylindrique** :
-```
-Modern minimalist architecture: a single sleek horizontal cylindrical capsule cabin, matte charcoal black exterior (Shou Sugi Ban), one large round panoramic window on the front end, supported by minimal black steel feet, [+ style commun]
-```
-
-**B — Cube noir** :
-```
-Modern minimalist architecture: a single perfect cube cabin, charred black timber exterior (Shou Sugi Ban), full-facade floor-to-ceiling glass on one side revealing minimalist interior, flat roof, raised on minimal black steel stilts above forest floor, [+ style commun]
-```
-
-**C — A-frame** :
-```
-Modern minimalist architecture: a single A-frame triangular cabin with steeply pitched roof reaching nearly to the ground, charred black timber exterior (Shou Sugi Ban), massive triangular floor-to-ceiling glass facade, small terrace deck in front, [+ style commun]
-```
+⚠️ `--ease-cinematic` / `--ease-soft` ont été **supprimés** : `lib/motion.ts`
+prétendait les refléter mais utilisait des eases GSAP nommés — un contrat
+faux valait moins que pas de contrat.
 
 ## Structure du site (sections)
 
-1. **Hero** — Vidéo loop AI background, wordmark + tagline, indicateur scroll
-2. **Manifeste** — Scroll-driven typography (reveal mot par mot)
-3. **Le lieu (Charlevoix)** — Présentation région, parallax sur paysages
-4. **Concept architectural** — Philosophie design, matériaux
-5. **Les 3 unités** — Section dédiée par unité
-6. **Expériences / Activités** — 4-6 activités outdoor
-7. **Galerie / Ambiance** — Mood board pur visuel
-8. **Journal / Écrits courts** — 2-3 textes saisonniers
-9. **FAQ pratique** — Q/R utilitaires
-10. **Réservation / Contact** — Server Action Next.js
-11. **Footer** — Nav, social, mention "Concept fictif"
+Ordre réel dans `src/app/page.tsx` (13 sections). La liste antérieure de ce
+fichier décrivait un plan de conception jamais implémenté tel quel — voici ce
+qui existe :
 
-## Plan d'implémentation par phase
+| # | Section | Rôle |
+|---|---|---|
+| 1 | **Hero** | Vidéo loop en fond, wordmark, tagline |
+| 2 | **Manifeste** | `CurtainReveal` scrubbé sur une phrase |
+| 3 | **Choisir** | `SectionHeading` + pastilles de principes |
+| 4 | **Hebergements** | Pile de cartes épinglée, une par refuge |
+| 5 | **Proximite** | CTA qui ouvre la `MapOverlay` |
+| 6 | **MarqueeBrand** | Bande « Pourquoi Aquilon ? », décorative |
+| 7 | **Pourquoi** | 3 slides, wheel-hijack + rideau + dolly |
+| 8 | **Medaillons** | Charnière jour→soir, 2 rideaux + texte qui se réchauffe |
+| 9 | **Activites** | `SectionHeading` + paliers d'engagement |
+| 10 | **Carousel** | 5 cartes en scroll horizontal épinglé |
+| 11 | **Feedback** | Citation, reveal mot à mot |
+| 12 | **Cta** | Marquee + nav + socials |
+| 13 | **Footer** | Wordmark géant `AquilonReveal` |
 
-### Phase 1 — Scaffold (✅ fait)
-- Inspection Capsules + scaffold Next.js + setup tokens + CLAUDE.md
+⚠️ **Medaillons doit rester en position 8.** Elle était en 3 et promettait
+« le soir, ensemble » six sections avant que le site n'en reparle, en
+contradiction directe avec Hebergements (« aucun voisin ») juste dessous.
+En 8 elle fait charnière : Pourquoi pose la distance, Medaillons allume le
+feu, Activités ouvre sur « Seul, ou tous ensemble ».
 
-### Phase 2 — Assets AI (à faire par Patrick)
-- Test 3 architectures, sélection
-- Génération de tous les assets (~30 images + 10 vidéos)
-- Optimisation AVIF/WebM
-- Placement dans `public/images/` et `public/videos/`
+Jamais implémentées, malgré les mentions ailleurs dans ce fichier :
+`Lieu.tsx`, `Galerie.tsx`, Journal, FAQ.
 
-### Phase 3 — Sections statiques (en cours)
-- Composants par section avec copy original FR poétique
-- Layouts responsive
-- Placeholders pour assets AI
+| `createOverlayContext` | Factory Provider + hook pour un overlay open/close. Menu et ReservePanel en sortent. `MapOverlayContext` reste à part (état `preloaded` en plus). |
+| `usePrefersReducedMotion` | Dans `hooks/useMediaQuery.ts`. Pour **changer de layout**, pas pour animer — les paramètres d'animation passent par `gsap.matchMedia()`. |
+| `wantsReducedMotion()` | Dans `lib/motion.ts`. Lecture ponctuelle dans un handler ou un effet de montage, sans souscription. |
+| `RevealText` / `RevealChars` / `CurtainReveal` / `AquilonReveal` | Primitives de reveal. `RevealText` expose `start`, ce qui permet de découper un titre en plusieurs temps sans la modifier. |
+| `Marquee`, `BgGradient`, `SlideIndicators`, `NavWheelLink`, `SmoothScroll`, `CustomCursor` | Inchangées. |
 
-### Phase 4 — Animations GSAP
-- ScrollTrigger reveal, parallax, scroll-driven typography
-- Hero video loop
-- Hover states, transitions
-- Lenis smooth scroll global
-- Reduced-motion fallbacks
+### Assets — état
 
-### Phase 5 — Polish & SEO
-- Responsive mobile (375/768/1024/1440)
-- Lighthouse desktop ≥ 95, mobile ≥ 80
-- SEO metadata, OG, structured data
-- Accessibility audit
-- Case study README final
+Toutes les images live sont générées et rangées par section :
 
-## État actuel (mai 2026)
+```
+public/images/
+├── hero-shape.avif          poster LCP + image OG
+├── photo-patrick.avif       avatar Feedback
+├── refuges/     brume, aubepine, galets
+├── pourquoi/    aube, fjord, crete
+├── medaillons/  feu-{eteint,allume}, terrasse-{eteint,allume}
+└── activites/   kayak, sommet, via-ferrata, belugas, veillee
+```
 
-✅ **Phase 1 — Scaffold** complète :
-- Next.js 16.2.4 + React 19.2.4 + Tailwind 4.2.4 + GSAP 3.15 + Lenis 1.3.23
-- Inspection technique de capsules.moyra.co complète (font Host Grotesk, palette #181717/#F4EFE7, structure des animations)
-- Tokens design + folder structure
-- Dev server tourne sur http://localhost:3001
+⚠️ Les sources 4k et les variantes écartées vivent dans **`/assets-raw/`** à la
+racine, **hors de `public/`** et gitignorées. Elles y étaient auparavant
+(`public/images/_raw/`, 1,25 Go) : gitignorées mais tout de même servies par
+`next dev` et copiées par tout build local. `public/` fait 6,8 Mo aujourd'hui.
 
-✅ **Phase 3 — Sections + Animations** complète :
-**Sections actuelles** (11) : `Hero → Manifeste → Medaillons → Choisir → Hebergements → MarqueeBrand → Pourquoi → Activites → Carousel → Feedback → Cta → Footer` (Cta + Footer partagent un wrapper `relative isolate` avec un BgGradient base-noir→gris-tan).
-- Header : Reserve top-right (simple fade-in, scroll-out direction-based) + Menu bottom-center (cream pill grows around inner gris-tan circle, iOS wheel Menu↔Close)
-- MenuOverlay (clip-path **inset arrondi** expand depuis bouton — pas de cercles)
-- ReservePanel (slide-in from right, OKLAB transitions via `<BgGradient>`)
-- CustomCursor (point + cercle, mix-blend-difference, hover scale)
-- Form Réservation avec Server Action + Zod
-- **Composants common/ actuels** :
-  - `SmoothScroll` (Lenis + GSAP sync, panel-aware lock)
-  - `MenuContext` + `MenuOverlay`, `ReservePanelContext` + `ReservePanel`
-  - `RevealText` (2 modes : lines, words)
-  - `RevealChars` (per-char slide right→left, word-aware splitting) — utilisé par Hebergements, Pourquoi, Footer
-  - `CurtainReveal` (sharp horizontal cut, dual-clipped layers, anti-fringe)
-  - `Marquee` (directional scroll-aware wordmark loop, optionnel `pauseOnHover` avec hit-test scroll + curseur)
-  - `BrandMark` (wordmark + ® subscript — **non utilisé actuellement** ; le Footer utilise un mécanisme `:last-child` CSS scoped par `.aquilon-wordmark-fill`)
-  - `BgGradient` (linear gradient overlay OKLAB)
-  - `SlideIndicators` (chips 01/03 paginés, prop `tone: "muted" | "strong"`)
-  - `NavWheelLink` (iOS-wheel hover flip pour les nav links du Cta)
-  - `CustomCursor`
+Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
+**`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
+**`docs/backlog.md`**.
 
-✅ **Phase 2 — Assets (juin 2026, partiel)** — imagerie générée via **Higgsfield CLI** :
-
-- **Carousel activités** = 5 cartes, données **hardcodées dans `CARDS` (Carousel.tsx)** — PAS dans `src/lib/data`. Math scroll = fonction de N cartes : `w-[N·75vw]`, `TRACK_END_PERCENT`, `end "+=…%"` (formules commentées dans le fichier). Thème « solitude/rassemblement ». Images : `activite-{kayak,sommet,via-ferrata,terrasse,veillee}.avif`.
-- **Médaillons** = 2 cartes **paysage** (reformées d'ovales 3:4), `medaillon-{feu,rassemblement}.avif`, copy « Le jour pour soi. Le soir, ensemble. »
-- **Pourquoi** = 3 slides **4:5**, `pourquoi-{matin,baie,drone}.avif`, base scale `SLIDE_IMAGE_ZOOM` (Pourquoi.tsx).
-- ⚠️ `public/images/recycled_assets/` **supprimé** (placeholders désuets) — ne plus y référencer.
-- **Pipeline Higgsfield CLI** (auth `higgsfield auth login`) : `higgsfield generate create nano_banana_2 --aspect_ratio <r> --resolution 4k [--image <ref>] --wait --prompt "…"`. Modèle = **Nano Banana Pro** (4 cr/img). Ratios : carousel/médaillons **3:2**, Pourquoi **4:5**. Forme refuge = capsule « **stadium** » (pill horizontal, bouts arrondis) → passer une photo de réf en `--image` pour la verrouiller. Convert AVIF : `ffmpeg -i src -vf scale=2400:-2 -c:v libaom-av1 -still-picture 1 -cpu-used 6 -crf 30 …` (Pourquoi portrait : `scale=1600:-2`). **Détails + prompts : `docs/assets-a-generer.md`.** Sources archivées (gitignoré) : `public/images/_raw/{finals,alternates}/` + `_INDEX.md`.
-- ⏳ Reste à générer : `lieu-charlevoix.avif`, galerie (6 images), vidéos hero/ambiance.
-
-⏳ **Phase 4 — Polish** (post-assets) :
-
-- [x] Décision finale du **nom de marque** : Aquilon (vent du nord en latin/littéraire)
-- [ ] Wordmark / logo SVG (à dessiner ou générer)
-- [ ] Raffinage du copy après validation des visuels
-- [ ] Detail panel par unité (overlay click-to-open avec galerie)
-- [ ] Hover states sur les cards (image scale subtil)
-- [ ] Parallax léger sur les paysages
-- [ ] Page transition overlay (fade noir entre navigations)
-- [ ] Responsive mobile fine-tuning (375 / 768 / 1024 / 1440)
-- [ ] SEO complet : metadata, OG image, structured data LodgingBusiness
-- [ ] Lighthouse audit (cible : desktop ≥ 95, mobile ≥ 80)
-- [ ] Case study README avec breakdown technique
+⏳ **Reste** : voir `docs/backlog.md` — art direction du hero en portrait,
+passe copy complète, `lieu-charlevoix`, galerie, vidéos d'ambiance, envoi réel
+des réservations (Resend jamais branché), audit Lighthouse.
 
 ## Note sur le nom de marque
 
-**Aquilon** — vent du nord en latin/littéraire (de l'antiquité romaine). Choisi pour son registre érudit, sa rareté en hospitalité, et l'écho avec le contexte maritime nordique du St-Laurent. À noter : l'un des trois refuges s'appelle quand même "Brume" (slug `brume` dans `src/lib/data/unites.ts`) — c'est intentionnel, le mot reste utilisé comme nom de produit, pas comme nom de marque.
+**Aquilon** — vent du nord en latin/littéraire (de l'antiquité romaine). Choisi pour son registre érudit, sa rareté en hospitalité, et l'écho avec le contexte maritime nordique du St-Laurent. À noter : l'un des trois refuges s'appelle quand même "Brume" (slug `brume` dans `src/lib/data/refuges.ts`) — c'est intentionnel, le mot reste utilisé comme nom de produit, pas comme nom de marque.
 
 **Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `src/lib/constants.ts`. Les chaînes affichées (eyebrow, marquee, manifeste, feedback) sont actuellement hardcoded — chercher littéralement "Aquilon" pour les retrouver.
 
-## Verification locale (Wave 1+2 testées)
+## Reduced motion — règles du projet
 
-Screenshots pris via Playwright à :
-- `/refuges-hero.jpeg` — hero wordmark + tagline + CTAs
-- `/refuges-manifeste.jpeg` — manifeste scroll-text-reveal
-- `/refuges-lieu.jpeg` — Charlevoix split layout
-- `/refuges-concept.jpeg` — 3 principes en grille + transition vers MarqueeBrand
-- `/refuges-unite-1.jpeg` — Aubépine + Galets en alternance
-- `/refuges-activites.jpeg` — horizontal scroll-pinned 6 cards
-- `/refuges-galerie.jpeg` — grid asymétrique
-- `/refuges-reservation.jpeg` — form complet
-- `/refuges-footer.jpeg` — footer
+Le site tombe en panne de façon **silencieuse** sous `prefers-reduced-motion`
+si on n'y prend pas garde, parce que beaucoup d'éléments partent d'un état
+invisible (`opacity: 0` inline, `visibility: hidden`, `clip-path: inset(100%)`,
+glyphes parqués hors champ) et comptent sur une animation pour arriver. Trois
+pertes de contenu ont déjà été corrigées à ce titre — le Hero rendait une image
+sans un seul mot dessus.
 
-Console clean — seuls 404 attendus sur `/videos/hero-loop.mp4` (résolu : tag `<source>` commenté en attendant la génération en Phase 2).
+Trois outils, à ne pas confondre :
 
-## Inventaire technique des animations à implémenter
+1. **`gsap.matchMedia()`** pour les paramètres d'animation. Toujours écrire la
+   branche `(prefers-reduced-motion: reduce)` quand l'élément part d'un état
+   invisible — ce n'est pas facultatif, c'est ce qui le rend visible.
+2. **`usePrefersReducedMotion()`** quand il faut changer de **layout**.
+   Carousel et Pourquoi s'en servent pour rendre leur pile mobile à toutes les
+   largeurs : leur piste desktop est entièrement pilotée par ScrollTrigger, donc
+   sans pin les cartes suivantes seraient inatteignables.
+3. **`wantsReducedMotion()`** pour une lecture ponctuelle dans un handler ou un
+   effet de montage, quand souscrire n'apporterait rien.
 
-(Identifié via inspection Playwright de capsules.moyra.co — ce sont des techniques GSAP / CSS standards, pas un blueprint propriétaire.)
-
-### A — Infrastructure
-1. ✅ Lenis smooth scroll (`html.lenis`) synchronisé avec ScrollTrigger
-2. ✅ GSAP + ScrollTrigger
-3. ✅ Custom cursor (point + cercle, mix-blend-difference, scale au hover)
-
-### B — Reveals texte
-- `<RevealText mode="lines | words">` — primitive 2-modes (entrance one-shot)
-- `<RevealChars play>` — per-char slide right→left inside per-glyph mask, word-aware splitting (no mid-word breaks). Imperative play prop. Used in Capsules.
-- `<CurtainReveal>` — sharp horizontal cut, complementary clip-path on cream + filter layers (eliminates antialiasing fringe). Used in Manifeste.
-
-### C — Backgrounds & transitions
-- `<BgGradient from to direction noiseOpacity>` — static linear gradient overlay, OKLAB-interpolated via inline `linear-gradient(in oklab, ...)` (Tailwind v4 default OKLAB doesn't apply to var()-backed stops at runtime). SVG turbulence noise dither.
-
-### D — Marquee
-- `<Marquee text speed directional>` — directional flag toggles scroll-direction-aware reverse
-
-### E — Floating UI
-- Header CTA `Réserver` (top-right, simple fade-in, scroll-direction-driven hide/show with 0.35s anti-jitter delay)
-- Menu CTA (bottom-center, cream pill unrolls around gris-tan circle on entry)
-- Side badge vertical (`Concept · 2026`)
-
-### F — Overlays
-- Menu fullscreen overlay (clip-path **inset rounded rectangle** expand from button position — not a circle anymore)
-- Reservation form Server Action (Zod validation, no email delivery yet — TODO Resend)
-
-### G — Bonus
-- `useReducedMotion` hook + CSS fallback for prefers-reduced-motion
-
-## Prompts Nano Banana — catalogue d'assets à générer
-
-**Style commun (suffixe à ajouter à TOUS les prompts pour cohérence)** :
-```
-Setting: Charlevoix, Quebec, autumn boreal forest with golden birch and red maple,
-distant view of the St. Lawrence fjord with turquoise water glints. Cinematic golden-hour
-lighting, soft morning fog, ultra-realistic, hyper-detailed, 35mm lens, shallow depth of
-field, no people, no signage, no logos. Color palette: deep forest green, charred black wood,
-turquoise water, sunset orange, cream sky. Aspect ratio 16:9.
-```
-
-### Phase 2A — Test 3 architectures (génère 3-4 variantes par prompt, choisis la meilleure)
-
-**A1 — Capsule cylindrique** :
-```
-Modern minimalist architecture: a single sleek horizontal cylindrical capsule cabin,
-matte charred-black timber exterior (Shou Sugi Ban), one large round panoramic window
-on the front showing warm interior lights, supported on minimal black steel feet,
-nestled in the boreal forest, [+ style commun]
-```
-
-**A2 — Cube noir** :
-```
-Modern minimalist architecture: a single perfect cube cabin, charred black timber
-exterior (Shou Sugi Ban), full-facade floor-to-ceiling glass on one side revealing
-a minimalist warm interior, flat roof, raised on minimal black steel stilts above
-the forest floor, [+ style commun]
-```
-
-**A3 — A-frame** :
-```
-Modern minimalist architecture: a single A-frame triangular cabin with a steeply
-pitched roof reaching nearly to the ground, charred black timber exterior, massive
-triangular floor-to-ceiling glass facade with warm interior glow, small wooden
-terrace deck in front, [+ style commun]
-```
-
-### Phase 2B — Hero loop video (Seedance 2.0 / Kling 3.0, 8s, loop-perfect)
-
-**Prompt principal (recommandé — loop propre via ambient-only motion)** :
-
-```
-Cinematic locked-off shot, completely static camera, no pan, no zoom, no shake.
-Subject: a single charred-black timber [SHAPE] cabin, dead center of frame, raised
-slightly above the forest floor on minimal black steel feet. Setting: Charlevoix
-boreal forest in early autumn, surrounded by tall golden birches and red maples,
-moss-covered ground, soft morning fog drifting horizontally from left to right at
-slow speed (covering about 6 percent of the frame per second). Distant view of
-turquoise St. Lawrence fjord visible between trees on the right. Warm amber interior
-light pulsing very gently through the cabin window (subtle 4-second pulse cycle).
-One single golden birch leaf falling slowly diagonally through frame from upper-right
-to lower-left, completing its fall at 6 seconds. Trees in background swaying very
-subtly in light wind. Foreground rocks and ground completely still. Golden hour
-lighting, color palette deep forest green, charred black, turquoise water, sunset
-orange, cream sky.
-
-LOOP REQUIREMENTS: ensure perfect seamless loop. Last frame must match first frame
-in: fog density and position pattern, light intensity, tree sway position, leaf
-position (the falling leaf must complete its arc and exit the frame before frame
-7.5, so frames 7.5–8 show only ambient motion identical to frame 0).
-
-Duration: 8 seconds. Frame rate: 24fps. Resolution: 1920x1080. Aspect ratio: 16:9.
-No people, no text, no logos, no birds, no animals. Ultra-realistic, hyper-detailed,
-35mm lens, shallow depth of field, soft cinematic grade.
-```
-
-**Pourquoi ce prompt loop proprement** :
-- Caméra 100% statique → aucune désync de cadrage
-- Brume linéaire à vitesse constante → identique à chaque frame du cycle
-- Pulse lumière intérieure 4s → exactement 2 cycles complets en 8s
-- Feuille termine avant 7.5s → 0.5s d'ambiance pure pour rejoindre le loop
-- Sol/rochers statiques → zéro mismatch
-
-**Image hero (`public/images/hero-shape.avif`, sert de poster + dérivé)** :
-Soit extraire un frame de la vidéo générée (`ffmpeg -i hero-loop.mp4 -ss 4 -frames:v 1 hero-shape.jpg`), soit regénérer une image statique avec le prompt Phase 2A correspondant (pour cohérence cadrage avec la vidéo loop).
-
-**Encodage final** :
-```
-ffmpeg -i output.mp4 -c:v libx265 -crf 24 -pix_fmt yuv420p hero-loop.mp4
-```
-
-### Phase 2C — Les 3 unités (image-to-image avec frame init de l'architecture choisie)
-
-**Aubépine** (au creux de la forêt) :
-```
-Same [SHAPE] cabin from frame init, this version named "Aubépine": deep inside dense
-boreal forest, surrounded by tall white birches and red maples, soft morning fog,
-small outdoor wooden sauna with a chimney smoking gently nearby, no view of water.
-Twilight blue hour, warm interior glow. [+ style commun]
-```
-
-**Galets** (au bord du fleuve) :
-```
-Same [SHAPE] cabin from frame init, this version named "Galets": positioned 10 meters
-from a rocky St. Lawrence shoreline, low tide exposing pebble flats, an outdoor wooden
-hot tub on the deck facing the river, distant white belugas surfacing in the water.
-Late afternoon golden light. [+ style commun]
-```
-
-**Brume** (sur le promontoire) :
-```
-Same [SHAPE] cabin from frame init, this version named "Brume": perched on a rocky
-cliff promontory overlooking 40 km of St. Lawrence fjord, fog rising from the water
-below the cabin, panoramic terrace with an outdoor stone fire pit, dramatic horizon.
-Sunrise pastel sky. [+ style commun]
-```
-
-### Phase 2D — Intérieurs (3 variantes)
-
-```
-Architectural interior of a [SHAPE] cabin: minimalist Scandinavian design, warm wood
-walls, queen bed with linen sheets, large window framing the boreal forest outside,
-soft morning light, cast iron wood stove glowing in corner, woven rug, no clutter,
-no humans visible. Editorial interior photography, 50mm lens. [+ style commun]
-```
-
-### Phase 2E — Paysages Charlevoix (5 plans)
-
-1. **Fjord** : `Wide aerial view of the St. Lawrence fjord at sunrise, turquoise water, mist hovering, dark mountain silhouettes, golden sky. [+ style commun]`
-2. **Forêt boréale** : `Deep autumn boreal forest path, towering golden birches and crimson maples, soft fog filtering through trees, wet mossy ground. [+ style commun]`
-3. **Galets de plage** : `Rocky St. Lawrence shoreline at low tide, smooth gray pebbles, distant cargo ship on horizon, soft cloudy light. [+ style commun]`
-4. **Sommet panoramique** : `Mountain summit overlooking Charlevoix valley, autumn forest spread below, distant fjord glimmer, dramatic clouds. [+ style commun]`
-5. **Lac brumeux** : `Quiet boreal lake at dawn, perfect mirror reflection of autumn forest, fog rising from water surface, no ripples, no people. [+ style commun]`
-
-### Phase 2F — Activités (5 plans)
-
-1. **Kayak fjord** : `Single sea kayak on calm turquoise fjord water at golden hour, distant cliff, paddle dipping, wake behind. From slightly above. No face visible. [+ style commun]`
-2. **Marche forêt** : `First-person low POV through fall boreal forest path, golden leaves on ground, soft fog, sunbeams. No people. [+ style commun]`
-3. **Sauna nordique** : `Wooden Scandinavian sauna in forest at twilight, steam rising from chimney, warm light through small window, snow on roof or autumn leaves around. [+ style commun]`
-4. **Observation baleines** : `Beluga whale tail breaking the turquoise surface of the St. Lawrence, distant view, sunset light, painterly. [+ style commun]`
-5. **Foyer extérieur** : `Outdoor stone fire pit at dusk on a wooden deck, glowing flames, two empty chairs, fog in the forest beyond. [+ style commun]`
-
-### Phase 2G — Détails / textures (5)
-
-1. `Macro detail of charred black Shou Sugi Ban wood texture, deep grain, soft shadows. [+ style commun]`
-2. `Drops of rain on a metal-frame window with autumn forest blurred behind. [+ style commun]`
-3. `A single golden birch leaf floating on dark turquoise water. [+ style commun]`
-4. `Glowing embers in a stone fire pit, sparks rising into the night. [+ style commun]`
-5. `Steam rising slowly from a wooden hot tub at dawn on a deck. [+ style commun]`
-
-### Phase 2H — Vidéos courtes Seedance/Kling (5-10s chacune)
-
-1. **Hero loop** : voir Phase 2B
-2. **Transition fog** : `Slow morning fog drifting across the screen left to right, no subject, ambient. 6s, loop-friendly.`
-3. **Leaf falling** : `A single golden birch leaf falling slowly through frame from top to bottom, soft fog background. 5s.`
-4. **Sauna steam** : `Slow steam rising and curling from a wooden sauna chimney, twilight backdrop. 7s, loop-friendly.`
-5. **Kayak paddle** : `Slow shot of a paddle dipping into turquoise water, ripples expanding outward. 6s.`
-6. **Fjord water lap** : `Calm turquoise fjord water lapping gently against rocky shore, golden hour light. 8s, loop-friendly.`
-7. **Fire pit flames** : `Close-up flames in a stone fire pit at night, ambient glow, sparks. 6s, loop-friendly.`
-
-### Pipeline post-génération
-
-1. Sélectionner les meilleures variantes de chaque prompt
-2. Convertir images PNG/JPG → AVIF via Sharp (`pnpm dlx sharp-cli` ou squoosh)
-3. Convertir vidéos → MP4 H.265 + WebM VP9 fallback (ffmpeg)
-4. Placer dans `public/images/` et `public/videos/` (slugs cohérents avec les composants)
-5. Mettre à jour les `image: "/images/..."` paths dans `src/lib/data/*.ts`
+Les primitives `RevealChars` et `AquilonReveal` gèrent le cas **elles-mêmes** :
+parquer les glyphes hors champ ne marche que si quelqu'un lève `play` ensuite,
+et au moins un appelant le pilote depuis une branche `no-preference`.
 
 ## Références
 
 - Site de référence (format structurel uniquement) : capsules.moyra.co
 - Stack mirroir local : `c:\DevTools\Projects\WaaS-Websites\ttminc-website`
-- Plan complet : `C:\Users\Patrick Patenaude\.claude\plans\jiggly-painting-wilkes.md`
+- `docs/assets-a-generer.md` — pipeline Higgsfield, prompts littéraux, règles de brief
+- `docs/backlog.md` — dette assumée, avec le *pourquoi* de chaque report
 
 ## Commandes utiles
 
@@ -492,6 +244,16 @@ pnpm dev
 # Build production
 pnpm build && pnpm start
 
-# Lint
-pnpm lint
+# Lint + typecheck (les deux, le lint seul ne suffit pas)
+pnpm lint && npx tsc --noEmit
+
+# Génération d'image (voir docs/assets-a-generer.md pour les prompts)
+higgsfield account status
+higgsfield generate create nano_banana_2 --aspect_ratio 3:2 --resolution 4k \
+  --image assets-raw/refs/canon-capsule.jpg --wait --prompt "…"
+
+# Conversion AVIF — paysage 2400, portrait 1600. L'unsharp après
+# redimensionnement récupère du piqué perçu, gratuitement.
+ffmpeg -y -i src.png -vf "scale=2400:-2,unsharp=5:5:0.4:5:5:0.0" \
+  -c:v libaom-av1 -still-picture 1 -cpu-used 6 -crf 30 -pix_fmt yuv420p out.avif
 ```

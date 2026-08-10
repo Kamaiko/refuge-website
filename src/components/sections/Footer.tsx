@@ -6,25 +6,25 @@ import { ScrollTrigger } from "@/lib/gsap";
 import AquilonReveal from "@/components/common/AquilonReveal";
 
 /**
- * Closing footer. Tan delimiter line, single-row credit + copyright,
- * then a massive {@link RevealChars} wordmark that animates its glyphs
- * in/out as the section enters / exits the viewport.
+ * Closing footer. Tan delimiter line, single-row credit + copyright, then a
+ * massive {@link AquilonReveal} wordmark that animates its glyphs in and
+ * out as the section enters / leaves the viewport.
  *
- * The wordmark fills with a tan → creme vertical gradient applied
- * per-glyph via the `.aquilon-wordmark-fill` CSS class on each
- * RevealChars mask (see `app/globals.css`). Applying the gradient on
- * the outer span doesn't reach RevealChars' transformed descendants
- * reliably in Tailwind v4; per-glyph application sidesteps that.
+ * The wordmark fills with a tan → creme vertical gradient applied per-glyph
+ * via the `.aquilon-wordmark-fill` CSS class on each glyph mask (see
+ * `app/globals.css`). Applying the gradient on the outer span doesn't reach
+ * the transformed descendants reliably in Tailwind v4; per-glyph
+ * application sidesteps that.
  *
- * Two ScrollTriggers : entry at `top 85%` plays the slide-in; exit
- * at `top 60%` plays the reverse-out on scroll-up. The exit also
- * listens to `onEnter` to re-trigger play=true if the user bounces
- * back down without crossing the entry threshold above.
+ * One ScrollTrigger at `top 80%`: `onEnter` plays the reveal, `onLeaveBack`
+ * plays the reverse-out on scroll-up. (This was previously two separate
+ * triggers, documented as firing at different thresholds — but both were
+ * created with the same `start`, so the described entry/exit hysteresis
+ * never actually existed. Merged into one.)
  *
- * Sits inside the `relative isolate` wrapper in `src/app/page.tsx` that
- * owns the `base-noir → gris-tan` background gradient spanning the
- * CTA's lower half + this entire footer — so this section's own bg
- * stays transparent.
+ * Sits inside the `relative isolate` wrapper in `src/app/page.tsx` that owns
+ * the `base-noir → gris-tan` background gradient spanning the CTA's lower
+ * half plus this entire footer — so this section's own bg stays transparent.
  */
 export default function Footer() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -33,26 +33,13 @@ export default function Footer() {
   useGSAP(
     () => {
       if (!sectionRef.current) return;
-      const entryTrigger = ScrollTrigger.create({
+      const trigger = ScrollTrigger.create({
         trigger: sectionRef.current,
         start: "top 80%",
         onEnter: () => setPlay(true),
-      });
-      // Exit fires later than entry — when scrolling up, the wordmark
-      // should be (almost) out of view before the reverse plays, so the
-      // user doesn't see the letters unwind in front of them. No
-      // `onEnter` here : scroll-down through 80% would otherwise
-      // pre-empt the real entry trigger at 55% and play the animation
-      // before the wordmark is visible.
-      const exitTrigger = ScrollTrigger.create({
-        trigger: sectionRef.current,
-        start: "top 80%",
         onLeaveBack: () => setPlay(false),
       });
-      return () => {
-        entryTrigger.kill();
-        exitTrigger.kill();
-      };
+      return () => trigger.kill();
     },
     { scope: sectionRef },
   );
@@ -85,7 +72,6 @@ export default function Footer() {
       <div className="aquilon-footer-wordmark overflow-hidden text-center h-[1em] text-[24vw]">
         <AquilonReveal
           play={play}
-          mode="wipe-and-slide"
           className="block leading-[1.0] tracking-[0.01em] font-bold"
           charClassName="aquilon-wordmark-fill"
           ease="power2.inOut"

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import SlideIndicators from "@/components/common/SlideIndicators";
 
 type Card = {
@@ -37,46 +38,54 @@ const PARALLAX_X_PERCENT = 8;
 /** The five activity cards. Photos are framed for the card's landscape
  *  aspect ratio (3:2 source, object-cover crop), so `zoom` stays at 1 —
  *  the desktop parallax floor (`PARALLAX_SCALE_FLOOR`) is applied at the
- *  call site. The first three carry the "solitude" register, the last two
- *  the "rassemblement" one; the Activités intro above frames the duality.
+ *  call site. Four of the five sit in the "solitude" register and only the
+ *  last one ("Le feu de minuit") in the "rassemblement" one; the Activités
+ *  intro above frames the duality. Under the site's editorial rule — the
+ *  refuge is private, the territory is shared — the shared side is
+ *  deliberately the minority.
  *  Image paths point at the final AVIFs in /images. */
 const CARDS: readonly Card[] = [
   {
     titre: "Kayak sur le fjord",
     sous: "Glisser au ras de l'eau, sous une lumière qui change toutes les dix minutes.",
     niveau: "Journée",
-    image: "/images/activite-kayak.avif",
+    image: "/images/activites/kayak.avif",
     zoom: 1,
   },
   {
     titre: "Randonnée des sommets",
     sous: "Monter une heure pour mériter l'horizon. En haut, le monde se tait.",
     niveau: "Journée",
-    image: "/images/activite-sommet.avif",
+    image: "/images/activites/sommet.avif",
     zoom: 1,
   },
   {
     titre: "Via ferrata",
     sous: "Suspendu à la roche, le vide sous les pieds — et le calme, étrangement, qui s'installe.",
     niveau: "Demi-journée",
-    image: "/images/activite-via-ferrata.avif",
+    image: "/images/activites/via-ferrata.avif",
     zoom: 1,
     // The climber sits in the right third of the 3:2 source; bias the
     // object-position right so the 4:3 card crop keeps them in frame.
     objectPosition: "62% 50%",
   },
   {
-    titre: "Terrasse en fête",
-    sous: "Quand le soleil s'étire, la terrasse se remplit. Du monde, de la musique, le fjord pour décor.",
+    // Replaced "Terrasse en fête", which was the last remnant of the
+    // festival register the site dropped everywhere else — and its photo
+    // showed a smartly-dressed crowd, reading as an event rather than as
+    // the territory. Belugas were already seeded in the copy: the Galets
+    // refuge description says "Les bélugas passent l'été, parfois".
+    titre: "Le passage des bélugas",
+    sous: "Une heure à fixer l'eau grise pour trois secondes de dos blanc. Personne ne s'en est jamais plaint.",
     niveau: "Après-midi",
-    image: "/images/activite-terrasse.avif",
+    image: "/images/activites/belugas.avif",
     zoom: 1,
   },
   {
     titre: "Le feu de minuit",
     sous: "La nuit tombe, le feu prend. On reste tard, verre à la main, à refaire le monde.",
     niveau: "Soirée",
-    image: "/images/activite-veillee.avif",
+    image: "/images/activites/veillee.avif",
     zoom: 1,
   },
 ] as const;
@@ -100,6 +109,11 @@ export default function Carousel() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const innerPanRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Layout switch, not an animation parameter — see the JSX below. The
+  // desktop track is driven entirely by ScrollTrigger, so under reduced
+  // motion it must not render at all: the pin never engages and cards 1
+  // through 4 would sit permanently off-screen with no way to reach them.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(
     () => {
@@ -222,7 +236,20 @@ export default function Carousel() {
     // obscured by it. `bg-gris-tan` continues the warm band started
     // halfway through Activités above; Feedback below snaps back to
     // bg-base-noir at the section boundary.
-    <section ref={sectionRef} className="relative w-full bg-gris-tan overflow-hidden z-[95]">
+    <section
+      ref={sectionRef}
+      aria-labelledby="carousel-heading"
+      className="relative w-full bg-gris-tan overflow-hidden z-[95]"
+    >
+      {/* The visible heading for this content lives in Activités, one
+          section up ("Découvrez les activités du territoire"). This is a
+          separate <section> element though, so it needs its own accessible
+          name — and without it the <h3> card titles below are orphans with
+          no <h2> anywhere in the section. */}
+      <h2 id="carousel-heading" className="sr-only">
+        Les activités du territoire, en images
+      </h2>
+
       {/* Mobile : horizontal thumb-swipe scroll. The pin / scrub doesn't
           apply below md, but we still want the carousel feeling — so the
           3 cards live in a horizontal overflow-x track with snap-mandatory.
@@ -231,14 +258,18 @@ export default function Carousel() {
           primary anchor and offloads body text into legible vertical
           rhythm. `w-[85vw]` lets the edge of the next card peek on the
           right, hinting at swipeability. */}
-      <div className="md:hidden py-16">
+      <div className={`${prefersReducedMotion ? "block" : "md:hidden"} py-16`}>
         <div className="overflow-x-auto snap-x snap-mandatory flex gap-4 px-3 no-scrollbar">
           {CARDS.map((c, i) => (
+            // `md:w-[42vw]` only ever applies when this block is standing in
+            // for the desktop track (reduced motion) — 85vw cards on a
+            // 1440px screen would be absurd. On real mobile the md: prefix
+            // never matches.
             <article
               key={c.titre}
-              className="snap-center shrink-0 w-[85vw] flex flex-col gap-5"
+              className="snap-center shrink-0 w-[85vw] md:w-[42vw] flex flex-col gap-5"
             >
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[28px]">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-card">
                 <Image
                   src={c.image}
                   alt={c.titre}
@@ -287,7 +318,7 @@ export default function Carousel() {
           the next/previous card at every position — one card occupies
           the centre with adjacent cards visible at ~25vw width on
           each side. */}
-      <div className="hidden md:block">
+      <div className={prefersReducedMotion ? "hidden" : "hidden md:block"}>
         <div className="h-screen flex items-center">
           <div
             ref={trackRef}
@@ -305,7 +336,7 @@ export default function Carousel() {
               <div key={c.titre} className="w-[75vw] h-screen p-3 flex-shrink-0">
                 {/* Triple-fix for the rounded-clip-with-transformed-
                     children bug in Chromium/WebKit :
-                    1. `overflow-hidden` + `rounded-[60px]` — the
+                    1. `overflow-hidden` + `rounded-hero` — the
                        baseline that works in most cases.
                     2. `clipPath: inset(0 round 60px)` — fallback for
                        browsers where overflow+radius doesn't clip
@@ -319,7 +350,7 @@ export default function Carousel() {
                        still skip the rounded clip on transformed
                        descendants. */}
                 <article
-                  className="relative h-full w-full overflow-hidden rounded-[60px]"
+                  className="relative h-full w-full overflow-hidden rounded-hero"
                   style={{
                     clipPath: "inset(0 round 60px)",
                     transform: "translateZ(0)",

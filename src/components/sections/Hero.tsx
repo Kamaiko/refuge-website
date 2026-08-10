@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
+import { wantsReducedMotion } from "@/lib/motion";
 import BrandMark from "@/components/common/BrandMark";
 
 const TAGLINE = "Trois refuges\nau creux du fjord.";
@@ -51,7 +52,7 @@ export default function Hero() {
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (wantsReducedMotion()) return;
 
     // `HAVE_FUTURE_DATA` (3) means enough is buffered to play forward.
     if (video.readyState >= 3) {
@@ -89,6 +90,18 @@ export default function Hero() {
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
+
+      // Reduced-motion: land the copy immediately. This branch is NOT
+      // optional — the three elements below ship with `style={{opacity:0}}`
+      // inline (to avoid a flash before GSAP runs), so without it the hero
+      // renders as an image with no text on it at all.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
+          opacity: 1,
+          y: 0,
+        });
+      });
+
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
           opacity: 0,
@@ -133,7 +146,7 @@ export default function Hero() {
       data-hero
       className="relative h-[100svh] w-full p-3 md:p-4"
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[60px]">
+      <div className="relative h-full w-full overflow-hidden rounded-hero">
         <div ref={mediaRef} className="absolute inset-0 will-change-transform">
           {/* Poster as a real <img> via next/image — this is what
               Lighthouse measures as LCP. The same file is preloaded by

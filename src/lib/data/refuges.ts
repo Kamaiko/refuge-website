@@ -23,7 +23,7 @@ export const REFUGES = [
       "Le plus haut, le plus exposé au ciel. Aux premières heures, la brume s’élève du fleuve et passe sous le refuge. Aurores boréales possibles l’hiver.",
     capacite: "2-4 personnes",
     surface: "46 m²",
-    image: "/images/refuge-brume.avif",
+    image: "/images/refuges/brume.avif",
     tarifParNuit: 680,
   },
   {
@@ -34,7 +34,7 @@ export const REFUGES = [
       "Le plus enclavé des trois. Aucun voisin, aucune vue ouverte ; seulement les arbres, le bois noir et le silence. Pour celles et ceux qui viennent vraiment écouter.",
     capacite: "2 personnes",
     surface: "32 m²",
-    image: "/images/refuge-aubepine.avif",
+    image: "/images/refuges/aubepine.avif",
     tarifParNuit: 540,
   },
   {
@@ -45,7 +45,7 @@ export const REFUGES = [
       "Le refuge le plus exposé. La marée, le vent, la lumière qui change toute la journée. Les bélugas passent l’été, parfois.",
     capacite: "2-3 personnes",
     surface: "38 m²",
-    image: "/images/refuge-galets.avif",
+    image: "/images/refuges/galets.avif",
     tarifParNuit: 600,
   },
 ];

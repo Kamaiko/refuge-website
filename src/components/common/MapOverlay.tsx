@@ -11,6 +11,7 @@ import { SITE_CONFIG } from "@/lib/constants";
 import { CTA } from "@/lib/cta-dimensions";
 import { MQ } from "@/lib/breakpoints";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useOverlayA11y } from "@/hooks/useOverlayA11y";
 
 /** Approximate coordinates of L'Acropole des Draveurs trail, within
  *  Parc national des Hautes-Gorges-de-la-Rivière-Malbaie (Charlevoix-Est).
@@ -129,8 +130,6 @@ export default function MapOverlay() {
   // Skip the open/close GSAP effect on first mount — see the relevant
   // useGSAP below for why.
   const hasMountedRef = useRef(false);
-  // Saved focus target for the open/close cycle (restored on close).
-  const previousFocusRef = useRef<HTMLElement | null>(null);
   // Map → Reserve panel relay timer ID, so we can clear it on unmount
   // or re-entry instead of letting a stale firing arrive against an
   // unmounted tree.
@@ -334,34 +333,9 @@ export default function MapOverlay() {
     return () => window.removeEventListener("resize", onResize);
   }, [isOpen]);
 
-  // Escape closes the overlay (mirrors MenuOverlay's contract).
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isOpen, close]);
-
-  // Focus management — save the trigger element on open, focus the
-  // Close pill once the overlay is mounted/focusable, restore focus on
-  // close. Paired with the `inert` attribute SmoothScroll applies to
-  // <main> when any overlay is open, this creates a proper
-  // keyboard-only flow. Same contract as MenuOverlay.
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-      const id = window.setTimeout(() => {
-        closeRef.current?.focus();
-      }, 50);
-      return () => window.clearTimeout(id);
-    }
-    if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
+  // Escape-to-close, plus focus save / move / restore. Focus lands on the
+  // Close pill — there's nothing else interactive inside the map.
+  useOverlayA11y({ isOpen, close, focusTarget: () => closeRef.current });
 
   // The "Prêt à réserver ?" card link closes the map then opens the
   // Reserve panel — a small lag so the close clip-path tween starts
@@ -481,7 +455,7 @@ export default function MapOverlay() {
             anchor against the wide-open map. */}
         <div
           ref={cardRef}
-          className="absolute top-4 left-4 md:top-8 md:left-8 w-[min(33rem,calc(100vw-2rem))] rounded-[60px] bg-base-noir/95 text-creme p-9 md:p-10 backdrop-blur-md shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]"
+          className="absolute top-4 left-4 md:top-8 md:left-8 w-[min(33rem,calc(100vw-2rem))] rounded-hero bg-base-noir/95 text-creme p-9 md:p-10 backdrop-blur-md shadow-[0_24px_60px_-20px_rgba(0,0,0,0.5)]"
         >
           <div
             id={TITLE_ID}
@@ -505,7 +479,7 @@ export default function MapOverlay() {
           <div className="mt-7 flex gap-3">
             <div className="relative h-24 w-36 overflow-hidden rounded-2xl">
               <Image
-                src="/images/refuge-brume.avif"
+                src="/images/refuges/brume.avif"
                 alt="Refuge Brume"
                 fill
                 sizes="144px"
@@ -515,7 +489,7 @@ export default function MapOverlay() {
             </div>
             <div className="relative h-24 w-36 overflow-hidden rounded-2xl">
               <Image
-                src="/images/refuge-aubepine.avif"
+                src="/images/refuges/aubepine.avif"
                 alt="Refuge Aubépine"
                 fill
                 sizes="144px"

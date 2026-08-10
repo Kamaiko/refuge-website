@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
+import { wantsReducedMotion } from "@/lib/motion";
 
 /**
  * Nav link with an iOS-style vertical "wheel" flip on hover. At rest the
@@ -31,7 +32,10 @@ export default function NavWheelLink({
     if (!wheelRef.current) return;
     gsap.to(wheelRef.current, {
       yPercent,
-      duration: 0.55,
+      // Reduced motion: keep the colour change (it's the hover/focus
+      // affordance and carries meaning) but drop the travel — the wheel
+      // cuts to the other layer instead of rolling to it.
+      duration: wantsReducedMotion() ? 0 : 0.55,
       ease: "expo.inOut",
       overwrite: true,
     });

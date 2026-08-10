@@ -11,7 +11,7 @@ import { useMapOverlay } from "@/components/common/MapOverlayContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import HamburgerIcon from "@/components/common/HamburgerIcon";
 import { SITE_CONFIG } from "@/lib/constants";
-import { SCROLL_OUT } from "@/lib/motion";
+import { SCROLL_OUT, wantsReducedMotion } from "@/lib/motion";
 import { MQ } from "@/lib/breakpoints";
 import { CTA } from "@/lib/cta-dimensions";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -67,6 +67,13 @@ export default function Header() {
   // hook shouldn't re-run when the breakpoint settles.
   useGSAP(() => {
     if (!reserveRef.current) return;
+    // Read the preference directly rather than through the hook: this is a
+    // one-shot mount tween, and adding a subscribing hook to the deps would
+    // reintroduce exactly the re-run flicker the comment above warns about.
+    if (wantsReducedMotion()) {
+      gsap.set(reserveRef.current, { opacity: 1, y: 0 });
+      return;
+    }
     gsap.fromTo(
       reserveRef.current,
       { opacity: 0, y: -10 },
@@ -98,6 +105,20 @@ export default function Header() {
       });
       gsap.set(labelAreaRef.current, { width: 0, opacity: 0 });
       if (wheelRef.current) gsap.set(wheelRef.current, { yPercent: 0 });
+
+      // Reduced motion: assemble the pill at its final geometry in one
+      // frame. Skipping the timeline without this would leave the label
+      // area at width 0 / opacity 0 — i.e. a permanently unlabelled
+      // circle where the "Menu" button should be.
+      if (wantsReducedMotion()) {
+        gsap.set(menuBtnRef.current, {
+          opacity: 1,
+          paddingLeft: 0,
+          paddingRight: CTA.pillPaddingRight,
+        });
+        gsap.set(labelAreaRef.current, { width: "auto", opacity: 1 });
+        return;
+      }
 
       // 1) Snap appearance — quick fade so the assembled pill (cream halo +
       //    gris-tan circle + hamburger) appears as one solid object.
@@ -166,15 +187,22 @@ export default function Header() {
     for (const el of targets) el.style.pointerEvents = value;
   };
 
+  // Both helpers already accept `animate: false` to snap instead of tween.
+  // Reduced motion just forces that path — the bar still hides and shows on
+  // scroll direction (that behaviour is functional, not decorative), it
+  // simply stops sliding 140% of its height under the reader's eyes.
+  // `wantsReducedMotion()` is read per call rather than captured, so the
+  // scroll handlers below can't hold a stale value.
   const animateHidden = (animate: boolean) => {
     const targets = collectTargets();
     if (!targets.length) return;
+    const tween = animate && !wantsReducedMotion();
     setPointerEvents(targets, "none");
     gsap.to(targets, {
       yPercent: -140,
       opacity: 0,
-      duration: animate ? SCROLL_OUT.duration : 0,
-      delay: animate ? SCROLL_OUT.delay : 0,
+      duration: tween ? SCROLL_OUT.duration : 0,
+      delay: tween ? SCROLL_OUT.delay : 0,
       ease: "expo.in",
       overwrite: true,
     });
@@ -184,14 +212,15 @@ export default function Header() {
   const animateVisible = (animate: boolean, withScrollDelay = false) => {
     const targets = collectTargets();
     if (!targets.length) return;
+    const tween = animate && !wantsReducedMotion();
     setPointerEvents(targets, "");
     gsap.to(targets, {
       yPercent: 0,
       opacity: 1,
-      duration: animate ? SCROLL_OUT.duration : 0,
+      duration: tween ? SCROLL_OUT.duration : 0,
       // Anti-jitter delay only matters for the scroll-driven flip; the
       // hero-zone re-pin and the menu-close snap should feel instant.
-      delay: animate && withScrollDelay ? SCROLL_OUT.delay : 0,
+      delay: tween && withScrollDelay ? SCROLL_OUT.delay : 0,
       ease: "expo.out",
       overwrite: true,
     });

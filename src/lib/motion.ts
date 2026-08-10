@@ -1,5 +1,16 @@
-/** Shared GSAP animation constants. Easings mirror `--ease-cinematic` /
- *  `--ease-soft` in globals.css — keep both sides in sync. */
+/** Shared GSAP animation constants and motion-preference helpers. */
+
+/** Reads the live `prefers-reduced-motion` preference.
+ *
+ *  Use this inside event handlers and one-shot mount effects, where the
+ *  value only needs to be correct *at call time* and re-rendering on a
+ *  preference change would buy nothing. For anything that must switch
+ *  **layout** when the preference flips, use the `usePrefersReducedMotion`
+ *  hook in `src/hooks/useMediaQuery.ts` instead — it subscribes.
+ *
+ *  Browser-only: guard or call from an effect. */
+export const wantsReducedMotion = () =>
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Open/close ease pair for the Menu and Reserve panels.
  *  Asymmetric on purpose: out-easing on entry feels welcoming,

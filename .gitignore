@@ -41,7 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 # AI raw source assets (heavy PNGs/MP4s — kept locally, regenerated as needed)
-public/images/*-ai.png
 public/images/hf_*.mp4
 public/videos/hero-loop-[A-Z].mp4
 
@@ -57,6 +56,9 @@ public/videos/hero-loop-[A-Z].mp4
 # Claude Code local state (per-user settings, harness logs)
 /.claude/
 
-# AI raw source assets staged before AVIF conversion (heavy, regenerated)
-public/images/_raw/
+# AI source assets staged before AVIF conversion — 1.2 GB of 4k PNGs and
+# rejected variants. Deliberately OUTSIDE public/: while it lived at
+# public/images/_raw/ it was gitignored but still served by `next dev` and
+# copied by any local `next build`, Docker context or archive.
+/assets-raw/
 public/videos/_raw/

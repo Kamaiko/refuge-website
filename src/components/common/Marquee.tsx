@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
 import { MQ } from "@/lib/breakpoints";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useMediaQuery, usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 
 type Props = {
   text: string;
@@ -76,6 +76,7 @@ export default function Marquee({
   // value every frame without re-rendering the component.
   const pausedRef = useRef(false);
   const isMobile = useMediaQuery(MQ.belowMd);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     speedRef.current = mobileSpeed !== undefined && isMobile ? mobileSpeed : speed;
@@ -84,7 +85,13 @@ export default function Marquee({
   useGSAP(
     () => {
       const t = track.current;
-      if (!t) return;
+      // Reduced motion: never start the ticker. The ribbon is decorative
+      // and moves continuously with no user-facing pause control, which
+      // is exactly what WCAG 2.2.2 asks us not to do. Bailing here leaves
+      // the wordmark rendered and legible at rest. Listed in `dependencies`
+      // below so flipping the OS preference re-runs this and starts (or
+      // stops) the ticker without a reload.
+      if (!t || prefersReducedMotion) return;
 
       const half = t.scrollWidth / 2;
 
@@ -233,7 +240,16 @@ export default function Marquee({
         removeHover?.();
       };
     },
-    { scope: wrap, dependencies: [directional, scrollBoost, directionalStart, pauseOnHover] },
+    {
+      scope: wrap,
+      dependencies: [
+        directional,
+        scrollBoost,
+        directionalStart,
+        pauseOnHover,
+        prefersReducedMotion,
+      ],
+    },
   );
 
   return (

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
+import { SITE_CONFIG } from "@/lib/constants";
 import { POURQUOI } from "@/lib/motion";
 import { dispatchSectionLock } from "@/lib/section-lock";
 import RevealChars from "@/components/common/RevealChars";
@@ -24,19 +26,19 @@ type Slide = {
  *  scroll-velocity coupling. */
 const SLIDES: readonly Slide[] = [
   {
-    title: "Un endroit pour ceux qui prennent leur temps—sans avoir à se justifier",
-    body: "Personne ne vous chronomètre. Le seul calendrier ici, c'est la lumière qui tombe sur le fjord.",
-    image: "/images/pourquoi-matin.avif",
+    title: "Le matin ne commence pas. Il monte du fleuve.",
+    body: "La brume passe sous le plancher vers six heures. Vous n'avez rien d'autre à faire que la regarder.",
+    image: "/images/pourquoi/aube.avif",
   },
   {
-    title: "Profitez de la vue—par la grande baie vitrée panoramique",
-    body: "Une fenêtre ouverte sur l'eau et le ciel, qui se renouvelle à chaque heure du jour.",
-    image: "/images/pourquoi-baie.avif",
+    title: "Le fjord change de couleur toutes les vingt minutes.",
+    body: "On finit par arrêter de compter. C'est l'instant où la journée cesse d'avoir un programme.",
+    image: "/images/pourquoi/fjord.avif",
   },
   {
-    title: "Le temps s'étire—loin du tumulte, dans une intimité totale",
-    body: "Ici, chaque souffle de la forêt boréale vous recharge — votre sanctuaire d'isolement vous attend.",
-    image: "/images/pourquoi-drone.avif",
+    title: "Le soir, la lumière la plus proche est à quinze minutes de marche.",
+    body: "Assez pour ne rien entendre. Assez peu pour changer d'avis.",
+    image: "/images/pourquoi/crete.avif",
   },
 ] as const;
 
@@ -116,8 +118,10 @@ const TEXT_SWAP_DELAY_MS = Math.round(
  * `position: relative; z-10` lets MarqueeBrand's parallaxed text slide
  * UNDER this section's painted area as the user scrolls into it.
  *
- * Reduced-motion: skips the pin and wheel-hijack entirely; only slide 1
- * is shown (the carousel's mode of expression IS the motion).
+ * Reduced-motion: skips the pin and wheel-hijack entirely AND renders the
+ * stacked layout (the one written for mobile) at every width, so all three
+ * slides stay reachable. Showing only slide 1 — as this did previously —
+ * silently dropped two thirds of the section's content.
  */
 export default function Pourquoi() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -138,6 +142,12 @@ export default function Pourquoi() {
   // version would crossfade the two simultaneously instead.
   const [text2Active, setText2Active] = useState(true);
   const [text3Active, setText3Active] = useState(false);
+
+  // Layout switch, not an animation parameter. The desktop slides are
+  // absolutely stacked and only ever separated by the wheel-hijack
+  // timeline; with reduced motion that timeline never runs, so slides 2
+  // and 3 would sit permanently under slide 1 with no way to reach them.
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useGSAP(
     () => {
@@ -371,9 +381,10 @@ export default function Pourquoi() {
         };
       });
 
-      // Reduced-motion (any width): leave slide 1 as the static rest
-      // state — the initial `gsap.set` calls above have already placed
-      // every element correctly. No pin, no listeners.
+      // Reduced-motion (any width): no pin, no listeners. The desktop
+      // card stack isn't rendered at all in that case (see
+      // `prefersReducedMotion` in the JSX) — the stacked layout takes
+      // over and every slide stays reachable by plain scrolling.
 
       return () => {
         mm.revert();
@@ -387,14 +398,28 @@ export default function Pourquoi() {
     <section
       ref={sectionRef}
       id="pourquoi"
-      className="relative w-full overflow-hidden bg-base-noir z-10 md:h-screen"
+      aria-labelledby="pourquoi-heading"
+      className={`relative w-full overflow-hidden bg-base-noir z-10 ${
+        prefersReducedMotion ? "" : "md:h-screen"
+      }`}
     >
+      {/* The visible "Pourquoi Aquilon ?" title is the MarqueeBrand band
+          above, which is aria-hidden (it's a decorative scrolling wordmark).
+          So this section had no heading of any kind. */}
+      <h2 id="pourquoi-heading" className="sr-only">
+        Pourquoi {SITE_CONFIG.brandMark} ?
+      </h2>
+
       {/* Mobile: vertical stack — small gris-tan text card on top,
           larger image card below. The wheel-hijack carousel doesn't fit
           a 50/50 column layout below 768px, so we drop it entirely on
           mobile and let the user scroll through the three slides
           naturally. */}
-      <div className="md:hidden flex flex-col gap-8 px-3 py-16">
+      <div
+        className={`${
+          prefersReducedMotion ? "flex" : "md:hidden flex"
+        } flex-col gap-8 px-3 py-16`}
+      >
         {SLIDES.map((slide, i) => (
           // One unified grey card per slide. The image sits INSIDE the card
           // with all four corners rounded — a small `p-3` outer padding (12px)
@@ -402,7 +427,7 @@ export default function Pourquoi() {
           // extra `px-4 pt-4` to keep its breathing space at the original
           // ~28px from the card edge. Wider image than the prior `p-7`-only
           // inset, but still visibly contained.
-          <article key={slide.title} className="bg-gris-tan rounded-[28px] p-3 flex flex-col gap-3">
+          <article key={slide.title} className="bg-gris-tan rounded-card p-3 flex flex-col gap-3">
             <div className="px-4 pt-4 flex flex-col gap-6">
               <h3 className="text-creme-terre/85 text-3xl xs:text-4xl font-medium leading-[1.1] tracking-tight">
                 {slide.title}
@@ -433,7 +458,7 @@ export default function Pourquoi() {
           mobile. The cards are `position: absolute` to the section
           (closest positioned ancestor); the wrapper here is just a
           display gate, not a containing block. */}
-      <div className="hidden md:block">
+      <div className={prefersReducedMotion ? "hidden" : "hidden md:block"}>
         <CardSlot ref={textCardARef} side="left" zClass="z-10">
           <CardWrapper>
             <CardText
@@ -522,10 +547,10 @@ function CardSlot({
 /** Outer card body — the gris-tan rounded box with overflow clip. Holds
  *  one or more `CardText` content layers; only the wrapper carries the bg
  *  so stacked text layers don't paint over each other. Corners match the
- *  Hebergements cards (`rounded-[40px] md:rounded-[60px]`). */
+ *  Hebergements cards (`rounded-frame md:rounded-hero`). */
 function CardWrapper({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative h-full w-full bg-gris-tan rounded-[40px] md:rounded-[60px] overflow-hidden">
+    <div className="relative h-full w-full bg-gris-tan rounded-frame md:rounded-hero overflow-hidden">
       {children}
     </div>
   );
@@ -535,7 +560,7 @@ function CardWrapper({ children }: { children: React.ReactNode }) {
  *  Wraps the absolute image layers so the rounded corners can clip them. */
 function RoundedFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="absolute inset-0 rounded-[40px] md:rounded-[60px] overflow-hidden">
+    <div className="absolute inset-0 rounded-frame md:rounded-hero overflow-hidden">
       {children}
     </div>
   );
@@ -544,8 +569,9 @@ function RoundedFrame({ children }: { children: React.ReactNode }) {
 /** Single full-bleed image inside a slide's frame. `unoptimized` because
  *  the source AVIFs are already encoded at the right size — Next's
  *  re-encode at quality 75 would only soften them. `scale` tightens the
- *  crop (defaults to 1.3, composes multiplicatively with the GSAP dolly
- *  on imageCardA). `objectPosition` shifts the visible framing — lower
+ *  crop (defaults to `SLIDE_IMAGE_ZOOM`, currently 1 — composes
+ *  multiplicatively with the GSAP dolly on imageCardA).
+ *  `objectPosition` shifts the visible framing — lower
  *  X% pulls focal point left, higher X% pulls it right. */
 function SlideImage({
   src,
@@ -594,16 +620,20 @@ function CardText({
   total: number;
   stacked?: boolean;
 }) {
-  // Hide inactive layer entirely — prevents per-glyph mask sub-pixel
-  // leak from bleeding through. The 500ms delay must outlast the
-  // longest RevealChars reverse-out at TEXT_REVEAL settings; if those
-  // change, this needs to grow accordingly.
-  const inactiveOpacityClass = active
-    ? "opacity-100 delay-0"
-    : "opacity-0 delay-500";
+  // Hide the inactive layer entirely — prevents per-glyph mask sub-pixel
+  // leak from bleeding through. The fade-out must not start before the
+  // RevealChars reverse-out has finished, or the glyphs dissolve while
+  // they're still sliding. `TEXT_SWAP_DELAY_MS` *is* that reverse-out
+  // duration for the longest title, so reusing it lands the fade exactly
+  // on the last frame of the slide-out — and it re-derives itself if the
+  // copy or the TEXT_REVEAL settings change. (It previously hardcoded
+  // 500ms, which was already ~200ms short of the real reverse-out.)
   return (
     <div
-      className={`${stacked ? "absolute" : "relative"} inset-0 h-full w-full p-10 md:p-14 lg:p-16 flex flex-col justify-between gap-8 transition-opacity duration-300 ${inactiveOpacityClass}`}
+      style={{ transitionDelay: active ? "0ms" : `${TEXT_SWAP_DELAY_MS}ms` }}
+      className={`${stacked ? "absolute" : "relative"} inset-0 h-full w-full p-10 md:p-14 lg:p-16 flex flex-col justify-between gap-8 transition-opacity duration-300 ${
+        active ? "opacity-100" : "opacity-0"
+      }`}
     >
       <RevealChars
         text={title}

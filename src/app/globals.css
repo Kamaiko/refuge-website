@@ -14,27 +14,32 @@
   /* Secondary grey — used for hamburger lines, secondary text, "filter" overlay */
   --color-gris-secondaire: #6B6660;
 
+  /* In use: turquoise for ::selection, orange-sunset for form errors. */
+  --color-turquoise: #4FB8B0;
+  --color-orange-sunset: #C2410C;
+
+  /* Reserve palette — declared brand colours with no call site yet. Kept
+     deliberately (they're the documented Charlevoix palette and the photo
+     grade is built around them), but flagged so nobody mistakes them for
+     tokens that something is quietly relying on. */
   --color-vert-sapin: #2D5F4E;
   --color-vert-sapin-deep: #1F4338;
-
-  --color-turquoise: #4FB8B0;
   --color-turquoise-deep: #2C8A82;
-
-  --color-orange-sunset: #C2410C;
   --color-or-ambre: #D97706;
 
   --color-creme-terre: #E8DCC4;
 
   --font-sans: var(--font-host-grotesk), ui-sans-serif, system-ui, sans-serif;
 
-  --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-soft: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-
-  /* Radius scale — used consistently across CTAs, cards, panels, inputs */
+  /* Radius scale. `card` / `soft` existed but were being bypassed by
+     hardcoded `rounded-[28px]` / `rounded-[16px]`; `frame` and `hero` are
+     new rungs for the `rounded-[40px] md:rounded-[60px]` pair that four
+     different components were spelling out by hand. */
   --radius-pill: 9999px;
   --radius-card: 28px;
   --radius-soft: 16px;
-  --radius-tight: 8px;
+  --radius-frame: 40px;
+  --radius-hero: 60px;
 
   /* Custom breakpoint — adds an `xs:` variant below Tailwind's default `sm:`.
      Mirrored as a number in src/lib/breakpoints.ts for JS matchMedia usage —
@@ -65,8 +70,6 @@ body {
   background: var(--color-turquoise);
   color: var(--color-creme);
 }
-
-/* Native cursor stays visible alongside the custom dot+ring overlay. */
 
 /* Hide horizontal scrollbar inside marquee/scroll-x containers */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -116,6 +119,54 @@ body::-webkit-scrollbar,
    `color-mix(in oklab, …)` on top of CSS variables fails to compile
    inside a `background-image` declaration. */
 @layer components {
+  /* Keyboard-focus ring. These exact five utilities were repeated verbatim
+     across Header (×3), MapOverlay (×2), ReservePanel (×3), Hebergements
+     and NavWheelLink — and were simply missing on the Cta links. */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir;
+  }
+
+  /* ── Display type ───────────────────────────────────────────────────
+     Three families are in play, and they are NOT one scale:
+
+       A. Wordmarks   viewport-relative all the way down (decorative,
+                      meant to bleed off the edges)
+       B. Section h2  viewport-relative all the way down
+       C. Reading type Tailwind's rem scale on mobile/md, switching to vw
+                      only at `lg` — deliberate, applied consistently
+
+     Only the two families with more than one call site get a class.
+     Single-use sizes stay inline; wrapping them would add indirection
+     without removing any duplication:
+
+       Hero h1                text-[18vw] md:text-[15vw]
+       Footer wordmark        text-[24vw]        (sizes an h-[1em] box)
+       Hebergements card      lg:text-[8vw]
+       Proximite / Menu nav   lg:text-[5.5vw]
+       Manifeste              lg:text-[5.5vw]    (was 5vw — aligned)
+       Feedback pull-quote    lg:text-[3.8vw]    (its own role) */
+
+  /* Choisir, Activités and the Cta intro. The first two previously
+     carried this exact string, character for character. */
+  .type-section-title {
+    @apply text-[11vw] md:text-[10vw] font-medium leading-[0.95] tracking-[-0.045em];
+  }
+
+  /* The full-bleed scrolling wordmark bands: MarqueeBrand, the Menu
+     overlay, and the Hebergements background. They share the md size;
+     the two that need a smaller mobile size override it with `max-md:`. */
+  .type-wordmark-band {
+    @apply text-[24vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em];
+  }
+
+  /* Section eyebrow — the small uppercase label above a section title.
+     `text-xs uppercase tracking-[0.3em]` was recopied in Medaillons,
+     Choisir, Activites, Hebergements, Header and ReservePanel with no
+     shared definition, so the letter-spacing drifted between them. */
+  .eyebrow {
+    @apply text-xs uppercase tracking-[0.3em];
+  }
+
   .aquilon-wordmark-fill {
     background-image: linear-gradient(to bottom, rgb(190 175 145) 15%, rgb(244 239 231) 85%);
     -webkit-background-clip: text;

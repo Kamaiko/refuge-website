@@ -141,7 +141,7 @@ export default function Feedback() {
       {/* Author — bottom-left, avatar + name + location */}
       <div ref={authorRef} className="flex items-center gap-4 mt-12 will-change-transform">
         <Image
-          src="/images/PhotoPat.jpg"
+          src="/images/photo-patrick.avif"
           alt="Patrick Patenaude"
           width={96}
           height={96}

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 
 /** Configuration for {@link RevealChars}.
  *  - `text`: the string to reveal — used both for rendering and as
@@ -49,6 +50,7 @@ export default function RevealChars({
   as: Tag = "span",
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Sync GSAP's transform cache with the SSR offscreen state and reveal the
   // wrapper. Without this, the first play tween reads xPercent=0 (default)
@@ -57,16 +59,25 @@ export default function RevealChars({
   // the glyph's left edge sits exactly on the mask's right edge, where
   // sub-pixel antialiasing can leak 1px back into the mask and read as a
   // faint vertical bar before the reveal plays.
+  //
+  // Reduced motion is handled HERE rather than at the call sites on
+  // purpose: parking the glyphs offscreen only works if something later
+  // flips `play`, and at least one consumer (Hebergements) drives `play`
+  // from inside a `no-preference` matchMedia branch. Landing them at rest
+  // makes the text readable no matter what the caller does.
   useEffect(() => {
     if (!ref.current) return;
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
-    gsap.set(glyphs, { xPercent: 110 });
+    gsap.set(glyphs, { xPercent: prefersReducedMotion ? 0 : 110 });
     gsap.set(ref.current, { visibility: "visible" });
-  }, []);
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
     if (!ref.current) return;
+    // At rest and staying there — the effect above already placed the
+    // glyphs at their final position.
+    if (prefersReducedMotion) return;
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
     gsap.to(glyphs, {
@@ -77,7 +88,7 @@ export default function RevealChars({
       ease: play ? "quint.out" : "quint.in",
       overwrite: true,
     });
-  }, [play, duration, delay, stagger, text]);
+  }, [play, duration, delay, stagger, text, prefersReducedMotion]);
 
   const segments: { type: "word" | "space"; value: string }[] = [];
   const re = /(\S+|\s+)/g;

@@ -213,7 +213,9 @@ export default function Hebergements() {
           text={SITE_CONFIG.brandMark}
           speed={140}
           separator="·"
-          className="text-creme text-[14vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em]"
+          // `max-md:text-[14vw]` — this band sits behind the card stack
+          // rather than full-bleed, so it runs smaller on mobile.
+          className="text-creme type-wordmark-band max-md:text-[14vw]"
         />
       </div>
 
@@ -230,7 +232,7 @@ export default function Hebergements() {
               <article
                 // Card 0's border-radius is GSAP-managed (stadium → 60px).
                 className={`relative h-full w-full overflow-hidden bg-base-noir-soft ${
-                  i === 0 ? "" : "rounded-[40px] md:rounded-[60px]"
+                  i === 0 ? "" : "rounded-frame md:rounded-hero"
                 }`}
               >
                 <div

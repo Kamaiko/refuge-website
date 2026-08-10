@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useActionState, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -9,6 +9,8 @@ import { useReservePanel } from "@/components/common/ReservePanelContext";
 import ArrowDiagonalIcon from "@/components/common/ArrowDiagonalIcon";
 import { REFUGES } from "@/lib/data/refuges";
 import { submitReservation, type ReservationState } from "@/actions/reservation";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
+import { useOverlayA11y } from "@/hooks/useOverlayA11y";
 
 const INITIAL_FORM_STATE: ReservationState = { ok: false, message: "" };
 
@@ -61,6 +63,7 @@ function isoDate(offsetDays = 0) {
  */
 export default function ReservePanel() {
   const { isOpen, close } = useReservePanel();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const backdropRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -101,6 +104,22 @@ export default function ReservePanel() {
       const bar = bottomBarRef.current;
       const barContent = bottomBarContentRef.current;
       if (!backdrop || !panel) return;
+
+      // Reduced motion: snap to the end state. A full-height panel sliding
+      // across the viewport is large-area movement; the panel still opens
+      // and closes, it just doesn't travel. Kept as its own short branch so
+      // the animated path below is untouched.
+      if (prefersReducedMotion) {
+        gsap.set(backdrop, {
+          opacity: isOpen ? 1 : 0,
+          pointerEvents: isOpen ? "auto" : "none",
+        });
+        gsap.set(panel, { xPercent: isOpen ? 0 : 105 });
+        if (bar) gsap.set(bar, { scaleX: isOpen ? 1 : 0 });
+        if (barContent) gsap.set(barContent, { opacity: isOpen ? 1 : 0 });
+        if (content) gsap.set(content, { opacity: isOpen ? 1 : 0 });
+        return;
+      }
 
       // overwrite: true on every tween — a re-toggle mid-animation kills
       // the in-flight AND delayed tweens, so a close click before the
@@ -191,38 +210,16 @@ export default function ReservePanel() {
         });
       }
     },
-    { dependencies: [isOpen] },
+    { dependencies: [isOpen, prefersReducedMotion] },
   );
 
   // Body scroll lock is owned by SmoothScroll (Lenis stop + body overflow) —
   // do not duplicate it here.
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, close]);
-
-  // Focus management: save the trigger that opened the panel, move focus
-  // to the close button, restore focus on close. Paired with the `inert`
-  // attribute on <main> (set by SmoothScroll) this keeps Tab cycling
-  // strictly within the dialog.
-  const previousFocusRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (isOpen) {
-      previousFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-      // Wait one frame so the panel has been rendered + made focusable.
-      const id = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
-      return () => window.clearTimeout(id);
-    }
-    if (previousFocusRef.current) {
-      previousFocusRef.current.focus();
-      previousFocusRef.current = null;
-    }
-  }, [isOpen]);
+  // Escape-to-close, plus focus save / move / restore. Focus lands on the
+  // close button rather than the first field — the panel is a dialog the
+  // user may have opened by accident.
+  useOverlayA11y({ isOpen, close, focusTarget: () => closeBtnRef.current });
 
   const nights = useMemo(() => diffNights(arrivee, depart), [arrivee, depart]);
   const dailyRate = useMemo(
@@ -327,7 +324,7 @@ export default function ReservePanel() {
                           : "bg-base-noir/50 text-creme hover:bg-base-noir/70"
                       }`}
                     >
-                      <span className="relative block aspect-[4/3] overflow-hidden rounded-[16px] m-2 mb-0 bg-base-noir-soft">
+                      <span className="relative block aspect-[4/3] overflow-hidden rounded-soft m-2 mb-0 bg-base-noir-soft">
                         <Image
                           src={r.image}
                           alt={r.nom}

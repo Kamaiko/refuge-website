@@ -1,8 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useGSAP } from "@gsap/react";
-import { gsap } from "@/lib/gsap";
+import { useEyebrowScrub } from "@/hooks/useEyebrowScrub";
 import { SITE_CONFIG } from "@/lib/constants";
 import { NAV } from "@/lib/data/nav";
 import Marquee from "@/components/common/Marquee";
@@ -10,6 +9,9 @@ import NavWheelLink from "@/components/common/NavWheelLink";
 import SocialIcons from "@/components/common/SocialIcons";
 
 const MARQUEE_TEXT = "Réservez votre refuge";
+
+/** Both inline links in the closing paragraph point here. */
+const PROFILE_URL = "https://www.linkedin.com/in/patrickpatenaude";
 
 /**
  * Closing CTA section. A static marquee scrolls "Réservez votre refuge"
@@ -32,37 +34,10 @@ export default function Cta() {
   const sectionRef = useRef<HTMLElement>(null);
   const introRef = useRef<HTMLHeadingElement>(null);
 
-  // Intro fade-in scrubbed over a ~50svh window, identical pattern to the
-  // Choisir eyebrow. Pre-hidden via inline style on the element so there's
-  // no SSR flash before the ScrollTrigger applies its `from` state.
-  useGSAP(
-    () => {
-      if (!introRef.current) return;
-      const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.fromTo(
-          introRef.current,
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            ease: "none",
-            scrollTrigger: {
-              trigger: introRef.current,
-              start: "top 80%",
-              end: "top 45%",
-              scrub: true,
-            },
-          },
-        );
-      });
-      mm.add("(prefers-reduced-motion: reduce)", () => {
-        if (introRef.current) gsap.set(introRef.current, { opacity: 1, y: 0 });
-      });
-      return () => mm.revert();
-    },
-    { scope: sectionRef },
-  );
+  // Same scrubbed fade-and-rise the Choisir / Activités eyebrows use. The
+  // markup differs here (this one is the section's `<h2>`, not a `<p>`),
+  // which is why the shared piece is a hook rather than a component.
+  useEyebrowScrub(introRef, sectionRef);
 
   return (
     <section
@@ -137,24 +112,9 @@ export default function Cta() {
               against the warmer paragraph. */}
           <p className="text-creme-terre/70 text-lg xs:text-xl md:text-3xl lg:text-4xl font-medium leading-snug max-w-3xl">
             Ce site est un concept de portfolio par&nbsp;
-            <a
-              href="https://www.linkedin.com/in/patrickpatenaude"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-creme-dim underline underline-offset-4 hover:text-creme transition-colors duration-300"
-            >
-              Patrick Patenaude
-            </a>
-            . Si vous voulez un site sur-mesure pour votre marque,&nbsp;
-            <a
-              href="https://www.linkedin.com/in/patrickpatenaude"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-creme-dim underline underline-offset-4 hover:text-creme transition-colors duration-300"
-            >
-              écrivez-moi
-            </a>
-            .
+            <ProfileLink>Patrick Patenaude</ProfileLink>. Si vous voulez un
+            site sur-mesure pour votre marque,&nbsp;
+            <ProfileLink>écrivez-moi</ProfileLink>.
           </p>
 
           <nav
@@ -174,5 +134,26 @@ export default function Cta() {
         </div>
       </div>
     </section>
+  );
+}
+
+/** Inline link to the author's profile. Both mentions in the closing
+ *  paragraph point at the same URL and carried identical (copy-pasted)
+ *  classes — and neither had any focus style, so keyboard users had no way
+ *  to tell they were on them. `.focus-ring` is the shared class defined in
+ *  globals.css.
+ *
+ *  Tone: `text-creme-dim` against the paragraph's warmer `creme-terre/70`,
+ *  so the links read as the actionable element in the sentence. */
+function ProfileLink({ children }: { children: React.ReactNode }) {
+  return (
+    <a
+      href={PROFILE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="focus-ring rounded-sm text-creme-dim underline underline-offset-4 hover:text-creme transition-colors duration-300"
+    >
+      {children}
+    </a>
   );
 }

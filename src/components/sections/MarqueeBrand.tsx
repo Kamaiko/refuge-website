@@ -69,7 +69,7 @@ export default function MarqueeBrand() {
         separator="·"
         directional
         scrollBoost
-        className="text-creme/90 text-[24vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em]"
+        className="text-creme/90 type-wordmark-band"
       />
     </section>
   );

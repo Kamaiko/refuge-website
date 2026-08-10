@@ -3,87 +3,89 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
+import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 
 /** Footer-specific Aquilon wordmark reveal. Distinct from the shared
- *  {@link RevealChars} primitive (used by Hebergements + Pourquoi) so
- *  the Footer animation can iterate independently.
+ *  {@link RevealChars} primitive (used by Hebergements + Pourquoi) so the
+ *  Footer animation can iterate independently.
  *
- *  Three modes for A/B/C testing :
- *   - `slide`         : glyph translates `xPercent: 110 → 0` inside a
- *                       fixed mask. Pure slide-in.
- *   - `wipe`          : `clip-path: inset(0 0 0 100% → 0%)` on each
- *                       glyph — visible region of the letter grows from
- *                       the right side leftward, like an invisible
- *                       curtain wiping right→left across the glyph.
- *   - `wipe-and-slide`: clip-path wipe + small same-direction glyph
- *                       slide for a subtle secondary cinematic flourish
- *                       during the reveal (tune via `slideStartX`).
+ *  The reveal combines a `clip-path` wipe — `inset(0 0 0 100% → 0%)`, so
+ *  each letter's visible region grows from its right edge leftward, like an
+ *  invisible curtain passing right→left across the glyph — with a small
+ *  same-direction slide as a secondary flourish.
  *
- *  No painted curtain element : the reveal is achieved by clipping the
- *  glyph itself, so there is nothing rendered that could create a
- *  visible silhouette around the wordmark at rest (the prior DOM
- *  curtain approach suffered from a faint per-glyph rectangle outline,
- *  visible against the surrounding bg even when colors matched). */
-export type AquilonRevealMode = "slide" | "wipe" | "wipe-and-slide";
+ *  No painted curtain element: the reveal clips the glyph itself, so
+ *  nothing is rendered that could leave a visible silhouette around the
+ *  wordmark at rest. (The earlier DOM-curtain approach produced a faint
+ *  per-glyph rectangle outline against the surrounding background, visible
+ *  even when the colours matched.)
+ *
+ *  This used to expose `slide` / `wipe` / `wipe-and-slide` modes for A/B/C
+ *  testing. `wipe-and-slide` won and the other two branches were never
+ *  used by any call site, so the `mode` prop is gone. */
+
+const CLIP_HIDDEN = "inset(0% 0% 0% 100%)";
+const CLIP_REVEALED = "inset(0% 0% 0% 0%)";
+
+/** Glyph x-offset at rest, as a percentage of its own width. Deliberately
+ *  well short of a full 110 (which is what {@link RevealChars} uses) —
+ *  here the clip-path wipe carries the reveal and the slide only adds
+ *  parallax underneath it. */
+const SLIDE_START_X = 40;
 
 type Props = {
   play: boolean;
-  mode: AquilonRevealMode;
   className?: string;
   charClassName?: string;
   ease?: string;
   duration?: number;
 };
 
-const CLIP_HIDDEN = "inset(0% 0% 0% 100%)";
-const CLIP_REVEALED = "inset(0% 0% 0% 0%)";
-
 export default function AquilonReveal({
   play,
-  mode,
   className,
   charClassName,
   ease = "power2.inOut",
   duration = 1.0,
 }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
-
-  const slideStartX = mode === "wipe-and-slide" ? 40 : 110;
-  const usesSlide = mode === "slide" || mode === "wipe-and-slide";
-  const usesClip = mode === "wipe" || mode === "wipe-and-slide";
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   // Park glyphs in their hidden state on mount, then reveal the root.
-  // Without this, the first frame would flash the natural-position
-  // text before the play effect pulled it back.
+  // Without this, the first frame would flash the natural-position text
+  // before the play effect pulled it back.
+  //
+  // Under reduced motion we park them REVEALED instead: the wrapper ships
+  // with `visibility: hidden` inline, so anything that leaves the glyphs
+  // clipped would render the footer wordmark permanently invisible.
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
-    const initial: gsap.TweenVars = {};
-    if (usesSlide) initial.xPercent = slideStartX;
-    if (usesClip) initial.clipPath = CLIP_HIDDEN;
-    gsap.set(glyphs, initial);
+    gsap.set(glyphs, {
+      xPercent: prefersReducedMotion ? 0 : SLIDE_START_X,
+      clipPath: prefersReducedMotion ? CLIP_REVEALED : CLIP_HIDDEN,
+    });
     gsap.set(root, { visibility: "visible" });
-    // mode + derived flags are stable per-mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prefersReducedMotion]);
 
-  // Drive forward / reverse on play change. Reverse uses half-duration
-  // so a quick scroll-up-then-down feels responsive instead of waiting
-  // for a full reverse tween to finish.
+  // Drive forward / reverse on play change. Reverse uses half-duration so a
+  // quick scroll-up-then-down feels responsive instead of waiting out a
+  // full reverse tween.
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
+    // At rest and staying there — the effect above already revealed it.
+    if (prefersReducedMotion) return;
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
-    const target: gsap.TweenVars = {
+    gsap.to(glyphs, {
+      xPercent: play ? 0 : SLIDE_START_X,
+      clipPath: play ? CLIP_REVEALED : CLIP_HIDDEN,
       duration: play ? duration : duration * 0.5,
       ease: play ? ease : "expo.out",
       overwrite: true,
-    };
-    if (usesSlide) target.xPercent = play ? 0 : slideStartX;
-    if (usesClip) target.clipPath = play ? CLIP_REVEALED : CLIP_HIDDEN;
-    gsap.to(glyphs, target);
-  }, [play, ease, duration, slideStartX, usesSlide, usesClip]);
+    });
+  }, [play, ease, duration, prefersReducedMotion]);
 
   const text = SITE_CONFIG.brandMark;
   return (
@@ -97,7 +99,7 @@ export default function AquilonReveal({
         <span
           key={i}
           aria-hidden
-          className={`aq-mask relative inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
+          className={`relative inline-block overflow-hidden align-baseline ${charClassName ?? ""}`}
         >
           <span className="rc-glyph inline-block">{ch}</span>
         </span>
