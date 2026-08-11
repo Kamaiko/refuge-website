@@ -101,15 +101,21 @@ export default function Hebergements() {
             1 - HEBERGEMENTS.scaleStep,
             1,
           ] as const;
-          // Snap targets, derived from the timeline rather than hand-tuned.
-          // Each card finishes arriving one time-unit after its phase starts,
-          // and `TL_TOTAL` accounts for the trailing hold below — so these are
-          // the progress values at which a card sits settled and centred.
-          const TL_TOTAL = 5.5;
-          const SNAP_POINTS = [
-            ...PHASE_STARTS.map((start) => (start + 1) / TL_TOTAL),
-            1,
-          ];
+          // Progress at which each card's text reveals on the way down, and
+          // re-hides on the way back up. The hide threshold sits ABOVE the
+          // reveal one on purpose — the hysteresis keeps a jitter at the
+          // boundary from flickering the text.
+          const TEXT_IN = [0.20, 0.47, 0.74] as const;
+          const TEXT_OUT = [0.25, 0.52, 0.95] as const;
+
+          // Snap targets, derived from TEXT_OUT so the two can't drift apart.
+          // The obvious derivation — "where each card finishes arriving",
+          // i.e. `(PHASE_STARTS[i] + 1) / 5.5` — gives 0.18 / 0.45 / 0.73,
+          // every one of which lands just BELOW its threshold. The reader
+          // would settle on a card whose name and description had just been
+          // animated away. Clearing TEXT_OUT keeps the text up in both scroll
+          // directions.
+          const SNAP_POINTS = [0, ...TEXT_OUT.map((t) => t + 0.02)];
 
           const tl = gsap.timeline({
             scrollTrigger: {
@@ -146,13 +152,13 @@ export default function Hebergements() {
                 setRevealActive((prev) => {
                   const next: boolean[] = [...prev] as boolean[];
                   if (dir === 1) {
-                    if (p >= 0.20 && !next[0]) next[0] = true;
-                    if (p >= 0.47 && !next[1]) next[1] = true;
-                    if (p >= 0.74 && !next[2]) next[2] = true;
+                    if (p >= TEXT_IN[0] && !next[0]) next[0] = true;
+                    if (p >= TEXT_IN[1] && !next[1]) next[1] = true;
+                    if (p >= TEXT_IN[2] && !next[2]) next[2] = true;
                   } else {
-                    if (p < 0.95 && next[2]) next[2] = false;
-                    if (p < 0.52 && next[1]) next[1] = false;
-                    if (p < 0.25 && next[0]) next[0] = false;
+                    if (p < TEXT_OUT[2] && next[2]) next[2] = false;
+                    if (p < TEXT_OUT[1] && next[1]) next[1] = false;
+                    if (p < TEXT_OUT[0] && next[0]) next[0] = false;
                   }
                   if (next[0] === prev[0] && next[1] === prev[1] && next[2] === prev[2]) return prev;
                   return next;

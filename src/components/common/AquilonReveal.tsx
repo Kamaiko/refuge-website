@@ -75,9 +75,21 @@ export default function AquilonReveal({
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    // At rest and staying there — the effect above already revealed it.
-    if (prefersReducedMotion) return;
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
+
+    if (prefersReducedMotion) {
+      // Assert the revealed state instead of merely bailing out. The
+      // preference reads false on the hydration render, so this effect has
+      // already fired once with `play: false` and started a half-second tween
+      // back to the hidden state. Returning early would leave that tween in
+      // flight, and it lands AFTER the mount effect's `gsap.set` — which is
+      // exactly how the Footer wordmark ended up parked at `xPercent 40` with
+      // a 91% clip, i.e. invisible, for reduced-motion readers.
+      gsap.killTweensOf(glyphs);
+      gsap.set(glyphs, { xPercent: 0, clipPath: CLIP_REVEALED });
+      return;
+    }
+
     gsap.to(glyphs, {
       xPercent: play ? 0 : SLIDE_START_X,
       clipPath: play ? CLIP_REVEALED : CLIP_HIDDEN,

@@ -75,11 +75,22 @@ export default function RevealChars({
 
   useEffect(() => {
     if (!ref.current) return;
-    // At rest and staying there — the effect above already placed the
-    // glyphs at their final position.
-    if (prefersReducedMotion) return;
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
+
+    if (prefersReducedMotion) {
+      // Assert the resting state rather than bailing out. The preference reads
+      // false on the hydration render, so this effect has already fired once
+      // with `play: false` and launched a tween back off-screen; returning
+      // early would let it land after the mount effect's `gsap.set` and park
+      // the glyphs outside their masks. `AquilonReveal` lost exactly that race
+      // and rendered the Footer wordmark invisible — this one wins it today,
+      // which is not something to depend on.
+      gsap.killTweensOf(glyphs);
+      gsap.set(glyphs, { xPercent: 0 });
+      return;
+    }
+
     gsap.to(glyphs, {
       xPercent: play ? 0 : 110,
       duration: play ? duration : duration * 0.5,

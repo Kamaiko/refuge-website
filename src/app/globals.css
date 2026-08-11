@@ -119,9 +119,13 @@ body::-webkit-scrollbar,
    `color-mix(in oklab, …)` on top of CSS variables fails to compile
    inside a `background-image` declaration. */
 @layer components {
-  /* Keyboard-focus ring. These exact five utilities were repeated verbatim
-     across Header (×3), MapOverlay (×2), ReservePanel (×3), Hebergements
-     and NavWheelLink — and were simply missing on the Cta links. */
+  /* Keyboard-focus ring — the house style, so new interactive elements have
+     one thing to reach for.
+     ⚠️ Only the Cta links use it today. The same five utilities are still
+     written out inline in Header (×3), MapOverlay (×2), ReservePanel (×3),
+     Hebergements, NavWheelLink and SocialIcons. Migrating them is a
+     mechanical sweep nobody has done yet — so this is an intention, not a
+     description of the codebase. */
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir;
   }
@@ -146,8 +150,11 @@ body::-webkit-scrollbar,
        Manifeste              lg:text-[5.5vw]    (was 5vw — aligned)
        Feedback pull-quote    lg:text-[3.8vw]    (its own role) */
 
-  /* Choisir, Activités and the Cta intro. The first two previously
-     carried this exact string, character for character. */
+  /* The section headline. Applied once, inside `SectionHeading` — which is
+     itself what Choisir and Activités now share, so the duplication this was
+     created to kill is already gone at the component level. (The Cta intro is
+     NOT one of these: it's `text-base md:text-lg`, a small paragraph acting
+     as the section's semantic title.) */
   .type-section-title {
     @apply text-[11vw] md:text-[10vw] font-medium leading-[0.95] tracking-[-0.045em];
   }
@@ -159,10 +166,12 @@ body::-webkit-scrollbar,
     @apply text-[24vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em];
   }
 
-  /* Section eyebrow — the small uppercase label above a section title.
-     `text-xs uppercase tracking-[0.3em]` was recopied in Soir,
-     Choisir, Activites, Hebergements, Header and ReservePanel with no
-     shared definition, so the letter-spacing drifted between them. */
+  /* Section eyebrow — the small uppercase label above a headline.
+     ⚠️ Only `Soir` uses it today. `text-xs uppercase tracking-[0.3em]` is
+     still inline in Hebergements, Header and ReservePanel; Choisir and
+     Activités get theirs from `SectionHeading`, which spells the utilities
+     out rather than using this class. Same situation as `.focus-ring`: the
+     definition exists, the sweep doesn't. */
   .eyebrow {
     @apply text-xs uppercase tracking-[0.3em];
   }

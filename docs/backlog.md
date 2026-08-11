@@ -152,6 +152,38 @@ Objectif : « pas cassé », pas « conçu pour ».
 
 ---
 
+## 🧱 Code — issus de la revue
+
+### Carousel : reduced-motion sur desktop avec souris
+Sous `prefers-reduced-motion`, le Carousel bascule sur la piste mobile — un
+scroll horizontal `snap-x` — à toutes les largeurs. Ça règle le cas tactile,
+mais sur un desktop à la souris cette piste est difficile d'accès : sa barre
+de défilement est masquée deux fois (`.no-scrollbar` et le `scrollbar-width:
+none !important` global de `globals.css`), et elle n'est pas focusable.
+
+Le correctif propre n'est pas un ajustement : il faut une mise en page
+verticale empilée pour ce cas, ou rendre la piste focusable avec des
+contrôles visibles. C'est un vrai trou, mais étroit — reduced-motion **et**
+desktop **et** souris.
+
+### `.focus-ring` et `.eyebrow` : la définition existe, la migration non
+Les deux classes sont définies dans `globals.css` mais n'ont **qu'un seul**
+point d'appel chacune. Les chaînes d'utilitaires qu'elles remplacent sont
+toujours écrites en clair dans Header (×3), MapOverlay (×2), ReservePanel
+(×3), Hebergements, NavWheelLink, SocialIcons et Proximite.
+
+C'est une passe mécanique. Les commentaires dans `globals.css` disent
+maintenant la vérité — ils annonçaient 9 et 6 points d'appel.
+
+### Révélation du texte dépendante de la direction
+`Hebergements` révèle le texte de chaque carte selon `self.direction`, avec
+une hystérésis (`TEXT_IN` / `TEXT_OUT`). L'état au repos dépend donc du
+chemin parcouru pour y arriver. Ça fonctionne en scroll continu — vérifié —
+mais c'est fragile : le snap a dû être dérivé de `TEXT_OUT` pour ne pas se
+poser sur un texte caché, et toute retouche de l'un demande d'auditer l'autre.
+Une révélation basée uniquement sur la progression, sans direction, serait
+plus simple à raisonner.
+
 ## 🧱 Code — reste du plan de reprise
 
 - **Lot 1.4** — passe copy complète sur les 13 sections + overlays. Blocs déjà repérés comme décrochant : le `SUBCOPY` du Hero (« temps de qualité », « nos emplacements », et un `avec — X` calqué de l'anglais), le témoignage Feedback (« a redéfini ce que repos veut dire »), le paragraphe Activités (il explique la dualité juste avant un carrousel qui la montre), la carte « Terrasse en fête ».
