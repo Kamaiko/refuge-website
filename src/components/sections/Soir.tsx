@@ -23,8 +23,8 @@ type Medallion = {
   before?: string;
 };
 
-/** Ordered top-to-bottom. The first entry gets the downward curtain, the
- *  second the upward one — see {@link Medaillons}.
+/** Ordered top-to-bottom. Both get a downward curtain, offset — see
+ *  {@link Soir}.
  *
  *  No people appear in any of these frames, deliberately. The headline says
  *  the fire burns "qu'il y ait quelqu'un ou non", and an empty ring of
@@ -48,22 +48,31 @@ const MEDALLIONS: readonly Medallion[] = [
 ] as const;
 
 /**
- * The day→evening hinge of the page, between Pourquoi (which ends on the
- * distance between refuges) and Activités (which opens on "Seul, ou tous
- * ensemble"). Its job is to introduce the shared side of the stay without
- * ever turning it into an obligation — hence "qu'il y ait quelqu'un ou non".
+ * The evening section. Sits after the Carousel, whose last card is "Le feu de
+ * minuit" — so it lands as an amplification: the carousel names the fire as
+ * something you can do, this section reveals it's simply a nightly fact of
+ * the place. Its job is to open the shared side of the stay without ever
+ * turning it into an obligation — hence "qu'il y ait quelqu'un ou non".
  *
- * Two landscape medallion cards parallax *towards each other* on scroll (the
- * top one descends, the bottom one rises). On top of that, each card that has
- * a paired frame runs a `clip-path` curtain revealing the lit version
- * underneath. Both curtains wipe downward, offset from one another so they
- * still read as the headline's two beats ("Le feu est allumé tous les
- * soirs." / "Qu'il y ait quelqu'un ou non.") without competing.
+ * Two landscape cards parallax *towards each other* on scroll (the top one
+ * descends, the bottom one rises). On top of that, each card that has a paired
+ * frame runs a `clip-path` curtain revealing the lit version underneath. Both
+ * curtains wipe downward, offset from one another so they still read as the
+ * headline's two beats ("Le feu est allumé tous les soirs." / "Qu'il y ait
+ * quelqu'un ou non.") without competing.
+ *
+ * Background: `bg-gris-tan`, continuing the warm band that Activités opens and
+ * the Carousel carries. Feedback below fades it back to base-noir over its top
+ * 45% — that fade assumes it arrives onto gris-tan, so this section must not
+ * break the chain by falling back to the body's base-noir.
  *
  * Reduced-motion: no parallax, no curtain. Each card shows its `after` frame
  * at rest — that's the one carrying the meaning, so nothing is lost.
+ *
+ * Named `Medaillons` until the cards stopped being oval medallions; the shape
+ * changed, the name hadn't.
  */
-export default function Medaillons() {
+export default function Soir() {
   const ref = useRef<HTMLDivElement>(null);
   /** The medallion column, used as the curtain trigger. Triggering on the
    *  <section> instead is what made the first version unwatchable: the
@@ -198,7 +207,7 @@ export default function Medaillons() {
   return (
     <section
       ref={ref}
-      className="relative w-full px-5 md:px-10 py-32 md:py-40 overflow-hidden"
+      className="relative w-full bg-gris-tan px-5 md:px-10 py-32 md:py-40 overflow-hidden"
     >
       <div className="mx-auto max-w-7xl grid gap-16 md:grid-cols-12 items-center">
         <div

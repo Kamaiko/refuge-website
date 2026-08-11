@@ -1,7 +1,7 @@
 import Header from "@/components/layout/Header";
 import Hero from "@/components/sections/Hero";
 import Manifeste from "@/components/sections/Manifeste";
-import Medaillons from "@/components/sections/Medaillons";
+import Soir from "@/components/sections/Soir";
 import Choisir from "@/components/sections/Choisir";
 import Hebergements from "@/components/sections/Hebergements";
 import Proximite from "@/components/sections/Proximite";
@@ -26,17 +26,19 @@ export default function Home() {
         <Proximite />
         <MarqueeBrand />
         <Pourquoi />
-        {/* Medaillons is the day→evening hinge, so it has to sit AFTER the
-            refuges have been introduced. It used to run third, right after
-            the Manifeste — promising "le soir, ensemble" six sections before
-            anything else picked the thread back up, and directly on top of
-            Hebergements selling "aucun voisin, aucune vue ouverte".
-            Here it reads as an escalation instead: Pourquoi ends on the
-            distance (quinze minutes de marche), Medaillons lights the fire,
-            Activités opens on "Seul, ou tous ensemble". */}
-        <Medaillons />
         <Activites />
         <Carousel />
+        {/* Soir closes the activity block. The Carousel's last card is "Le feu
+            de minuit — la nuit tombe, le feu prend", and this section picks
+            that up to reveal the fire isn't an event but a nightly habit:
+            "Le feu est allumé tous les soirs. Qu'il y ait quelqu'un ou non."
+            It used to run third, right after the Manifeste — promising "le
+            soir, ensemble" six sections before anything picked the thread back
+            up, and directly above Hebergements selling "aucun voisin".
+            It also has to carry `bg-gris-tan`: Feedback below fades gris-tan →
+            base-noir over its top 45%, and that fade assumes it arrives onto
+            the warm band. */}
+        <Soir />
         <Feedback />
         {/* CTA + Footer share one base-noir → gris-tan background
             gradient. The wrapper carries `isolate` so the gradient

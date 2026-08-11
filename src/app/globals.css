@@ -160,7 +160,7 @@ body::-webkit-scrollbar,
   }
 
   /* Section eyebrow — the small uppercase label above a section title.
-     `text-xs uppercase tracking-[0.3em]` was recopied in Medaillons,
+     `text-xs uppercase tracking-[0.3em]` was recopied in Soir,
      Choisir, Activites, Hebergements, Header and ReservePanel with no
      shared definition, so the letter-spacing drifted between them. */
   .eyebrow {

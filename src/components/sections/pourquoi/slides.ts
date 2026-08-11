@@ -12,9 +12,9 @@ export type Slide = {
  *  wheel handler intercepts scroll ticks and advances slides at fixed speed —
  *  one tick = one slide, no queueing, no scroll-velocity coupling.
  *
- *  Copy is anchored on a time of day (dawn / midday / dusk), and slide 3
- *  hands off to the Medaillons section that follows: it states the distance,
- *  Medaillons lights the fire. */
+ *  Copy is anchored on a time of day (dawn / midday / dusk). Slide 3 states
+ *  the distance ("quinze minutes de marche"); the fire it implies is lit
+ *  later, in the Soir section that closes the activity block. */
 export const SLIDES: readonly Slide[] = [
   {
     title: "Le matin ne commence pas. Il monte du fleuve.",

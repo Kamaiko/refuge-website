@@ -147,18 +147,28 @@ qui existe :
 | 5 | **Proximite** | CTA qui ouvre la `MapOverlay` |
 | 6 | **MarqueeBrand** | Bande « Pourquoi Aquilon ? », décorative |
 | 7 | **Pourquoi** | 3 slides, wheel-hijack + rideau + dolly |
-| 8 | **Medaillons** | Charnière jour→soir, 2 rideaux + texte qui se réchauffe |
-| 9 | **Activites** | `SectionHeading` + paliers d'engagement |
-| 10 | **Carousel** | 5 cartes en scroll horizontal épinglé |
+| 8 | **Activites** | `SectionHeading` + paliers d'engagement |
+| 9 | **Carousel** | 5 cartes en scroll horizontal épinglé |
+| 10 | **Soir** | 2 rideaux éteint→allumé + titre qui se réchauffe |
 | 11 | **Feedback** | Citation, reveal mot à mot |
 | 12 | **Cta** | Marquee + nav + socials |
 | 13 | **Footer** | Wordmark géant `AquilonReveal` |
 
-⚠️ **Medaillons doit rester en position 8.** Elle était en 3 et promettait
-« le soir, ensemble » six sections avant que le site n'en reparle, en
-contradiction directe avec Hebergements (« aucun voisin ») juste dessous.
-En 8 elle fait charnière : Pourquoi pose la distance, Medaillons allume le
-feu, Activités ouvre sur « Seul, ou tous ensemble ».
+⚠️ **`Soir` ne doit pas remonter avant Hebergements.** Elle était en position 3
+et promettait « le soir, ensemble » six sections avant que le site n'en
+reparle, en contradiction directe avec Hebergements (« aucun voisin ») juste
+dessous. En 10 elle prolonge le Carousel, dont la dernière carte est « Le feu
+de minuit » : le carousel nomme le feu comme une activité, `Soir` révèle que
+c'en est une habitude.
+
+⚠️ **Chaîne de fonds** — Activités ouvre une bande chaude (fondu base-noir →
+gris-tan), Carousel et `Soir` la portent en `bg-gris-tan`, Feedback la referme
+(fondu gris-tan → base-noir sur son haut). Insérer ou déplacer une section
+dans ce bloc **sans lui donner `bg-gris-tan`** fait peindre à Feedback une
+bande chaude sortie de nulle part.
+
+Le composant s'appelait `Medaillons` du temps où les cartes étaient des
+ovales ; la forme a changé, pas le nom.
 
 Jamais implémentées, malgré les mentions ailleurs dans ce fichier :
 `Lieu.tsx`, `Galerie.tsx`, Journal, FAQ.
