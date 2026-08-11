@@ -388,11 +388,12 @@ export default function Header() {
           type="button"
           onClick={openReservePanel}
           aria-label="Ouvrir le panneau de réservation"
+          data-anim="fade"
           style={{ height: pillH, paddingRight: CTA.pillPaddingRight }}
           // Hover scale is driven via gsap.to in the useEffect below — GSAP
           // owns the inline `transform` after entrance + scroll-hide, so a
           // Tailwind `hover:scale` would lose to it (inline wins over CSS).
-          className="reserve-cta group opacity-0 pointer-events-auto inline-flex items-center rounded-pill bg-creme font-medium text-base-noir will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
+          className="reserve-cta group pointer-events-auto inline-flex items-center rounded-pill bg-creme font-medium text-base-noir will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
         >
           <span className="pl-5 pr-3 md:pl-7 md:pr-5 text-lg md:text-2xl font-medium text-base-noir whitespace-nowrap">
             Réserver
@@ -422,11 +423,12 @@ export default function Header() {
         onClick={menuToggle}
         aria-label={menuIsOpen ? "Fermer le menu" : "Ouvrir le menu"}
         aria-expanded={menuIsOpen}
+        data-anim="fade"
         // z-[300] normally so the Menu sits above ReservePanel (z-[210])
         // and its backdrop (z-[200]). When Reserve is open, drop to z-[150]
         // so the backdrop covers the Menu (visible through the blur but
         // not clickable). Pointer-events disabled in the same condition.
-        className={`menu-cta group opacity-0 fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
+        className={`menu-cta group fixed bottom-12 md:bottom-12 left-1/2 inline-flex items-center rounded-pill bg-creme will-change-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir ${
           reserveMaskActive || mapIsOpen ? "z-[150] pointer-events-none" : "z-[300]"
         }`}
       >

@@ -118,17 +118,10 @@ export default function Hero() {
     () => {
       const mm = gsap.matchMedia();
 
-      // Reduced-motion: land the copy immediately. This branch is NOT
-      // optional — the three elements below ship with `style={{opacity:0}}`
-      // inline (to avoid a flash before GSAP runs), so without it the hero
-      // renders as an image with no text on it at all.
-      mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
-          opacity: 1,
-          y: 0,
-        });
-      });
-
+      // No `reduce` branch, and that is the point. The three elements carry
+      // `data-anim="fade"`, which only hides them under `no-preference` (see
+      // globals.css) — so a reduced-motion visitor gets them painted by the
+      // server and JS has nothing to undo.
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         gsap.set([wordmarkRef.current, taglineRef.current, subcopyRef.current], {
           opacity: 0,
@@ -265,7 +258,7 @@ export default function Hero() {
           <div className="flex-1 flex items-start pt-32 md:pt-0">
             <h1
               ref={wordmarkRef}
-              style={{ opacity: 0 }}
+              data-anim="fade"
               // 22vw on mobile, not 18. Measured at 390: 18vw put the wordmark
               // at 58.7% of the viewport width against 48.9% on desktop, so it
               // already read smaller relative to its frame. ⚠️ Growing it is
@@ -283,7 +276,7 @@ export default function Hero() {
           <div className="flex flex-col gap-6 pb-36 md:flex-row md:items-end md:justify-between md:gap-16 md:pb-12">
             <h2
               ref={taglineRef}
-              style={{ opacity: 0 }}
+              data-anim="fade"
               // `font-normal` below `md`, `font-light` from `md` up. Measured:
               // the tagline sits at ratio 6.0 against its background on mobile,
               // comfortably past AA — so the weakness there is not contrast, it
@@ -296,7 +289,7 @@ export default function Hero() {
 
             <p
               ref={subcopyRef}
-              style={{ opacity: 0 }}
+              data-anim="fade"
               className="text-creme max-w-md text-lg font-semibold leading-snug md:text-2xl"
             >
               {SUBCOPY}

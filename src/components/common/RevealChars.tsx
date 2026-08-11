@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
+import { wantsReducedMotion } from "@/lib/motion";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 
 /** Configuration for {@link RevealChars}.
@@ -60,16 +61,25 @@ export default function RevealChars({
   // sub-pixel antialiasing can leak 1px back into the mask and read as a
   // faint vertical bar before the reveal plays.
   //
-  // Reduced motion is handled HERE rather than at the call sites on
-  // purpose: parking the glyphs offscreen only works if something later
-  // flips `play`, and at least one consumer (Hebergements) drives `play`
-  // from inside a `no-preference` matchMedia branch. Landing them at rest
-  // makes the text readable no matter what the caller does.
+  // ⚠️ The preference is read with `wantsReducedMotion()` INSIDE the effect,
+  // not from the hook's render-time value, and that is the whole fix. The hook
+  // returns `false` on the hydration render by design (see useMediaQuery.ts —
+  // the animated layout is what must hydrate), so reading it here launched the
+  // masking work for reduced-motion visitors too and left a corrective tween
+  // racing a `gsap.set`. `AquilonReveal` lost that race in production and
+  // shipped an invisible Footer wordmark. Effects only ever run on the client,
+  // so a direct matchMedia read is both safe and correct. The hook stays in the
+  // dependency arrays purely so a preference change mid-session re-runs these.
+  //
+  // The `visibility` half of the hidden state now lives in CSS, behind
+  // `no-preference` (globals.css, `[data-anim="hidden"]`). Under `reduce`
+  // nothing was ever hidden, so there is nothing to undo.
   useEffect(() => {
     if (!ref.current) return;
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
-    gsap.set(glyphs, { xPercent: prefersReducedMotion ? 0 : 110 });
+    if (wantsReducedMotion()) return;
+    gsap.set(glyphs, { xPercent: 110 });
     gsap.set(ref.current, { visibility: "visible" });
   }, [prefersReducedMotion]);
 
@@ -78,14 +88,10 @@ export default function RevealChars({
     const glyphs = ref.current.querySelectorAll<HTMLElement>(".rc-glyph");
     if (!glyphs.length) return;
 
-    if (prefersReducedMotion) {
-      // Assert the resting state rather than bailing out. The preference reads
-      // false on the hydration render, so this effect has already fired once
-      // with `play: false` and launched a tween back off-screen; returning
-      // early would let it land after the mount effect's `gsap.set` and park
-      // the glyphs outside their masks. `AquilonReveal` lost exactly that race
-      // and rendered the Footer wordmark invisible — this one wins it today,
-      // which is not something to depend on.
+    if (wantsReducedMotion()) {
+      // Still asserts the resting state rather than bailing out — not for the
+      // hydration race any more, but for the case where the preference flips
+      // mid-session while glyphs are parked off-screen.
       gsap.killTweensOf(glyphs);
       gsap.set(glyphs, { xPercent: 0 });
       return;
@@ -116,7 +122,7 @@ export default function RevealChars({
       ref={ref as React.RefObject<HTMLSpanElement & HTMLHeadingElement>}
       className={className}
       aria-label={text}
-      style={{ visibility: "hidden" }}
+      data-anim="hidden"
     >
       {segments.map((seg, si) => {
         if (seg.type === "space") {

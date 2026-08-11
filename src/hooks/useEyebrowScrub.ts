@@ -7,10 +7,12 @@ import type { RefObject } from "react";
 /**
  * Scroll-scrubbed fade-and-rise for a section's eyebrow line.
  *
- * The element is expected to ship pre-hidden with an inline `opacity: 0`,
- * so there's no flash between SSR and the moment ScrollTrigger applies its
- * `from` state. This hook is what brings it back — including under reduced
- * motion, where it snaps to the rest position instead of scrubbing.
+ * The element is expected to carry `data-anim="fade"`, which hides it only
+ * under `prefers-reduced-motion: no-preference` (see globals.css) — so there's
+ * no flash between SSR and the moment ScrollTrigger applies its `from` state,
+ * and a reduced-motion visitor is never hidden to begin with. That's why there
+ * is no `reduce` branch here: it used to exist solely to undo an inline
+ * `opacity: 0` that the markup no longer carries.
  *
  * Extracted because Choisir, Activités and the Cta each carried a byte-for-
  * byte copy of this block; only the ref name differed. The markup they wrap
@@ -44,12 +46,6 @@ export function useEyebrowScrub(
             },
           },
         );
-      });
-
-      // Not optional: the element ships at `opacity: 0`, so without this
-      // branch a reduced-motion visitor never sees the eyebrow at all.
-      mm.add("(prefers-reduced-motion: reduce)", () => {
-        gsap.set(el, { opacity: 1, y: 0 });
       });
 
       return () => mm.revert();

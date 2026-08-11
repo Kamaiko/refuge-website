@@ -350,18 +350,24 @@ export default function Hebergements() {
                   className="absolute inset-0 pointer-events-none"
                   style={{
                     background:
-                      "radial-gradient(ellipse 90% 65% at 0% 100%, rgba(24,23,23,0.92) 0%, rgba(24,23,23,0.5) 38%, rgba(24,23,23,0) 80%)",
+                      "radial-gradient(ellipse 78% 42% at 0% 100%, rgba(24,23,23,0.80) 0%, rgba(24,23,23,0.34) 42%, rgba(24,23,23,0) 76%)",
                   }}
                 />
 
-                {/* ⚠️ NO full-width scrim here, and that is a decision, not an
-                    oversight. One was built and measured — it lifted the nom
-                    from 2.03 to well past AA — and then removed: veiling the
-                    lower 60% of the photo defeats what the section is for,
-                    which is showing the refuge. The contrast is fixed in the
-                    IMAGE BRIEF instead (see docs/assets-a-generer.md): the
-                    portrait must be dark from ~38% of its height downward, not
-                    merely in its bottom third. */}
+                {/* ⚠️ The gradient above is deliberately WEAK, and there is no
+                    second one. Two heavier versions were built and measured —
+                    a full-width scrim lifted the nom from a 2.03 contrast
+                    ratio to well past AA — and both were rejected: veiling the
+                    photo defeats what this section is for, which is showing
+                    the refuge. The gradient was then pulled back further still
+                    (ellipse 90%×65% → 78%×42%, peak alpha 0.92 → 0.80) so it
+                    hugs the bottom-left text corner instead of washing the
+                    middle of the frame.
+
+                    So the readability budget is spent in the IMAGE BRIEF, not
+                    in CSS — see docs/assets-a-generer.md: the portrait must be
+                    dark from ~38% of its height downward on its left side, and
+                    the lit interior must sit in the upper half. */}
 
                 <RefugeCardContent
                   refuge={refuge}

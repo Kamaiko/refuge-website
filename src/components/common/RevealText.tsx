@@ -3,6 +3,7 @@
 import { useRef, type ElementType, type ReactNode } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
+import { wantsReducedMotion } from "@/lib/motion";
 
 type RevealMode = "lines" | "words";
 
@@ -49,6 +50,15 @@ export default function RevealText({
     () => {
       const el = ref.current;
       if (!el) return;
+
+      // Unlike the other reveal primitives, nothing here ships hidden: the
+      // lines are rendered in place inside `overflow-hidden` masks, and it is
+      // this tween that pushes them out to `yPercent: 110` before bringing
+      // them back. Which means that without this guard it ran for EVERY
+      // visitor, reduced-motion included — the one primitive in the set with
+      // no motion-preference handling at all. Consumers: Soir (×4), Proximité.
+      if (wantsReducedMotion()) return;
+
       const targets = el.querySelectorAll<HTMLElement>(".reveal-inner");
       gsap.fromTo(
         targets,

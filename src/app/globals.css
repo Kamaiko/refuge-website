@@ -102,6 +102,39 @@ body::-webkit-scrollbar,
   }
 }
 
+/* ── The hidden starting state of every entrance animation ──────────────
+   It lives HERE, gated on `no-preference`, and not in JSX.
+
+   The invariant is "this element ships hidden, and an animation brings it
+   back". Written the old way, its two halves lived in two languages and two
+   files: an inline `opacity: 0` in the markup, and a `prefers-reduced-motion:
+   reduce` branch in GSAP that did nothing but undo it. Six such branches
+   existed, and one of them lost the race in production — `usePrefersReduced
+   Motion()` reads `false` on the hydration render (see hooks/useMediaQuery.ts,
+   the default is deliberate so the animated layout is what hydrates), so a
+   masking tween launched before the preference flipped and landed after the
+   corrective `gsap.set`. The Footer wordmark rendered invisible.
+
+   Behind a media query the race cannot exist: the rule applies at the first
+   server paint, and a reduced-motion visitor is never hidden in the first
+   place. Every `reduce` branch then collapses into "do not animate", which is
+   no branch at all.
+
+   Specificity note — these rules sit OUTSIDE any cascade layer, so they beat
+   Tailwind's layered utilities whatever the source order. An inline style
+   still wins, which is exactly how GSAP reveals the element.
+
+   NOT in scope, on purpose: the closed state of MenuOverlay / ReservePanel /
+   MapOverlay. A closed panel is the correct SSR state at any motion
+   preference, and no content is lost. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Fades up into place. */
+  [data-anim="fade"] { opacity: 0; }
+  /* Revealed by a clip-path curtain or a per-glyph slide, both of which need
+     the element laid out (so `visibility`, not `display`) but unpainted. */
+  [data-anim="hidden"] { visibility: hidden; }
+}
+
 /* Gradient fill for the Footer's "Aquilon®" wordmark. Two targets :
    1) `.aquilon-wordmark-fill .rc-glyph` — the inner span carrying
       each character within RevealChars. `background-clip: text` MUST

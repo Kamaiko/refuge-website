@@ -59,7 +59,7 @@ export default function Cta() {
           mount with inline style to prevent SSR flash. */}
       <h2
         ref={introRef}
-        style={{ opacity: 0 }}
+        data-anim="fade"
         className="text-creme text-base md:text-lg font-semibold leading-snug max-w-md m-0"
       >
         Le moment est venu de ralentir.

@@ -77,23 +77,17 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
           // `inset(100%)` — i.e. invisible.
           isMobile: `(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`,
           isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
-          reduceMotion: "(prefers-reduced-motion: reduce)",
         },
         (ctx) => {
-          const { isMobile, reduceMotion } = ctx.conditions as {
+          const { isMobile } = ctx.conditions as {
             isMobile: boolean;
             isDesktop: boolean;
-            reduceMotion: boolean;
           };
 
-          if (reduceMotion) {
-            lineRefs.current.forEach((line) => {
-              if (line) {
-                gsap.set(line, { clipPath: "inset(0% 0 0 0)", visibility: "visible" });
-              }
-            });
-            return;
-          }
+          // There is no `reduce` condition any more. The lines carry
+          // `data-anim="hidden"`, which only applies under `no-preference`
+          // (globals.css) — so under `reduce` nothing here runs and nothing
+          // needs to: the title is painted by the server, unclipped.
 
           // Mobile uses a softer parallax (-75 vs -200): the eyebrow sits much
           // closer there, and a deeper drift made the curtain's first frames
@@ -180,7 +174,7 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
         // Pre-hidden inline so there's no SSR flash before the scrub's `from`
         // state applies after hydration. `useEyebrowScrub` owns bringing it
         // back, including under reduced motion.
-        style={{ opacity: 0 }}
+        data-anim="fade"
         className="text-creme text-xl md:text-2xl font-semibold tracking-tight"
       >
         {eyebrow}
@@ -200,7 +194,7 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
               // clip doesn't trim "j", "p", "q" — the CSS spec disallows the
               // negative `inset()` values that would otherwise let the clip
               // reach past the box.
-              style={{ visibility: "hidden" }}
+              data-anim="hidden"
               className="block pb-[0.1em]"
             >
               {line}

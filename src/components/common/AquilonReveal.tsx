@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap } from "@/lib/gsap";
 import { SITE_CONFIG } from "@/lib/constants";
+import { wantsReducedMotion } from "@/lib/motion";
 import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 
 /** Footer-specific Aquilon wordmark reveal. Distinct from the shared
@@ -55,17 +56,23 @@ export default function AquilonReveal({
   // Without this, the first frame would flash the natural-position text
   // before the play effect pulled it back.
   //
-  // Under reduced motion we park them REVEALED instead: the wrapper ships
-  // with `visibility: hidden` inline, so anything that leaves the glyphs
-  // clipped would render the footer wordmark permanently invisible.
+  // ⚠️ This component is where the hydration race actually shipped: the
+  // wordmark rendered at `xPercent 40` behind a 91% clip — invisible — for
+  // reduced-motion readers. The cause was reading the preference from
+  // `usePrefersReducedMotion()`, which returns `false` on the hydration render
+  // by design. It is now read with `wantsReducedMotion()` inside the effect,
+  // where the real value is available; the hook stays in the dependency array
+  // only so a mid-session preference change re-runs this.
+  //
+  // The `visibility` half of the hidden state moved to CSS behind
+  // `no-preference` (globals.css, `[data-anim="hidden"]`), so under `reduce`
+  // the wordmark is painted by the server and this effect does nothing.
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
+    if (wantsReducedMotion()) return;
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
-    gsap.set(glyphs, {
-      xPercent: prefersReducedMotion ? 0 : SLIDE_START_X,
-      clipPath: prefersReducedMotion ? CLIP_REVEALED : CLIP_HIDDEN,
-    });
+    gsap.set(glyphs, { xPercent: SLIDE_START_X, clipPath: CLIP_HIDDEN });
     gsap.set(root, { visibility: "visible" });
   }, [prefersReducedMotion]);
 
@@ -77,14 +84,10 @@ export default function AquilonReveal({
     if (!root) return;
     const glyphs = root.querySelectorAll<HTMLElement>(".rc-glyph");
 
-    if (prefersReducedMotion) {
-      // Assert the revealed state instead of merely bailing out. The
-      // preference reads false on the hydration render, so this effect has
-      // already fired once with `play: false` and started a half-second tween
-      // back to the hidden state. Returning early would leave that tween in
-      // flight, and it lands AFTER the mount effect's `gsap.set` — which is
-      // exactly how the Footer wordmark ended up parked at `xPercent 40` with
-      // a 91% clip, i.e. invisible, for reduced-motion readers.
+    if (wantsReducedMotion()) {
+      // Still asserts the revealed state rather than merely bailing out — not
+      // for the hydration race any more, but for a preference flipped
+      // mid-session with glyphs already parked behind their clip.
       gsap.killTweensOf(glyphs);
       gsap.set(glyphs, { xPercent: 0, clipPath: CLIP_REVEALED });
       return;
@@ -105,7 +108,7 @@ export default function AquilonReveal({
       ref={ref}
       className={className}
       aria-label={text}
-      style={{ visibility: "hidden" }}
+      data-anim="hidden"
     >
       {Array.from(text).map((ch, i) => (
         <span
