@@ -342,3 +342,36 @@ montée et masquée toute la session, une écriture de transform par frame sur u
 `Cta`), un listener `mousemove` **et** un listener `scroll` appellent
 `getBoundingClientRect()` à chaque événement : un layout forcé par frame
 pendant un scroll Lenis. Un `IntersectionObserver` réglerait les deux.
+
+## 🎨 `activites/belugas.avif` — regénérer, palette hors design system
+
+Carte 4 du Carousel, « Le passage des bélugas »
+([Carousel.tsx:81](../src/components/sections/Carousel.tsx#L81)).
+
+**Problème** : coucher de soleil trop orange et trop saturé. Les couchers de
+soleil du reste du site ne le sont pas — `pourquoi/crete.avif`, `pourquoi/
+aube.avif` et `refuges/galets.avif` tiennent tous dans une lumière basse,
+désaturée, plus terre que feu. Cette image tire vers l'orange publicitaire et
+ne tient pas dans la bande chaude gris-tan qui la porte.
+
+⚠️ **La cause est très probablement dans mes propres adjectifs.** C'est la
+règle apprise à ses dépens sur `refuge-galets` : les qualificatifs pilotent la
+saturation bien plus que la référence. « blazing », « burnt », « fiery », «
+golden hour » la montent ; « muted », « faded », « overcast », « past peak »,
+« low contrast » la descendent. Et **en cas de conflit, le texte l'emporte sur
+l'image de référence.**
+
+**Méthode pour la reprise :**
+
+1. Ne PAS décrire le grade en mots. Passer `pourquoi/crete.avif` (ou l'AVIF
+   converti en PNG — `--image` n'accepte pas l'AVIF) en référence et demander
+   explicitement d'en reproduire la palette et le niveau de saturation.
+2. Retirer du prompt tout adjectif de chaleur. Si une heure doit être nommée,
+   dire « late afternoon, overcast, low sun behind cloud » plutôt que « golden
+   hour » ou « sunset ».
+3. **Ne pas perdre l'acquis** : la version précédente avait été refaite parce
+   qu'on ne voyait pas les bélugas. Les garder proches, lisibles, et l'eau
+   sombre — c'est ce qui les détache. Le risque de cette passe est de
+   désaturer jusqu'à les rendre invisibles à nouveau.
+4. Regénération complète depuis zéro, pas une retouche à partir de l'image
+   actuelle : chaque itération qui repart d'un rendu perd en netteté.
