@@ -61,7 +61,7 @@ const CARDS: readonly Card[] = [
   },
   {
     titre: "Via ferrata",
-    sous: "Suspendu à la roche, le vide sous les pieds — et le calme, étrangement, qui s'installe.",
+    sous: "Suspendu à la roche, le vide sous les pieds, et le calme qui s'installe, étrangement.",
     niveau: "Demi-journée",
     image: "/images/activites/via-ferrata.avif",
     zoom: 1,
@@ -77,13 +77,18 @@ const CARDS: readonly Card[] = [
     // refuge description says "Les bélugas passent l'été, parfois".
     titre: "Le passage des bélugas",
     sous: "Une heure à fixer l'eau grise pour trois secondes de dos blanc. Personne ne s'en est jamais plaint.",
-    niveau: "Après-midi",
+    // « Après-midi » a été aligné sur le vocabulaire des `NIVEAUX` d'Activités
+    // (Demi-journée / Journée / Multijour), qui présente les mêmes pastilles
+    // deux sections plus haut. « Soirée » reste sur la carte suivante : le feu
+    // n'est pas un palier d'effort, c'est un moment, et c'est justement ce que
+    // la section `Soir` révèle juste après.
+    niveau: "Demi-journée",
     image: "/images/activites/belugas.avif",
     zoom: 1,
   },
   {
     titre: "Le feu de minuit",
-    sous: "La nuit tombe, le feu prend. On reste tard, verre à la main, à refaire le monde.",
+    sous: "La nuit tombe, le feu prend. On reste plus tard qu'on ne l'avait prévu.",
     niveau: "Soirée",
     image: "/images/activites/veillee.avif",
     zoom: 1,

@@ -45,7 +45,7 @@ export default function Choisir() {
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16">
           <p className="text-creme-terre/70 max-w-4xl text-xl xs:text-2xl md:text-5xl font-medium leading-snug">
-            L&apos;un se dérobe dans la forêt. L&apos;autre se penche sur le fleuve. Le dernier domine la falaise. Trois rapports distincts au même territoire — le vôtre se reconnaît avant d&apos;avoir fini de lire.
+            L&apos;un se dérobe dans la forêt. L&apos;autre se penche sur le fleuve. Le dernier domine la falaise. Trois rapports distincts au même territoire. Le vôtre se reconnaît avant d&apos;avoir fini de lire.
           </p>
 
           <div className="flex flex-col gap-8">

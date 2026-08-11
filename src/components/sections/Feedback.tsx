@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
-import { SITE_CONFIG } from "@/lib/constants";
 
 const EYEBROW = "Et eux, qu'en pensent-ils ?";
-const QUOTE = `Un séjour à ${SITE_CONFIG.brandMark} au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau suspendu.`;
+const QUOTE =
+  "On est arrivés avec une liste de choses à faire. On n'en a fait aucune, et c'est la première fois que ça ne m'a pas dérangé.";
 
 /**
  * Closing testimonial section. Three blocks (eyebrow, quote, author) are

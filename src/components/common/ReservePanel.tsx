@@ -403,7 +403,7 @@ export default function ReservePanel() {
               disabled={isPending}
               className="inline-flex items-center justify-center gap-2 rounded-pill bg-creme px-5 py-2.5 text-xs font-medium text-base-noir transition-opacity hover:opacity-90 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir"
             >
-              {isPending ? "Envoi…" : "Suivant"}
+              {isPending ? "Envoi…" : "Envoyer la demande"}
               <ArrowDiagonalIcon size={12} />
             </button>
           </div>

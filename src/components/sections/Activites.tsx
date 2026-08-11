@@ -86,7 +86,7 @@ export default function Activites() {
           </ul>
 
           <p className="text-creme-terre/70 max-w-xl text-xl md:text-3xl font-medium leading-snug">
-            Se retirer seul au sommet, ou rester tard autour du feu. Le territoire ne choisit pas pour vous — il offre les deux : le silence quand on le cherche, la fête quand elle se présente. Tout se vit par envie, jamais par programme.
+            Le territoire ne choisit pas pour vous. Tout se vit par envie, jamais par programme.
           </p>
         </div>
       </div>

@@ -49,10 +49,14 @@ const STRUCTURED_DATA = {
     longitude: -70.2497,
   },
   priceRange: "$$$",
+  // ⚠️ À garder aligné sur `FEATURES` dans `sections/Choisir.tsx`, qui est ce
+  // que la page affiche réellement. Ces trois entrées annonçaient « Sauna
+  // nordique » et « Foyer extérieur » quand la page dit « Bain nordique » et
+  // « Foyer intérieur » : une donnée structurée qui contredit la page.
   amenityFeature: [
-    { "@type": "LocationFeatureSpecification", name: "Sauna nordique", value: true },
+    { "@type": "LocationFeatureSpecification", name: "Bain nordique", value: true },
     { "@type": "LocationFeatureSpecification", name: "Vue sur le fjord", value: true },
-    { "@type": "LocationFeatureSpecification", name: "Foyer extérieur", value: true },
+    { "@type": "LocationFeatureSpecification", name: "Foyer intérieur", value: true },
   ],
 } as const;
 

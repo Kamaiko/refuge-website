@@ -441,7 +441,7 @@ export default function Header() {
           <span className="block pl-8 pr-5 md:pl-12 md:pr-8 whitespace-nowrap">
             <span ref={wheelRef} className="block will-change-transform">
               <span style={{ height: circleH }} className="flex items-center">Menu</span>
-              <span style={{ height: circleH }} className="flex items-center">Close</span>
+              <span style={{ height: circleH }} className="flex items-center">Fermer</span>
             </span>
           </span>
         </span>

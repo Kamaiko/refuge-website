@@ -359,7 +359,7 @@ export default function MenuOverlay() {
                 <SocialIcons tone="on-gris-tan" />
               </div>
               <p ref={conceptRef} className="text-creme-dim text-sm md:text-base font-semibold max-w-xl leading-relaxed">
-                Ce site web est juste un concept de projet réalisé par moi pour démontrer mes capacités.
+                Un concept de portfolio. Aucun de ces refuges n&apos;existe.
               </p>
             </div>
           </div>
