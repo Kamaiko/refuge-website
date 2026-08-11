@@ -98,11 +98,28 @@ export default function RootLayout({
             standalone `<link>` tags to <head> automatically, so this is the
             cleanest way to inject a resource hint without dropping out of
             the App Router metadata pattern. `fetchPriority="high"` tells
-            the browser to schedule this preload ahead of other resources. */}
+            the browser to schedule this preload ahead of other resources.
+
+            Two hints, not one: the Hero is art-directed (`<picture>` with a
+            9:16 source below `md`), and a preload without `media` would pull
+            the landscape file on every phone — 92 KB fetched at high priority
+            and never painted, ahead of the poster that IS the LCP. `media`
+            on a preload is honoured by every engine that honours preload at
+            all, and the two queries are mutually exclusive so exactly one
+            fires. Keep these breakpoints in step with `MQ.mdUp`. */}
         <link
           rel="preload"
           as="image"
+          media="(min-width: 768px)"
           href="/images/hero-shape.avif"
+          type="image/avif"
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          media="(max-width: 767px)"
+          href="/images/hero-shape-portrait.avif"
           type="image/avif"
           fetchPriority="high"
         />

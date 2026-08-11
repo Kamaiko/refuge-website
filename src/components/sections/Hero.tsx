@@ -1,12 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { MQ } from "@/lib/breakpoints";
 import { SITE_CONFIG } from "@/lib/constants";
 import { wantsReducedMotion } from "@/lib/motion";
 import BrandMark from "@/components/common/BrandMark";
+
+/** Art-directed hero sources. The section is `h-[100svh]` with `object-cover`,
+ *  so on a 390×844 phone the container ratio is ~0.45 — a 16:9 source loses
+ *  roughly two thirds of its width to the crop, which is what made the site
+ *  read as "everything is cropped" on mobile. The portrait pair is framed for
+ *  that container: 9:16, composed in three bands so the wordmark (top) and the
+ *  tagline (bottom) never land on the cabin. */
+const MEDIA = {
+  landscape: { poster: "/images/hero-shape.avif", video: "/videos/hero-loop.mp4?v=6" },
+  portrait: {
+    poster: "/images/hero-shape-portrait.avif",
+    video: "/videos/hero-loop-portrait.mp4",
+  },
+} as const;
 
 const TAGLINE = "Trois refuges\nau creux du fjord.";
 const SUBCOPY = `Passez du temps de qualité dans nos emplacements au Québec avec — ${SITE_CONFIG.brandMark}.`;
@@ -53,6 +67,17 @@ export default function Hero() {
     const video = videoRef.current;
     if (!video) return;
     if (wantsReducedMotion()) return;
+
+    // Pick the video source here rather than with `<source media="…">`.
+    // The `media` attribute IS part of the media-element resource selection
+    // algorithm, but engines only evaluate it once, at load time, and never
+    // re-run selection on resize — so the markup form silently keeps the
+    // wrong file after an orientation change. `preload="none"` means the
+    // element has no src until this effect runs anyway, and `.load()` below
+    // is already explicit.
+    video.src = window.matchMedia(MQ.mdUp).matches
+      ? MEDIA.landscape.video
+      : MEDIA.portrait.video;
 
     // `HAVE_FUTURE_DATA` (3) means enough is buffered to play forward.
     if (video.readyState >= 3) {
@@ -154,15 +179,25 @@ export default function Hero() {
               in cache by the time React renders this element. `priority`
               tells next/image to add `fetchpriority="high"` and skip the
               default lazy loading. */}
-          <Image
-            src="/images/hero-shape.avif"
-            alt="Refuge Aquilon — architecture contemporaine au creux du fjord du Saint-Laurent, en forêt boréale de Charlevoix"
-            fill
-            priority
-            sizes="100vw"
-            unoptimized
-            className="object-cover"
-          />
+          {/* Plain `<picture>` rather than `next/image`. next/image has no
+              art-direction escape hatch (one `src`, `sizes` only ever picks a
+              WIDTH of the same crop), and the poster already carried
+              `unoptimized` — so the component was contributing nothing but
+              the `fill` positioning, which is four utility classes. */}
+          <picture>
+            <source
+              media={MQ.mdUp}
+              srcSet={MEDIA.landscape.poster}
+              type="image/avif"
+            />
+            <img
+              src={MEDIA.portrait.poster}
+              alt="Refuge Aquilon — architecture contemporaine au creux du fjord du Saint-Laurent, en forêt boréale de Charlevoix"
+              fetchPriority="high"
+              decoding="async"
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </picture>
           {/* Video layered above the poster but invisible at mount —
               `preload="none"` + no `autoplay` means the browser doesn't
               touch the 4 MB MP4 on the critical path. The effect above
@@ -179,7 +214,6 @@ export default function Hero() {
             preload="none"
             aria-hidden="true"
           >
-            <source src="/videos/hero-loop.mp4?v=5" type="video/mp4" />
           </video>
         </div>
 
@@ -192,6 +226,20 @@ export default function Hero() {
           style={{
             background:
               "linear-gradient(to bottom, rgba(24,23,23,0.55) 0%, rgba(24,23,23,0) 25%, rgba(24,23,23,0) 75%, rgba(24,23,23,0.3) 100%)",
+          }}
+        />
+
+        {/* Extra bottom darkening below `md` only, stacked on the one above.
+            The portrait source is a much brighter frame than the landscape
+            crop — mean luminance 161 against 116 — and the tagline and
+            subcopy land on pale shoreline stones there. Additive rather than
+            a second full gradient: 0.3 over 0.35 composites to ~0.55, which
+            is the top band's value. */}
+        <div
+          className="absolute inset-0 pointer-events-none md:hidden"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(24,23,23,0) 55%, rgba(24,23,23,0.35) 100%)",
           }}
         />
 
