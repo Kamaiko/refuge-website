@@ -61,6 +61,11 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
     () => {
       if (!titleWrapRef.current) return;
 
+      // Drop refs left over from a longer previous split. React nulls the
+      // entry when a span unmounts, but trimming keeps the array's length
+      // honest so nothing downstream iterates over holes.
+      lineRefs.current.length = renderedLines.length;
+
       const mm = gsap.matchMedia();
 
       mm.add(
@@ -158,7 +163,14 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
 
       return () => mm.revert();
     },
-    { scope: scopeRef },
+    // `renderedLines` is load-bearing in these deps. `useMediaQuery` returns
+    // false on the server and the first client render, so a compact viewport
+    // mounts with the desktop split and only swaps to `linesCompact` on the
+    // next commit. Without a re-run, GSAP would still hold refs to the old
+    // spans — and the new ones, which ship `visibility: hidden` and rely on
+    // this effect to reveal them, would never appear at all. That shipped
+    // once: the Activités title rendered as "Découvrez les" and nothing else.
+    { scope: scopeRef, dependencies: [renderedLines] },
   );
 
   return (
