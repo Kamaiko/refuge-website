@@ -109,20 +109,16 @@ Variantes écartées, conservées dans `_raw/alternates/` : `medaillon-table-ave
 ### ✅ `refuge-galets.avif` — doublon corrigé
 Le fichier était **octet pour octet identique à `hero-shape.avif`** : le troisième refuge affichait la photo du hero. Régénéré d'après sa description dans `src/lib/data/refuges.ts` — rivage rocheux à marée basse, étendue de galets, flaques de marée, cargo à l'horizon, bain nordique sur la terrasse, lumière rasante de fin d'après-midi. MD5 vérifié différent après coup.
 
-### Carousel carte 4 « Terrasse en fête » — à remplacer par une autre activité
+### ✅ Carousel carte 4 — « Terrasse en fête » remplacée
 
-**Constat** : le concept plaît, mais il s'éloigne trop de l'environnement paisible du projet. La fête n'est pas l'attrait numéro un — et sur `activite-terrasse.avif` tout le monde est habillé proprement, ce qui tire vers l'événementiel plutôt que vers le territoire. C'est le dernier vestige du registre « festival » qu'on a retiré partout ailleurs.
+Devenue « Le passage des bélugas ». C'était le dernier vestige du registre
+« festival » retiré partout ailleurs. Le sujet était déjà semé dans le copy :
+la description du refuge Galets dit « Les bélugas passent l'été, parfois ».
 
-**Contrainte de créneau** : la carte occupe le slot « Après-midi » entre trois activités de plein effort (kayak, sommets, via ferrata) et « Le feu de minuit ». Il lui faut donc un registre **calme**, distinct des trois premières, et qui ne double pas la veillée.
-
-**Pistes, par ordre de préférence** :
-
-1. **Observation des bélugas** ⭐ — le plus « Charlevoix » de tous, et déjà semé dans le copy : la description du refuge Galets dit « Les bélugas passent l'été, parfois ». Contemplatif par nature, aucun recoupement avec les autres cartes. Depuis la rive ou en zodiac.
-   *Piste de copy* : « On attend. C'est tout le principe. Parfois ils passent. »
-2. **Cueillette en forêt** — champignons et petits fruits d'automne. Tactile, lent, très régional, et c'est la seule carte qui ferait baisser le regard au lieu de le porter au loin.
-3. **Route des saveurs** — passer chez un producteur, rapporter de quoi souper. Garde une note humaine et chaleureuse sans aucune foule.
-
-**À faire une fois l'idée arrêtée** : régénérer `activite-terrasse.avif` (3:2, ≤ 2 personnes ou aucune, palette stricte), et réécrire le titre, le sous-titre et le niveau dans `CARDS` — les données sont **hardcodées dans `Carousel.tsx`**, pas dans `src/lib/data`.
+L'image a demandé quatre passes, dont trois ratées en cherchant à
+« désaturer » — voir le journal de la méthode dans docs/assets-a-generer.md.
+Le niveau de la carte est passé de « Après-midi » à « Demi-journée » pour
+rejoindre le vocabulaire des `NIVEAUX` d'Activités.
 
 ### `hero-loop.mp4` (desktop) — à regénérer entièrement
 
@@ -307,9 +303,16 @@ les cartes arrivent vraiment.
 
 ## 🧱 Code — reste du plan de reprise
 
-- **Lot 1.4** — passe copy complète sur les 13 sections + overlays. Blocs déjà repérés comme décrochant : le `SUBCOPY` du Hero (« temps de qualité », « nos emplacements », et un `avec — X` calqué de l'anglais), le témoignage Feedback (« a redéfini ce que repos veut dire »), le paragraphe Activités (il explique la dualité juste avant un carrousel qui la montre), la carte « Terrasse en fête ».
+- ~~**Lot 1.4** — passe copy complète~~ ✅ **faite**. Incohérences factuelles
+  soldées (« Close » vs « Fermer », « Suivant » sur un bouton terminal,
+  aménités JSON-LD ≠ `FEATURES`, vocabulaire des durées, double paragraphe
+  « concept »), registre corrigé sur Hero, Feedback, Activités et la carte 5
+  du Carousel, et tirets cadratins retirés de toute la prose visible.
+  ⏳ Ce qui reste : `SITE_DESCRIPTION` dit « Trois refuges », ce qui est exact
+  côté données mais se lit comme quatre à l'écran (le hero en montre un, plus
+  les trois d'Hébergements) — à trancher.
 - **Lot 5** — extraire `<SectionHeading>` (Choisir ↔ Activités ↔ Cta partagent ~125 lignes dont 28 identiques octet pour octet), `createOverlayContext()` (3 contextes quasi jumeaux), `useOverlayA11y()` (Escape + focus save/restore écrits 3 fois).
-- **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par commentaire), unifier les espacements de section (3 échelles `px-*` concurrentes), trancher sur `unoptimized` (posé sur 8 `<Image>` sur 14, dont le LCP, mais pas sur Medaillons/ReservePanel/Feedback qui servent les mêmes AVIF), sortir `public/images/_raw/` (588 Mo) de `public/`, dé-tracker `docs/hero-aquilon.png` (5,5 Mo), retirer la graisse 800 jamais utilisée.
+- **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par commentaire), unifier les espacements de section (3 échelles `px-*` concurrentes), retirer la graisse 800 jamais utilisée. ✅ `unoptimized` est tranché : il s'applique à tous les `<Image>` raster (Soir, ReservePanel et Feedback y échappaient). ✅ `_raw/` est sorti de `public/` vers `/assets-raw/`.
 - **Perf** — `Feedback.tsx` anime `filter: blur` en scrub sur ~50 spans, chacun promu en couche compositeur. Poste le plus lourd du site ; mesurer, et remplacer par `opacity` + `y` si le coût se confirme.
 
 ---
@@ -322,43 +325,70 @@ les cartes arrivent vraiment.
 
 ---
 
-## 🎨 Lisibilité — surnom des cartes Hébergements
+## ✅ Lisibilité des cartes Hébergements — mesurée, et l'hypothèse était fausse
 
-Le **petit titre** de chaque carte (le `surnom`, `text-creme-dim` sur le
-`RevealChars` du haut) manque de contraste sur une des trois photos. Verdict
-utilisateur, en observation directe :
+Le backlog soupçonnait le **surnom** sur la carte Galets, d'après une
+observation à l'œil. Mesuré à 390×844, texte masqué dans le DOM et fond
+échantillonné sous chaque niveau — sans masquer le texte, la moyenne inclut
+les pixels du texte et ne mesure rien :
 
-| Carte | Surnom | Lisibilité |
+| Niveau | Hauteur dans la carte | Ratio |
 |---|---|---|
-| Brume | « Au creux de la forêt » | parfait |
-| Aubépine | — | passe |
-| **Galets** | — | **difficile à lire** |
+| surnom | 39 % | 4,29 |
+| **nom** | 45 % | **2,03** |
+| description | 54–70 % | 3,30 – 3,85 |
+| capacité | 80 % | 8,10 |
 
-Le reste du contenu (nom, description, capacité) est lisible sur les trois.
-C'est donc un problème de **ce niveau typographique précis** — 12 px,
-`tracking-[0.3em]`, `creme-dim` (#C9C5BD) — posé sur la zone la plus claire
-d'une photo, pas un problème général de la carte.
+Le surnom est le **seul des quatre niveaux qui passe**. C'est le nom qui
+échoue, posé sur l'intérieur éclairé de la photo.
 
-Pistes, de la moins à la plus invasive :
+Cause structurelle : le dégradé radial est ancré en bas à **gauche** et son
+alpha est nulle vers 48 % de la hauteur, alors que sur un écran étroit la
+description passe à cinq lignes et fait monter le bloc jusqu'à 39 %.
 
-1. **Renforcer le dégradé radial de la carte** sous ce coin uniquement. Il
-   existe déjà (`radial-gradient(ellipse 90% 65% at 0% 100%…)`) mais il est
-   ancré en bas à gauche, alors que le surnom est plus haut. Le plus ciblé.
-2. **Passer le surnom en `creme`** plein plutôt que `creme-dim`. Une ligne,
-   mais ça aplatit la hiérarchie surnom → nom sur les trois cartes.
-3. **Regénérer `refuge-galets.avif`** avec une zone basse plus sombre. Coûte
-   des crédits et rouvre l'art direction d'une image déjà validée.
+**Ce qui a été décidé** — un voile plein cadre a été construit et mesuré (il
+faisait passer le nom largement au-delà de AA) puis **retiré** : assombrir la
+photo va contre l'objet de la section. Le dégradé radial a même été affaibli
+(90 %×65 % → 78 %×42 %, alpha 0,92 → 0,80). La typographie a été resserrée
+(nom `text-6xl` → `text-5xl`, description `text-lg/relaxed` →
+`text-base/snug` sous `md`), ce qui rend ~6 % de hauteur de carte.
 
-⚠️ Ne pas trancher au jugé : mesurer le ratio de contraste réel sous le texte
-sur les trois cartes avant de choisir. La différence perçue entre « passe » et
-« difficile » est peut-être un écart de 0,3 de ratio, auquel cas la piste 1
-suffit et ne touche à rien d'autre.
+⏳ **Le reste tient au brief d'image**, consigné dans `docs/assets-a-generer.md`
+avec la formulation exacte : le portrait doit être sombre **à partir de 38 %
+de sa hauteur** côté gauche, et l'intérieur éclairé doit être dans la moitié
+haute. À appliquer sur `aubepine-portrait` et `galets-portrait`, et à
+reprendre sur `brume-portrait` si l'occasion se présente.
 
 ## 🧱 Code — reports assumés de la passe simplify
 
 Trouvés par la revue, **volontairement pas corrigés** dans cette passe parce
 que chacun est un vrai refactor et non un ajustement. Consignés avec le
 raisonnement pour ne pas les redécouvrir.
+
+### ✅ L'état caché vit maintenant en CSS — fait
+
+Livré. `[data-anim="fade"]` / `[data-anim="hidden"]` sous
+`@media (prefers-reduced-motion: no-preference)` dans `globals.css`, hors de
+toute cascade layer pour battre les utilitaires Tailwind. Trois branches
+`reduce` supprimées (Hero, `useEyebrowScrub`, `SectionHeading`).
+
+Les deux primitives à glyphes ne pouvaient pas être réglées par le CSS seul —
+leur état caché est aussi un transform que GSAP doit poser pour tenir son
+cache. Elles lisent désormais la préférence avec `wantsReducedMotion()` dans
+l'effet, et gardent le hook en dépendance pour rester réactives.
+
+Un trou trouvé en route : `RevealText` n'avait **aucune** gestion de la
+préférence et animait pour tout le monde. Corrigé.
+
+Vérifié sur le build aux deux préférences, en scroll continu : sous `reduce`,
+25 éléments `data-anim`, 0 invisible, 0 glyphe hors champ, 0 ligne décalée.
+
+Les branches `reduce` conservées (CurtainReveal, MapOverlay, Feedback,
+Hebergements, Soir) annulent un état posé en JS, pas par le markup — elles ne
+relèvent pas de ce refactor.
+
+<details>
+<summary>Raisonnement d'origine, conservé</summary>
 
 ### L'état caché devrait vivre en CSS, pas en JS (le plus rentable)
 Beaucoup d'éléments sont livrés cachés par le markup SSR (`opacity: 0`,
@@ -387,6 +417,8 @@ s'applique dès la première peinture serveur.
 
 ⚠️ Un helper `restAt(targets, props)` **ne marcherait pas** : les états de
 repos sont réellement spécifiques. Ce qui est partagé, c'est l'état *caché*.
+
+</details>
 
 ### `SectionHeading.linesCompact` → SplitText
 Le prop existe parce que le rideau anime **une entrée de `lines`**, pas une

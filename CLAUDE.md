@@ -215,13 +215,33 @@ Toutes les images live sont générées et rangées par section :
 
 ```
 public/images/
-├── hero-shape.avif          poster LCP + image OG
-├── photo-patrick.avif       avatar Feedback
-├── refuges/     brume, aubepine, galets
+├── hero-shape.avif           poster LCP paysage + image OG
+├── hero-shape-portrait.avif  poster 9:16, servi sous md
+├── photo-patrick.avif        avatar Feedback
+├── refuges/     brume, aubepine, galets  (+ brume-portrait)
 ├── pourquoi/    aube, fjord, crete
 ├── medaillons/  feu-{eteint,allume}, terrasse-{eteint,allume}
 └── activites/   kayak, sommet, via-ferrata, belugas, veillee
+public/videos/
+├── hero-loop.mp4             desktop, 5,08 s
+└── hero-loop-portrait.mp4    mobile, 4,04 s
 ```
+
+⚠️ **Art direction, pas responsive.** Le hero et les cartes `Hebergements`
+sont `absolute inset-0` dans un cadre `~100svh` : sur un téléphone ce cadre
+fait **0,446** de ratio, et une source 16:9 y perd **75 % de sa largeur**.
+Les variantes portrait sont servies par un `<picture>` + `<source media>` —
+`next/image` n'a aucune échappatoire pour ça, un seul `src` et `sizes` ne
+choisit qu'une *largeur* du même recadrage. Le `<link rel="preload">` du hero
+est dédoublé avec un attribut `media` sur chacun, sans quoi les téléphones
+tirent aussi le fichier paysage.
+
+`imagePortrait` dans `src/lib/data/refuges.ts` est **optionnel** : un refuge
+sans variante garde son paysage partout. Seul Brume en a une pour l'instant.
+
+⚠️ **Les vidéos ne bouclent pas nativement** — aucun modèle ne revient à son
+image de départ. Les deux boucles sont recousues en post par un fondu de queue
+sur tête ; la recette et les mesures sont dans `docs/assets-a-generer.md`.
 
 ⚠️ Les sources 4k et les variantes écartées vivent dans **`/assets-raw/`** à la
 racine, **hors de `public/`** et gitignorées. Elles y étaient auparavant
@@ -232,9 +252,10 @@ Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
 **`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
 **`docs/backlog.md`**.
 
-⏳ **Reste** : voir `docs/backlog.md` — art direction du hero en portrait,
-passe copy complète, `lieu-charlevoix`, galerie, vidéos d'ambiance, envoi réel
-des réservations (Resend jamais branché), audit Lighthouse.
+⏳ **Reste** : voir `docs/backlog.md` — portraits d'Aubépine et Galets,
+regénération du hero (le portrait actuel est un plan large là où le desktop
+est un gros plan) et de la vidéo desktop, `lieu-charlevoix`, galerie, envoi
+réel des réservations (Resend jamais branché), audit Lighthouse.
 
 ## Note sur le nom de marque
 
@@ -244,28 +265,61 @@ des réservations (Resend jamais branché), audit Lighthouse.
 
 ## Reduced motion — règles du projet
 
-Le site tombe en panne de façon **silencieuse** sous `prefers-reduced-motion`
-si on n'y prend pas garde, parce que beaucoup d'éléments partent d'un état
-invisible (`opacity: 0` inline, `visibility: hidden`, `clip-path: inset(100%)`,
-glyphes parqués hors champ) et comptent sur une animation pour arriver. Trois
-pertes de contenu ont déjà été corrigées à ce titre — le Hero rendait une image
-sans un seul mot dessus.
+> **L'état caché vit en CSS, plus en JSX.** C'est la règle numéro un depuis
+> août 2026, et elle remplace un mécanisme qui avait déjà coûté trois pertes
+> de contenu — dont un Hero qui rendait une image sans un seul mot dessus.
+>
+> ```css
+> @media (prefers-reduced-motion: no-preference) {
+>   [data-anim="fade"]   { opacity: 0; }
+>   [data-anim="hidden"] { visibility: hidden; }
+> }
+> ```
+>
+> Un élément qui doit apparaître porte `data-anim` **au lieu** d'un
+> `style={{opacity:0}}` inline, et il n'y a **plus rien à écrire côté
+> reduced-motion** : sous `reduce` il n'est jamais caché, donc il n'y a rien à
+> annuler. Écrire une branche `reduce` pour ré-afficher quelque chose est
+> désormais le signe qu'on a caché l'élément au mauvais endroit.
+>
+> Le bloc est **hors de toute cascade layer**, donc il bat les utilitaires
+> Tailwind quel que soit l'ordre ; un style inline gagne encore, et c'est
+> exactement par là que GSAP révèle l'élément.
+>
+> ⚠️ Ne s'applique pas aux états cachés qui sont des **transforms** (glyphes
+> parqués, clip-path) : GSAP doit les poser lui-même pour tenir son cache. Là,
+> voir la règle 3 ci-dessous.
 
 Trois outils, à ne pas confondre :
 
-1. **`gsap.matchMedia()`** pour les paramètres d'animation. Toujours écrire la
-   branche `(prefers-reduced-motion: reduce)` quand l'élément part d'un état
-   invisible — ce n'est pas facultatif, c'est ce qui le rend visible.
+1. **`gsap.matchMedia()`** pour les paramètres d'animation. Une seule branche
+   `no-preference` suffit désormais dans le cas courant : l'état caché étant
+   en CSS, il n'y a plus rien à défaire sous `reduce`. Les branches `reduce`
+   qui subsistent (CurtainReveal, MapOverlay, Feedback, Hebergements, Soir)
+   annulent un état posé **en JS**, pas par le markup — c'est ce qui les rend
+   légitimes.
 2. **`usePrefersReducedMotion()`** quand il faut changer de **layout**.
    Carousel et Pourquoi s'en servent pour rendre leur pile mobile à toutes les
    largeurs : leur piste desktop est entièrement pilotée par ScrollTrigger, donc
    sans pin les cartes suivantes seraient inatteignables.
-3. **`wantsReducedMotion()`** pour une lecture ponctuelle dans un handler ou un
-   effet de montage, quand souscrire n'apporterait rien.
+   ⚠️ **Jamais pour décider d'animer ou non.** Le hook renvoie `false` au rendu
+   d'hydratation — c'est son contrat, voulu pour que le layout animé soit celui
+   qui hydrate — et c'est précisément la course qui a rendu le wordmark du
+   footer invisible en production.
+3. **`wantsReducedMotion()`** pour lire la préférence dans un effet ou un
+   handler. Les effets ne tournent que côté client, donc la lecture directe y
+   est toujours correcte, contrairement au hook. C'est l'outil des primitives
+   dont l'état caché est un **transform** : `RevealChars` et `AquilonReveal`
+   parquent leurs glyphes, `RevealText` pousse ses lignes hors de leur masque.
+   Toutes trois gardent le hook en dépendance, uniquement pour rester
+   réactives à un changement de préférence en cours de session.
 
-Les primitives `RevealChars` et `AquilonReveal` gèrent le cas **elles-mêmes** :
-parquer les glyphes hors champ ne marche que si quelqu'un lève `play` ensuite,
-et au moins un appelant le pilote depuis une branche `no-preference`.
+**Assertion de contrôle** — sous `prefers-reduced-motion: reduce`, après une
+descente en scroll continu : aucun `[data-anim]` en `visibility: hidden` ou
+`opacity < 0.05`, aucun `.rc-glyph` avec un `transform` non identitaire,
+aucune `.reveal-inner` décalée. Tester `getComputedStyle`, jamais
+`getBoundingClientRect().height` — qui reste non nul sur du `visibility:
+hidden` et a déjà rendu une vérification aveugle.
 
 ## Références
 
