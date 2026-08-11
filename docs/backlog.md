@@ -124,21 +124,134 @@ Le fichier était **octet pour octet identique à `hero-shape.avif`** : le trois
 
 **À faire une fois l'idée arrêtée** : régénérer `activite-terrasse.avif` (3:2, ≤ 2 personnes ou aucune, palette stricte), et réécrire le titre, le sous-titre et le niveau dans `CARDS` — les données sont **hardcodées dans `Carousel.tsx`**, pas dans `src/lib/data`.
 
+### `hero-loop.mp4` (desktop) — à regénérer entièrement
+
+La source est médiocre au départ : plan mou, boucle qui reprend mal. Elle a
+été recousue et ré-encodée en attendant, mais on ne répare pas un plan faible
+en post — il faut une nouvelle génération.
+
+**Ce qui a été fait en attendant** : fondu de queue sur tête de 2,0 s (7,08 s
+→ 5,08 s), ré-encodage `crf 19`. L'original tournait à 4 840 kbps pour un plan
+lent, soit 4,1 Mo sur le chemin critique du hero ; on est à 2,2 Mo pour une
+perte de netteté de 1,9 % contre la source. ⚠️ Un premier passage en `crf 23`
+coûtait 6,5 % — mesuré, pas estimé. Ne pas redescendre.
+
+**Aucune source n'existe** dans `assets-raw/finals/` pour l'original : seule
+la version recousue est archivée (`hero-loop-desktop-src-7s.mp4`, qui est en
+fait le fichier livré avant ma passe). Une régénération à l'identique est donc
+impossible de toute façon.
+
+**Consignes pour la nouvelle** :
+- **Caméra verrouillée.** Aucun mouvement d'appareil. C'est ce qui rend le
+  fondu de bouclage invisible, et ça divise le poids par trois : la portrait,
+  en plan fixe, tient dans 800 Ko contre 2,2 Mo pour la desktop.
+- **Aucun modèle ne boucle**, quoi qu'on lui écrive — il produit N secondes et
+  s'arrête où il en est. Le bouclage se fait toujours en post.
+- Mouvement d'ambiance seulement : brume qui dérive, feuillage qui frémit,
+  vapeur du bain nordique, lueur intérieure **stable** (pas de scintillement).
+- Cadrage : gros plan de la capsule, intérieur lisible — voir la section
+  « Art direction du hero en portrait » pour le détail des consignes.
+
 ### Encore jamais produits
 - `lieu-charlevoix.avif` (4:5) — section `Lieu.tsx`, non implémentée
 - Galerie ambiance, 6 images — section `Galerie.tsx`, non implémentée
-- Vidéos d'ambiance (brume, feuille, eau) ; `hero-loop.mp4` existe
+- Vidéos d'ambiance (brume, feuille, eau)
 
 ---
 
 ## 📱 Responsive — le vrai sujet n'est pas le paysage
 
-### Art direction du hero en portrait (rendement élevé)
-**Constat** : `hero-shape.avif` est cadrée en ~16:9. Le hero est `h-[100svh]` avec `object-cover`. Sur un téléphone en portrait (9:19.5), le navigateur ne garde qu'une bande verticale centrale et jette environ deux tiers de l'image. D'où l'impression de « tout est cropped » quand le site est montré sur mobile.
+### ✅ Art direction du hero en portrait — livré, mais l'image est à refaire
 
-**Action** : produire une variante portrait du hero (4:5 ou 3:4) et la servir sous `md` via `<picture>` + deux `<source media="...">`. Les images `pourquoi-*` sont la preuve que le format tient : elles sont en 4:5 et se lisent parfaitement sur téléphone.
+Le format est réglé : source 9:16 servie sous `md` par un `<picture>`, vidéo
+choisie en JS, deux `<link rel="preload">` avec `media`. Vérifié à 390×844 —
+seuls les fichiers portrait sont téléchargés. **Ce qui reste à refaire, c'est
+la photo elle-même**, au prochain rechargement de crédits.
 
-Même question à poser pour les cartes de `Hebergements` (`refuge-*.avif`, toutes en 16:9).
+**Le défaut à corriger : ce n'est pas le même PLAN que le desktop.**
+`hero-shape.avif` est un **gros plan** — la capsule occupe la moitié du cadre
+et l'intérieur (lit, cuisine, poêle, suspension ambre) se lit en détail. Le
+portrait actuel est un **plan large** où la capsule fait ~30 % de la largeur.
+C'est la cause racine de tout ce qui a été reproché ensuite : un plan large
+donne beaucoup de ciel, donc une image pâle, donc une envie de la corriger au
+grade — alors que le problème était le cadrage.
+
+**Consignes pour la prochaine génération** (payées, à ne pas redécouvrir) :
+
+1. **Gros plan. C'est la consigne n°1.** Demander explicitement que la capsule
+   remplisse la majeure partie du cadre et que l'intérieur soit lisible en
+   détail. Le hero vend l'architecture, pas le paysage.
+2. **Générer depuis la source d'origine** (`assets-raw/misc/hero-aquilon.png`),
+   pas depuis un rendu déjà généré. « Keep everything, change only X » ne sait
+   corriger qu'un défaut **localisé** — retirer un objet, nettoyer un coin. Le
+   cadrage fait partie du « everything » qu'on demande de préserver : les deux
+   consignes se contredisent et la préservation gagne. Essayé, mesuré : la
+   capsule est passée de 25 % à 30 % de largeur, et la consigne « plus sombre »
+   a été ignorée (Y 161,9 → 161,1).
+3. **Composer en trois bandes** — ça, ça a marché et il faut le garder. Tiers
+   haut vide (le wordmark `text-[18vw]` s'y pose), bande centrale pour la
+   capsule, tiers bas calme (tagline + subcopy). Vérifié à 390×844 : ni la
+   pastille `Réserver` ni le `Menu` ne mordent sur l'architecture.
+4. **Nommer la palette par la valeur ET par la teinte, séparément.** Les
+   adjectifs de chaleur pilotent la saturation plus que l'image de référence,
+   et **le texte l'emporte toujours sur `--image`**. Mais retirer tous les
+   adjectifs donne une image plate : « désaturé » et « plat » sont deux
+   réglages différents.
+5. **Cibles chiffrées à viser**, mesurées sur `hero-shape.avif` (voir plus bas
+   la méthode) : ciel `rgb(237,220,209)`, `V/R 0,928`, `B/R 0,882` — un tan
+   crème chaud, **surtout pas mauve**. Intérieur `rgb(142,88,61)`, `V/R 0,620`,
+   `B/R 0,430` — de l'ambre, pas du rouge. Point noir `YLOW ≈ 24`.
+
+**Grade appliqué en attendant** (dans `assets-raw/finals/hero-portrait-GRADE.txt`,
+à réappliquer à l'identique au poster ET à la vidéo, sinon le fondu
+poster → vidéo fait un saut de couleur) :
+
+```
+curves=all='0/0 0.25/0.11 0.5/0.34 0.75/0.65 1/0.99',
+curves=b='0/0 0.5/0.38 1/0.88',
+curves=g='0/0 0.5/0.487 1/0.975'
+```
+
+### Méthode de mesure d'un grade — trois erreurs commises, à ne pas refaire
+
+1. **`sqrt((U_moyen−128)² + (V_moyen−128)²)` ne mesure pas la saturation.**
+   C'est la saturation *de la moyenne*, donc une **dominante de couleur**. Sur
+   cette métrique le portrait paraissait 35 % moins coloré que le paysage ;
+   sur la bonne (`signalstats` `SATAVG`, moyenne des saturations par pixel) il
+   était **plus** coloré. J'ai poussé `eq=saturation` à 1,70 sur une image qui
+   n'en manquait pas — résultat douloureux à l'œil.
+2. **`eq=saturation` est presque toujours le mauvais outil.** Il multiplie
+   tout, donc il pousse au néon ce qui est déjà saturé (les érables rouges) et
+   ne fait presque rien sur ce qui est neutre (le ciel pâle). Si un jour il
+   faut vraiment monter la couleur, c'est `vibrance` — il fait l'inverse.
+3. **Une image pâle manque souvent de point noir, pas de couleur.** Le portrait
+   avait un plancher d'ombres à 61 contre 24 pour le paysage. Une courbe qui
+   descend le bas en gardant le point blanc suffit : la couleur déjà présente
+   ressort seule. Et une correction de **teinte** par canal (`curves=b`,
+   `curves=g`) règle un ciel mauve ou un intérieur rouge, là où saturation et
+   gamma ne peuvent rien.
+
+Commande de mesure d'une zone (moyenne exacte, pas d'estimation à l'œil) :
+```bash
+ffmpeg -v error -i img.avif -vf "crop=iw:ih*0.18:0:0,scale=1:1" \
+  -f rawvideo -pix_fmt rgb24 - | od -An -tu1
+```
+
+### Cartes `Hebergements` en portrait — même sujet
+Les `refuges/*.avif` sont toutes en 16:9 et les cartes sont `absolute inset-0`
+dans un conteneur `~100lvh` : même crop que le hero avant correction. Un
+portrait 9:16 par refuge, servi par le même `<picture>`. Ajouter un champ
+`imagePortrait` à `src/lib/data/refuges.ts`.
+
+⚠️ Contrainte propre à ces cartes : le surnom et le nom sont typographiés
+**en bas à gauche**. Demander explicitement que le tiers bas, moitié gauche,
+reste sombre et sans détail clair. Testé sur une première passe de `brume` :
+la consigne est respectée, et ça travaille directement pour la lisibilité du
+surnom (voir la section « Lisibilité »). Mais **même piège que le hero** —
+la première passe a produit un plan large avec la capsule au loin, et a
+inventé un précipice absent de la photo d'origine. Exiger le gros plan et
+l'intérieur lisible, et interdire tout élément de terrain non présent dans
+la référence.
 
 ### Garde-fou paysage mobile (rendement faible, coût faible)
 **Position assumée** : le paysage mobile n'est **pas** un breakpoint standard et ne mérite pas une troisième mise en page. Le jeu retenu reste 375 / 768 / 1024 / 1440.

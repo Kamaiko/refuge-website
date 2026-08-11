@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
-import { SITE_CONFIG } from "@/lib/constants";
 import { wantsReducedMotion } from "@/lib/motion";
 import BrandMark from "@/components/common/BrandMark";
 
@@ -22,8 +21,11 @@ const MEDIA = {
   },
 } as const;
 
-const TAGLINE = "Trois refuges\nau creux du fjord.";
-const SUBCOPY = `Passez du temps de qualité dans nos emplacements au Québec avec — ${SITE_CONFIG.brandMark}.`;
+/** `\n` is load-bearing — the `<h2>` renders with `whitespace-pre-line`, so
+ *  this is where the line break is decided, not in CSS. */
+const TAGLINE = "Dormir seul\nau creux du fjord.";
+const SUBCOPY =
+  "Des refuges de bois carbonisé posés en Charlevoix, loin les uns des autres.";
 
 /** Full-viewport hero. A muted looping video sits behind the brand
  *  wordmark, tagline and subcopy (all GSAP fade-up on mount). The video
@@ -262,7 +264,12 @@ export default function Hero() {
             <h2
               ref={taglineRef}
               style={{ opacity: 0 }}
-              className="text-creme max-w-2xl text-3xl font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line m-0"
+              // `font-normal` below `md`, `font-light` from `md` up. Measured:
+              // the tagline sits at ratio 6.0 against its background on mobile,
+              // comfortably past AA — so the weakness there is not contrast, it
+              // is a 30px light stroke over the high-frequency shoreline
+              // pebbles. Weight fixes that; more darkening would not.
+              className="text-creme max-w-2xl text-3xl font-normal md:font-light leading-[1.05] tracking-tight md:text-6xl whitespace-pre-line m-0"
             >
               {TAGLINE}
             </h2>
