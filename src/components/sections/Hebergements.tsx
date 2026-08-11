@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { REFUGES } from "@/lib/data/refuges";
@@ -317,18 +316,33 @@ export default function Hebergements() {
                   }}
                   className="absolute inset-0 will-change-transform"
                 >
-                  <Image
-                    src={refuge.image}
-                    alt={refuge.nom}
-                    fill
-                    sizes="100vw"
-                    priority={i === 0}
-                    // Source AVIFs (2400×1340, ~150KB) are already optimized;
-                    // Next's default re-encode at quality 75 would visibly
-                    // soften them. Same bandwidth either way.
-                    unoptimized
-                    className="object-cover"
-                  />
+                  {/* Plain `<picture>`, not `next/image`: the card needs ART
+                      DIRECTION (a differently-framed 9:16 crop below `md`),
+                      and next/image has no way to express that — one `src`,
+                      and `sizes` only ever picks a WIDTH of the same crop.
+                      The source AVIFs are already optimized (Next's default
+                      re-encode at quality 75 visibly softens them), so the
+                      component was contributing nothing but `fill`, which is
+                      four utility classes.
+                      `imagePortrait` is optional — a refuge without one keeps
+                      serving its landscape at every width. */}
+                  <picture>
+                    {refuge.imagePortrait && (
+                      <source
+                        media={MQ.mdUp}
+                        srcSet={refuge.image}
+                        type="image/avif"
+                      />
+                    )}
+                    <img
+                      src={refuge.imagePortrait ?? refuge.image}
+                      alt={refuge.nom}
+                      fetchPriority={i === 0 ? "high" : "auto"}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      decoding="async"
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  </picture>
                 </div>
 
                 <div

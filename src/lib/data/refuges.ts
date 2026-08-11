@@ -4,7 +4,14 @@
  *  - `surnom`: poetic subtitle shown above the name (e.g. "Sur le promontoire").
  *  - `description`: 2-3 sentences describing the location and ambience.
  *  - `capacite` / `surface`: human-readable specs ("2-4 personnes", "46 m²").
- *  - `image`: `/public` path to the cover AVIF.
+ *  - `image`: `/public` path to the cover AVIF. Landscape, ~16:9.
+ *  - `imagePortrait`: **optional** 9:16 variant, served below `md` by the
+ *    `<picture>` in Hebergements. The cards are `absolute inset-0` inside a
+ *    `~100lvh` container, so on a 390x844 phone the frame ratio is ~0.45 and
+ *    a 16:9 source loses most of its width to the crop. Optional on purpose:
+ *    each portrait is a separate generation, and a refuge without one simply
+ *    keeps serving its landscape everywhere — no broken state, and adding one
+ *    later is a single line here.
  *  - `tarifParNuit`: indicative night rate in CAD, drives the Reserve cost
  *    summary.
  *
@@ -12,9 +19,24 @@
  *  onto z-index stacking and slide-up sequencing, so reordering this array
  *  will reorder the scroll-pinned slideshow.
  *
- *  Consumers narrow per-entry types with `(typeof REFUGES)[number]` — no
- *  separate `Refuge` type alias is needed (avoids drift if the shape evolves). */
-export const REFUGES = [
+ *  Consumers keep narrowing with `(typeof REFUGES)[number]`, which now
+ *  resolves through the annotation below. The annotation exists for one
+ *  reason: `imagePortrait` is optional, and on a bare array literal TypeScript
+ *  infers a union in which the property exists on some members only — every
+ *  read of `refuge.imagePortrait` would then fail to compile. */
+type Refuge = {
+  slug: string;
+  nom: string;
+  surnom: string;
+  description: string;
+  capacite: string;
+  surface: string;
+  image: string;
+  imagePortrait?: string;
+  tarifParNuit: number;
+};
+
+export const REFUGES: Refuge[] = [
   {
     slug: "brume",
     nom: "Brume",
@@ -24,6 +46,7 @@ export const REFUGES = [
     capacite: "2-4 personnes",
     surface: "46 m²",
     image: "/images/refuges/brume.avif",
+    imagePortrait: "/images/refuges/brume-portrait.avif",
     tarifParNuit: 680,
   },
   {
