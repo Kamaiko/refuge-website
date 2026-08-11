@@ -143,6 +143,7 @@ export default function Feedback() {
           alt="Patrick Patenaude"
           width={96}
           height={96}
+          unoptimized
           className="h-12 w-12 rounded-full object-cover shrink-0"
         />
         <div className="flex flex-col leading-tight">

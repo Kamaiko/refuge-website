@@ -282,6 +282,7 @@ export default function Soir() {
                 role="presentation"
                 fill
                 sizes="440px"
+                unoptimized
                 className="object-cover object-center"
               />
 
@@ -299,6 +300,7 @@ export default function Soir() {
                   role="presentation"
                   fill
                   sizes="440px"
+                  unoptimized
                   className="object-cover object-center"
                 />
               </div>

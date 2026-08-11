@@ -330,6 +330,7 @@ export default function ReservePanel() {
                           alt={r.nom}
                           fill
                           sizes="180px"
+                          unoptimized
                           className="object-cover"
                         />
                       </span>
