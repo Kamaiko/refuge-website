@@ -91,19 +91,19 @@ const CARDS: readonly Card[] = [
 ] as const;
 
 /**
- * Horizontal pinned scroll-scrub carousel. The section pins for ~3
- * viewports on desktop; during the pin the vertical scroll progress maps
- * linearly onto an `xPercent` translation of the track. Two of the three
- * cards (indexes 1 and 2) carry an extra scrub-tied **internal pan** —
- * their image translates a few percent to the left as the track itself
- * pans, so each frame layers two motion axes for parallax depth.
+ * Horizontal pinned scroll-scrub carousel. The section pins for 7.7 viewports
+ * on desktop; during the pin the vertical scroll progress maps linearly onto
+ * an `xPercent` translation of the track. Every card also carries a scrub-tied
+ * **internal pan** — its image translates a few percent left as the track
+ * itself pans, so each frame layers two motion axes for parallax depth.
  *
  * Lenis + scrub coexist cleanly (Hebergements proves this), so the
- * section-lock event is NOT dispatched — the section-lock is needed only
- * for the wheel-hijack flow in Pourquoi.
+ * section-lock event is NOT dispatched — that's needed only for the
+ * wheel-hijack flow in Pourquoi.
  *
- * Mobile + reduced-motion : drop pin entirely, render the 3 cards in a
- * vertical stack.
+ * Mobile + reduced-motion: drop the pin entirely and render the five cards in
+ * a horizontal snap-scroll track (mobile) that doubles as the reduced-motion
+ * layout at every width.
  */
 export default function Carousel() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -250,14 +250,14 @@ export default function Carousel() {
         Les activités du territoire, en images
       </h2>
 
-      {/* Mobile : horizontal thumb-swipe scroll. The pin / scrub doesn't
-          apply below md, but we still want the carousel feeling — so the
-          3 cards live in a horizontal overflow-x track with snap-mandatory.
-          Card layout : image (with niveau pill + indicators overlay) on
-          top, title + body below in plain text — keeps the photo as the
-          primary anchor and offloads body text into legible vertical
-          rhythm. `w-[85vw]` lets the edge of the next card peek on the
-          right, hinting at swipeability. */}
+      {/* Mobile: horizontal thumb-swipe scroll. The pin / scrub doesn't apply
+          below md, but the carousel feeling should survive — so the five cards
+          live in a horizontal overflow-x track with snap-mandatory.
+          Card layout: image (with niveau pill + indicators overlay) on top,
+          title and body below as plain text — keeps the photo as the primary
+          anchor and gives the body legible vertical rhythm instead of
+          overlaying it. `w-[85vw]` lets the next card peek on the right,
+          hinting at swipeability. */}
       <div className={`${prefersReducedMotion ? "block" : "md:hidden"} py-16`}>
         <div className="overflow-x-auto snap-x snap-mandatory flex gap-4 px-3 no-scrollbar">
           {CARDS.map((c, i) => (
@@ -390,19 +390,22 @@ export default function Carousel() {
   );
 }
 
-/** Per-card overlay : title top-left, difficulty pill top-right,
- *  subtitle bottom-left, page indicator bottom-right. Same composition
- *  on mobile and desktop, with slightly tighter padding on mobile. */
+/** Per-card overlay for the DESKTOP track: title top-left, difficulty pill
+ *  top-right, subtitle bottom-left, page indicator bottom-right.
+ *
+ *  Desktop only. The mobile stack builds its own simpler composition inline
+ *  (photo, then title and body below it as plain text) rather than overlaying
+ *  text on the image, so it never calls this. A `mobile` prop used to exist
+ *  here with a full set of alternate sizes — it was never passed as `true` by
+ *  any call site. */
 function CardOverlay({
   card,
   index,
   total,
-  mobile = false,
 }: {
   card: Card;
   index: number;
   total: number;
-  mobile?: boolean;
 }) {
   return (
     <>
@@ -419,24 +422,16 @@ function CardOverlay({
       />
 
       <div
-        className={`absolute inset-0 pointer-events-none ${
-          mobile ? "p-6" : "p-12 lg:p-16"
-        } flex flex-col justify-between`}
+        className={`absolute inset-0 pointer-events-none p-12 lg:p-16 flex flex-col justify-between`}
       >
         <div className="flex items-start justify-between gap-4">
           <h3
-            className={`text-creme font-medium leading-[1] tracking-tight ${
-              mobile
-                ? "text-3xl xs:text-4xl max-w-[70%]"
-                : "text-5xl lg:text-6xl max-w-[55%]"
-            }`}
+            className={`text-creme font-medium leading-[1] tracking-tight text-5xl lg:text-6xl max-w-[55%]`}
           >
             {card.titre}
           </h3>
           <span
-            className={`inline-flex items-center rounded-pill border border-creme/40 text-creme ${
-              mobile ? "px-4 py-1.5 text-xs" : "px-5 py-2 text-sm"
-            } font-medium tracking-wide backdrop-blur-sm bg-base-noir/30`}
+            className={`inline-flex items-center rounded-pill border border-creme/40 text-creme px-5 py-2 text-sm font-medium tracking-wide backdrop-blur-sm bg-base-noir/30`}
           >
             {card.niveau}
           </span>
@@ -444,11 +439,7 @@ function CardOverlay({
 
         <div className="flex items-end justify-between gap-6">
           <p
-            className={`text-creme font-medium leading-snug ${
-              mobile
-                ? "text-2xl xs:text-3xl max-w-sm"
-                : "text-3xl md:text-4xl lg:text-5xl max-w-2xl"
-            }`}
+            className={`text-creme font-medium leading-snug text-3xl md:text-4xl lg:text-5xl max-w-2xl`}
           >
             {card.sous}
           </p>

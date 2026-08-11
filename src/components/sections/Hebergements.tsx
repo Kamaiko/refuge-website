@@ -36,6 +36,8 @@ export default function Hebergements() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cardImageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const marqueeWrapRef = useRef<HTMLDivElement>(null);
+  /** base-noir overlay faded in mid-timeline, replacing a backgroundColor tween. */
+  const bgFadeRef = useRef<HTMLDivElement>(null);
   const loadingBarRef = useRef<HTMLDivElement>(null);
   const loadingBarFillRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -63,7 +65,9 @@ export default function Hebergements() {
         },
         (ctx) => {
           const { isMobile } = ctx.conditions as { isDesktop: boolean; isMobile: boolean };
-          const stickyDuration = isMobile ? "+=300%" : HEBERGEMENTS.stickyDuration;
+          const stickyDuration = isMobile
+            ? HEBERGEMENTS.stickyDuration.mobile
+            : HEBERGEMENTS.stickyDuration.desktop;
 
           gsap.set(cards[0], { scale: 0.42, yPercent: 0, opacity: 1, zIndex: 1 });
           gsap.set(cards[1], { yPercent: 110, scale: 1, opacity: 1, zIndex: 2 });
@@ -97,6 +101,16 @@ export default function Hebergements() {
             1 - HEBERGEMENTS.scaleStep,
             1,
           ] as const;
+          // Snap targets, derived from the timeline rather than hand-tuned.
+          // Each card finishes arriving one time-unit after its phase starts,
+          // and `TL_TOTAL` accounts for the trailing hold below — so these are
+          // the progress values at which a card sits settled and centred.
+          const TL_TOTAL = 5.5;
+          const SNAP_POINTS = [
+            ...PHASE_STARTS.map((start) => (start + 1) / TL_TOTAL),
+            1,
+          ];
+
           const tl = gsap.timeline({
             scrollTrigger: {
               trigger: section,
@@ -104,6 +118,18 @@ export default function Hebergements() {
               end: stickyDuration,
               pin: true,
               scrub: 1,
+              // Settle on the nearest refuge when the reader stops, instead of
+              // leaving a card half-arrived. Deliberately NOT a wheel-hijack:
+              // Pourquoi disables its own hijack below 768px because trapping
+              // touch scroll is hostile, and two locked sections would make
+              // the page read as a slideshow. `delay` waits out Lenis' inertia
+              // so the snap doesn't fight momentum that's still unwinding.
+              snap: {
+                snapTo: SNAP_POINTS,
+                duration: { min: 0.2, max: 0.5 },
+                delay: 0.12,
+                ease: "power2.out",
+              },
               onUpdate: (self) => {
                 const p = self.progress;
                 const idx = p < 0.36 ? 0 : p < 0.64 ? 1 : 2;
@@ -152,8 +178,17 @@ export default function Hebergements() {
           }
 
           tl.to(cards[1], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[1])
-            .to(cards[0], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[1])
-            .to(section, { backgroundColor: "var(--color-base-noir)", duration: 1, ease: "none" }, PHASE_STARTS[1]);
+            .to(cards[0], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[1]);
+
+          // Section background gris-tan → base-noir. Done by fading a
+          // base-noir layer in rather than tweening the section's own
+          // `backgroundColor`: colour is not a compositable property, so the
+          // old version forced a full-viewport repaint on every scrub frame.
+          // Opacity on a promoted layer is free by comparison, and the render
+          // is identical.
+          if (bgFadeRef.current) {
+            tl.to(bgFadeRef.current, { opacity: 1, duration: 1, ease: "none" }, PHASE_STARTS[1]);
+          }
 
           tl.to(cards[2], { yPercent: 0, duration: 1, ease: "none" }, PHASE_STARTS[2])
             .to(cards[1], { scale: STACK_FINAL_SCALES[1], duration: 1, ease: "none" }, PHASE_STARTS[2])
@@ -204,6 +239,15 @@ export default function Hebergements() {
       className="relative w-full bg-gris-tan overflow-hidden"
       style={{ height: "100lvh" }}
     >
+      {/* base-noir layer faded in by the timeline — see the comment on the
+          tween. Sits behind everything (`-z-10` would escape the section's
+          stacking context, so it's simply first in DOM at z-0). */}
+      <div
+        ref={bgFadeRef}
+        aria-hidden
+        className="absolute inset-0 bg-base-noir opacity-0 pointer-events-none will-change-[opacity]"
+      />
+
       <div
         ref={marqueeWrapRef}
         aria-hidden

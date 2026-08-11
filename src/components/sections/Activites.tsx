@@ -7,6 +7,13 @@ import SectionHeading from "@/components/common/SectionHeading";
 
 const LINES = ["Découvrez les", "activités du territoire"] as const;
 
+/** Below `lg`, "activités du territoire" no longer fits on one line — and the
+ *  curtain animates per ENTRY, so a wrapped entry would reveal both of its
+ *  visual lines at once instead of in sequence. Splitting it explicitly keeps
+ *  one curtain per line at every width, without touching the two-line desktop
+ *  composition that mirrors Choisir. */
+const LINES_COMPACT = ["Découvrez les", "activités du", "territoire"] as const;
+
 /** Three commitment tiers shown as labelled progress bars below the title.
  *  `fill` is a 0..1 fraction — the bar's filled length relative to the
  *  full track width. Hand-picked to read as a soft ascending pattern
@@ -48,7 +55,11 @@ export default function Activites() {
           block reads as one composed page, not three differently-inset
           blocks. Matches Choisir exactly. */}
       <div className="relative px-8 md:px-16 py-32 md:py-48">
-        <SectionHeading eyebrow="Seul, ou tous ensemble" lines={LINES} />
+        <SectionHeading
+          eyebrow="Seul, ou tous ensemble"
+          lines={LINES}
+          linesCompact={LINES_COMPACT}
+        />
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16 items-start">
           {/* Niveaux list (left column desktop). Each row : label + duration

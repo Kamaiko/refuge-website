@@ -12,6 +12,7 @@ import { CTA } from "@/lib/cta-dimensions";
 import { MQ } from "@/lib/breakpoints";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useOverlayA11y } from "@/hooks/useOverlayA11y";
+import { REFUGES } from "@/lib/data/refuges";
 
 /** Approximate coordinates of L'Acropole des Draveurs trail, within
  *  Parc national des Hautes-Gorges-de-la-Rivière-Malbaie (Charlevoix-Est).
@@ -476,27 +477,26 @@ export default function MapOverlay() {
           >
             Prêt à réserver&nbsp;?
           </button>
+          {/* One thumbnail per refuge, driven by REFUGES so the card can't
+              drift out of sync with the section again — it used to hardcode
+              Brume and Aubépine in duplicated markup, and Galets simply
+              wasn't there. */}
           <div className="mt-7 flex gap-3">
-            <div className="relative h-24 w-36 overflow-hidden rounded-2xl">
-              <Image
-                src="/images/refuges/brume.avif"
-                alt="Refuge Brume"
-                fill
-                sizes="144px"
-                unoptimized
-                className="object-cover"
-              />
-            </div>
-            <div className="relative h-24 w-36 overflow-hidden rounded-2xl">
-              <Image
-                src="/images/refuges/aubepine.avif"
-                alt="Refuge Aubépine"
-                fill
-                sizes="144px"
-                unoptimized
-                className="object-cover"
-              />
-            </div>
+            {REFUGES.map((refuge) => (
+              <div
+                key={refuge.slug}
+                className="relative aspect-[3/2] flex-1 overflow-hidden rounded-2xl"
+              >
+                <Image
+                  src={refuge.image}
+                  alt={`Refuge ${refuge.nom}`}
+                  fill
+                  sizes="(max-width: 768px) 30vw, 160px"
+                  unoptimized
+                  className="object-cover"
+                />
+              </div>
+            ))}
           </div>
         </div>
 

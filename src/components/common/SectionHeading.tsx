@@ -4,15 +4,24 @@ import { useRef, type ReactNode } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useEyebrowScrub } from "@/hooks/useEyebrowScrub";
 
 type Props = {
   /** Small line above the headline. A node rather than a string so call
    *  sites can interpolate `SITE_CONFIG.brandMark`. */
   eyebrow: ReactNode;
-  /** One entry per rendered line. Each gets its own curtain, so the split
-   *  is a design decision, not a wrapping accident. */
+  /** One entry per rendered line. Each gets its own curtain, so the split is
+   *  a design decision, not a wrapping accident. */
   lines: readonly string[];
+  /** Optional alternate split for viewports below `lg`.
+   *
+   *  Needed because the curtain is per ENTRY, not per rendered line: if an
+   *  entry wraps, both visual lines are revealed as one block and the effect
+   *  loses its stagger. "activités du territoire" fits on one line from about
+   *  900px up but wraps at 768 and below, so Activités passes a three-way
+   *  split here while keeping its two-line desktop composition. */
+  linesCompact?: readonly string[];
 };
 
 /**
@@ -34,11 +43,17 @@ type Props = {
  *
  * Reduced motion: lines are revealed instantly and nothing is scroll-driven.
  */
-export default function SectionHeading({ eyebrow, lines }: Props) {
+export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) {
   const scopeRef = useRef<HTMLDivElement>(null);
   const eyebrowRef = useRef<HTMLParagraphElement>(null);
   const titleWrapRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLSpanElement | null)[]>([]);
+
+  // SSR and the first client render return `false`, so the desktop split is
+  // what hydrates. Harmless here: the lines ship `visibility: hidden` and are
+  // only revealed by the curtain, so the reconciliation is never seen.
+  const isCompact = useMediaQuery(MQ.belowLg);
+  const renderedLines = isCompact && linesCompact ? linesCompact : lines;
 
   useEyebrowScrub(eyebrowRef, scopeRef);
 
@@ -161,7 +176,7 @@ export default function SectionHeading({ eyebrow, lines }: Props) {
 
       <div ref={titleWrapRef} className="mt-16 md:mt-24 will-change-transform">
         <h2 className="text-creme type-section-title">
-          {lines.map((line, i) => (
+          {renderedLines.map((line, i) => (
             <span
               key={line}
               ref={(el) => {

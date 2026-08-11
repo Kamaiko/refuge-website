@@ -29,8 +29,13 @@ export const SCROLL_OUT = {
 
 /** Scroll-pinned card stack on the Hebergements section. */
 export const HEBERGEMENTS = {
-  /** Total pinned scroll length — ~6 viewports on desktop. */
-  stickyDuration: "+=600%",
+  /** Total pinned scroll length. Mobile is deliberately half the desktop
+   *  length: the same three cards read faster on a small screen, and a
+   *  6-viewport pin on a phone feels like the page has stopped responding.
+   *  Both values live here — the mobile one used to be hardcoded inline next
+   *  to the desktop lookup, which is exactly how one gets tuned and the other
+   *  forgotten. */
+  stickyDuration: { mobile: "+=300%", desktop: "+=600%" },
   /** Scale reduction per stacked card behind the active one. */
   scaleStep: 0.07,
 } as const;

@@ -9,89 +9,22 @@ import { usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { SITE_CONFIG } from "@/lib/constants";
 import { POURQUOI } from "@/lib/motion";
 import { dispatchSectionLock } from "@/lib/section-lock";
-import RevealChars from "@/components/common/RevealChars";
 import SlideIndicators from "@/components/common/SlideIndicators";
+import {
+  SLIDES,
+  LABELS,
+  LAST_INDEX,
+  SLIDE_IMAGE_ZOOM,
+  TEXT_SWAP_DELAY_MS,
+} from "./pourquoi/slides";
+import {
+  CardSlot,
+  CardWrapper,
+  RoundedFrame,
+  SlideImage,
+  CardText,
+} from "./pourquoi/cards";
 
-type Slide = {
-  title: string;
-  body: string;
-  image: string;
-};
-
-/** Three reasons answering the "Pourquoi Aquilon ?" question posed by
- *  MarqueeBrand directly above. Three slides, alternating layout
- *  (text-left, image-left, text-left). The section is short-pinned
- *  while the wheel handler intercepts scroll ticks and advances slides
- *  at fixed speed — one tick = one slide, no queueing, no
- *  scroll-velocity coupling. */
-const SLIDES: readonly Slide[] = [
-  {
-    title: "Le matin ne commence pas. Il monte du fleuve.",
-    body: "La brume passe sous le plancher vers six heures. Vous n'avez rien d'autre à faire que la regarder.",
-    image: "/images/pourquoi/aube.avif",
-  },
-  {
-    title: "Le fjord change de couleur toutes les vingt minutes.",
-    body: "On finit par arrêter de compter. C'est l'instant où la journée cesse d'avoir un programme.",
-    image: "/images/pourquoi/fjord.avif",
-  },
-  {
-    title: "Le soir, la lumière la plus proche est à quinze minutes de marche.",
-    body: "Assez pour ne rien entendre. Assez peu pour changer d'avis.",
-    image: "/images/pourquoi/crete.avif",
-  },
-] as const;
-
-/** Timeline labels — one per slide, indexed 0..N-1 to match `currentSlide`
- *  so call sites read `tl.tweenTo(LABELS[target])` with no off-by-one
- *  conversion. Length must equal `SLIDES.length`. */
-const LABELS = ["slide-0", "slide-1", "slide-2"] as const;
-const LAST_INDEX = SLIDES.length - 1;
-
-/** Image transform-scale applied to every slide image. The "why" photos
- *  are framed 4:5 for the portrait card, so `1` reads correctly — no crop
- *  needed. Used as the default of `SlideImage` (desktop slides) AND as the
- *  inline transform of the mobile `<Image>` so the two paths stay in sync. */
-const SLIDE_IMAGE_ZOOM = 1;
-
-/**
- * Single source of truth for the carousel's internal text rhythm.
- *
- * Principle: do NOT ballpark the text-swap delay. Every text timing is
- * **derived** from `POURQUOI.transitionDuration` (the card-slide duration),
- * so changing one knob keeps everything in sync.
- *
- * Sizing rationale:
- *  - `revealDuration` ≈ half the card slide. The longest title's full
- *    reveal then takes ≈ `transitionDuration * 0.5 + chars * stagger`,
- *    which lands within (or just at the end of) the slide window.
- *  - `swapDelayMs` matches the RevealChars **reverse-out** time for the
- *    longest title — so the moment text-2 finishes fading out is exactly
- *    when text-3 starts fading in, both visible only while the card is
- *    travelling right-to-left.
- *
- * RevealChars internal formulas (from its source):
- *  - forward play time   = `duration + (chars - 1) * stagger`
- *  - reverse-out time    = `duration * 0.5 + (chars - 1) * stagger * 0.5`
- */
-const TEXT_REVEAL = {
-  /** Used for both the title (small stagger) and body (smaller still). */
-  duration: POURQUOI.transitionDuration * 0.55,
-  titleStagger: 0.012,
-  bodyStagger: 0.008,
-  bodyDelay: 0.05,
-} as const;
-
-const MAX_TITLE_CHARS = Math.max(...SLIDES.map((s) => s.title.length));
-
-/** Derived from the longest title's reverse-out time at the title config
- *  above. Fires text-3's `play=true` exactly when text-2's reverse-out
- *  finishes — no overlap, no gap, no hand-tuned constant. */
-const TEXT_SWAP_DELAY_MS = Math.round(
-  (TEXT_REVEAL.duration * 0.5 +
-    Math.max(0, MAX_TITLE_CHARS - 1) * TEXT_REVEAL.titleStagger * 0.5) *
-    1000,
-);
 
 /**
  * Three-slide horizontal carousel with **wheel-hijacked**, fixed-speed
@@ -516,155 +449,6 @@ export default function Pourquoi() {
         </CardSlot>
       </div>
     </section>
-  );
-}
-
-/** Absolutely-positioned half-width card slot. Width: `calc(50% - 1.125rem)`
- *  i.e. half the section minus 18px, which combined with the 12px outer
- *  inset and 12px center gap balances to a clean 12px gutter. */
-function CardSlot({
-  side,
-  zClass,
-  children,
-  ref,
-}: {
-  side: "left" | "right";
-  zClass: string;
-  children: React.ReactNode;
-  ref: React.Ref<HTMLDivElement>;
-}) {
-  const xClass = side === "left" ? "left-3" : "right-3";
-  return (
-    <div
-      ref={ref}
-      className={`absolute top-3 bottom-3 w-[calc(50%-1.125rem)] ${xClass} ${zClass} will-change-transform`}
-    >
-      {children}
-    </div>
-  );
-}
-
-/** Outer card body — the gris-tan rounded box with overflow clip. Holds
- *  one or more `CardText` content layers; only the wrapper carries the bg
- *  so stacked text layers don't paint over each other. Corners match the
- *  Hebergements cards (`rounded-frame md:rounded-hero`). */
-function CardWrapper({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative h-full w-full bg-gris-tan rounded-frame md:rounded-hero overflow-hidden">
-      {children}
-    </div>
-  );
-}
-
-/** Rounded image-card frame — same corner radius as `CardWrapper`, no bg.
- *  Wraps the absolute image layers so the rounded corners can clip them. */
-function RoundedFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="absolute inset-0 rounded-frame md:rounded-hero overflow-hidden">
-      {children}
-    </div>
-  );
-}
-
-/** Single full-bleed image inside a slide's frame. `unoptimized` because
- *  the source AVIFs are already encoded at the right size — Next's
- *  re-encode at quality 75 would only soften them. `scale` tightens the
- *  crop (defaults to `SLIDE_IMAGE_ZOOM`, currently 1 — composes
- *  multiplicatively with the GSAP dolly on imageCardA).
- *  `objectPosition` shifts the visible framing — lower
- *  X% pulls focal point left, higher X% pulls it right. */
-function SlideImage({
-  src,
-  alt = "",
-  objectPosition = "50% 50%",
-  scale = SLIDE_IMAGE_ZOOM,
-}: {
-  src: string;
-  /** Defaults to empty so the layered image stacks used during the
-   *  slide transition don't all announce themselves to screen readers.
-   *  Pass a real label on the foreground image only. */
-  alt?: string;
-  objectPosition?: string;
-  scale?: number;
-}) {
-  return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      sizes="50vw"
-      unoptimized
-      className="object-cover"
-      style={{ objectPosition, transform: `scale(${scale})` }}
-    />
-  );
-}
-
-/** Text content layer — title TOP-LEFT (large), pagination indicators
- *  BOTTOM-LEFT, secondary copy BOTTOM-RIGHT. RevealChars sweep is driven
- *  by `active`. `stacked` lets two layers overlap inside the same
- *  CardWrapper (used by textCardB to swap text-2 ↔ text-3 sequentially).
- *  `index`/`total` feed the `01 / 03` pagination chips. */
-function CardText({
-  title,
-  body,
-  active,
-  index,
-  total,
-  stacked = false,
-}: {
-  title: string;
-  body: string;
-  active: boolean;
-  index: number;
-  total: number;
-  stacked?: boolean;
-}) {
-  // Hide the inactive layer entirely — prevents per-glyph mask sub-pixel
-  // leak from bleeding through. The fade-out must not start before the
-  // RevealChars reverse-out has finished, or the glyphs dissolve while
-  // they're still sliding. `TEXT_SWAP_DELAY_MS` *is* that reverse-out
-  // duration for the longest title, so reusing it lands the fade exactly
-  // on the last frame of the slide-out — and it re-derives itself if the
-  // copy or the TEXT_REVEAL settings change. (It previously hardcoded
-  // 500ms, which was already ~200ms short of the real reverse-out.)
-  return (
-    <div
-      style={{ transitionDelay: active ? "0ms" : `${TEXT_SWAP_DELAY_MS}ms` }}
-      className={`${stacked ? "absolute" : "relative"} inset-0 h-full w-full p-10 md:p-14 lg:p-16 flex flex-col justify-between gap-8 transition-opacity duration-300 ${
-        active ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      <RevealChars
-        text={title}
-        play={active}
-        duration={TEXT_REVEAL.duration}
-        stagger={TEXT_REVEAL.titleStagger}
-        className="block text-creme-terre/85 text-3xl xs:text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.05] tracking-tight"
-      />
-
-      {/* Symmetric inset on the bottom row keeps both ends clear of the
-          fixed Menu pill at viewport bottom-center AND keeps the visual
-          rhythm consistent card-to-card — every card gets the same
-          horizontal breathing room, regardless of which side it sits on. */}
-      <div className="flex items-end justify-between gap-6 px-12 md:px-16 lg:px-20">
-        <SlideIndicators
-          current={index}
-          total={total}
-          active={active}
-          shiftLeft={index !== 2}
-        />
-        <div className="text-creme text-xl md:text-2xl leading-snug max-w-lg text-right font-semibold">
-          <RevealChars
-            text={body}
-            play={active}
-            duration={TEXT_REVEAL.duration}
-            delay={TEXT_REVEAL.bodyDelay}
-            stagger={TEXT_REVEAL.bodyStagger}
-          />
-        </div>
-      </div>
-    </div>
   );
 }
 

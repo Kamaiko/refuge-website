@@ -14,6 +14,7 @@
 export const BP = {
   xs: 390,
   md: 768,
+  lg: 1024,
 } as const;
 
 export const MQ = {
@@ -23,4 +24,9 @@ export const MQ = {
   belowMd: `(max-width: ${BP.md - 1}px)`,
   /** Desktop layouts kick in. */
   mdUp: `(min-width: ${BP.md}px)`,
+  /** Narrow enough that long display headlines wrap. Measured: "activités du
+   *  territoire" at `md:text-[10vw]` fits on one line from ~900px up, but
+   *  wraps at 768 — the `md:` styles apply there yet the container is still
+   *  too tight. `lg` is the nearest standard breakpoint clear of that zone. */
+  belowLg: `(max-width: ${BP.lg - 1}px)`,
 } as const;

@@ -14,5 +14,3 @@ export const NAV = [
   { label: `Pourquoi ${SITE_CONFIG.brandMark} ?`, href: "#pourquoi" },
   { label: "Feedback", href: "#feedback" },
 ] as const;
-
-export type NavItem = (typeof NAV)[number];

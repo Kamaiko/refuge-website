@@ -163,11 +163,41 @@ feu, Activités ouvre sur « Seul, ou tous ensemble ».
 Jamais implémentées, malgré les mentions ailleurs dans ce fichier :
 `Lieu.tsx`, `Galerie.tsx`, Journal, FAQ.
 
+## Règle éditoriale — verrouillée
+
+> **Le refuge est privé. Le territoire se partage.**
+
+Le logement reste absolument solitaire ; c'est la promesse produit et c'est ce
+que vendent les trois descriptions de refuges. Le social est **optionnel** et
+vit hors du refuge — le feu, le soir. Silence = registre dominant, ~70/30.
+
+Tout ajout de copy ou d'image se juge là-dessus. Le registre « fête » a été
+retiré partout : « Terrasse en fête » est devenue « Le passage des bélugas »,
+et les médaillons ne montrent plus personne.
+
+## Primitives partagées
+
+| Primitive | Rôle |
+|---|---|
+| `SectionHeading` | Eyebrow + titre multi-lignes (depth, parallax, rideau par ligne). Choisir et Activités portaient chacune leur copie — ~125 lignes dupliquées. ⚠️ Le rideau anime **une entrée de `lines`**, pas une ligne rendue : si une entrée se replie, ses deux lignes visuelles sont révélées en bloc. D'où `linesCompact`, jeu alternatif sous `lg` — « activités du territoire » tient sur une ligne dès ~900 px mais se replie à 768. |
+| `useEyebrowScrub` | Le fade-and-rise scrubbé de l'eyebrow. Choisir, Activités et Cta le partagent ; le Cta a un markup différent, d'où un hook et non un composant. |
+| `useOverlayA11y` | Escape + sauvegarde/restauration du focus. Les 3 overlays en avaient chacun une copie. |
 | `createOverlayContext` | Factory Provider + hook pour un overlay open/close. Menu et ReservePanel en sortent. `MapOverlayContext` reste à part (état `preloaded` en plus). |
 | `usePrefersReducedMotion` | Dans `hooks/useMediaQuery.ts`. Pour **changer de layout**, pas pour animer — les paramètres d'animation passent par `gsap.matchMedia()`. |
 | `wantsReducedMotion()` | Dans `lib/motion.ts`. Lecture ponctuelle dans un handler ou un effet de montage, sans souscription. |
 | `RevealText` / `RevealChars` / `CurtainReveal` / `AquilonReveal` | Primitives de reveal. `RevealText` expose `start`, ce qui permet de découper un titre en plusieurs temps sans la modifier. |
 | `Marquee`, `BgGradient`, `SlideIndicators`, `NavWheelLink`, `SmoothScroll`, `CustomCursor` | Inchangées. |
+
+**Découpage** : `Pourquoi.tsx` ne garde que sa logique de scroll ; ses cartes
+de présentation vivent dans `sections/pourquoi/cards.tsx` et ses données +
+constantes dérivées dans `sections/pourquoi/slides.ts`. Les autres gros
+fichiers (`MapOverlay`, `ReservePanel`, `Carousel`, `Header`, `Hebergements`)
+sont longs mais cohérents — les découper par taille seule disperserait la
+logique sans rien clarifier.
+
+⚠️ **Les données du Carousel sont dans `Carousel.tsx`**, pas dans
+`src/lib/data`. Le genre de détail qui fait perdre dix minutes trois semaines
+plus tard.
 
 ### Assets — état
 
@@ -233,6 +263,47 @@ et au moins un appelant le pilote depuis une branche `no-preference`.
 - Stack mirroir local : `c:\DevTools\Projects\WaaS-Websites\ttminc-website`
 - `docs/assets-a-generer.md` — pipeline Higgsfield, prompts littéraux, règles de brief
 - `docs/backlog.md` — dette assumée, avec le *pourquoi* de chaque report
+
+## Pièges connus
+
+### Le serveur de dev sert un CSS périmé
+
+Symptôme : les titres rendent à 16 px au lieu de 144, les coins arrondis
+disparaissent, les bandes wordmark rapetissent. Autrement dit **toute
+modification récente de `globals.css` semble ignorée**.
+
+Cause : des processus `node` d'une session précédente restent vivants et
+gardent le port 3001. Un `pnpm dev` lancé par-dessus paraît fonctionner, mais
+c'est l'ancien serveur qui répond, avec son CSS figé. On a compté **huit
+processus de deux générations** simultanément.
+
+Diagnostic en une commande — comparer le disque et ce qui est servi :
+
+```bash
+curl -s http://localhost:3001/ | grep -oE '/_next/static/[^"]+\.css' | head -1 \
+  | xargs -I{} curl -s "http://localhost:3001{}" | grep -c "radius-hero"
+```
+
+Si le compte est 0 alors que le token est bien dans `globals.css`, c'est ça.
+
+Remède :
+```bash
+# PowerShell
+Get-Process node | Stop-Process -Force
+Remove-Item .next -Recurse -Force
+pnpm build && pnpm start   # verifier sur le BUILD, pas sur le dev
+```
+
+⚠️ **Vérifier ce genre de symptôme sur `pnpm build` + `pnpm start`, jamais sur
+le serveur de dev.** J'ai failli réécrire du CSS parfaitement fonctionnel en
+me fiant à ce que servait un serveur zombie.
+
+### Cette panne est silencieuse
+
+Le build passe, le lint passe, le texte rétrécit. Aucun outil ne la signale.
+D'où l'assertion de contrôle à garder dans toute passe de vérification
+navigateur : **le `<h2>` de Choisir doit dépasser 100 px de `font-size` à
+1440 px de large**. Une ligne, et elle couvre toute la famille de tokens.
 
 ## Commandes utiles
 
