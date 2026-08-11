@@ -35,15 +35,10 @@ export const SLIDES: readonly Slide[] = [
 
 /** Timeline labels — one per slide, indexed 0..N-1 to match `currentSlide` so
  *  call sites read `tl.tweenTo(LABELS[target])` with no off-by-one conversion.
- *  Length must equal `SLIDES.length`. */
-export const LABELS = ["slide-0", "slide-1", "slide-2"] as const;
+ *  Derived rather than written out: the "must match `SLIDES.length`" invariant
+ *  is one nobody can break this way. */
+export const LABELS = SLIDES.map((_, i) => `slide-${i}`);
 export const LAST_INDEX = SLIDES.length - 1;
-
-/** Image transform-scale applied to every slide image. The "why" photos are
- *  framed 4:5 for the portrait card, so `1` reads correctly — no crop needed.
- *  Used as the default of `SlideImage` (desktop slides) AND as the inline
- *  transform of the mobile `<Image>`, so the two paths stay in sync. */
-export const SLIDE_IMAGE_ZOOM = 1;
 
 /**
  * Single source of truth for the carousel's internal text rhythm.

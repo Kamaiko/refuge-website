@@ -187,7 +187,7 @@ export default function SectionHeading({ eyebrow, lines, linesCompact }: Props) 
       </p>
 
       <div ref={titleWrapRef} className="mt-16 md:mt-24 will-change-transform">
-        <h2 className="text-creme type-section-title">
+        <h2 className="text-creme text-[11vw] md:text-[10vw] font-medium leading-[0.95] tracking-[-0.045em]">
           {renderedLines.map((line, i) => (
             <span
               key={line}

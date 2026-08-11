@@ -29,13 +29,22 @@ export const SCROLL_OUT = {
 
 /** Scroll-pinned card stack on the Hebergements section. */
 export const HEBERGEMENTS = {
-  /** Total pinned scroll length. Mobile is deliberately half the desktop
-   *  length: the same three cards read faster on a small screen, and a
-   *  6-viewport pin on a phone feels like the page has stopped responding.
-   *  Both values live here — the mobile one used to be hardcoded inline next
-   *  to the desktop lookup, which is exactly how one gets tuned and the other
-   *  forgotten. */
-  stickyDuration: { mobile: "+=300%", desktop: "+=600%" },
+  /** Total pinned scroll length. Both values live here — the mobile one used
+   *  to be hardcoded inline next to the desktop lookup, which is exactly how
+   *  one gets tuned and the other forgotten.
+   *
+   *  Desktop was 600%. At that length the four snap intervals are ~1460px of
+   *  scroll each, so crossing an interval's midpoint costs ~730px — while one
+   *  wheel gesture through Lenis delivers 300-500px. Every single gesture fell
+   *  short and got snapped back, and reaching the next card took two. 400%
+   *  puts the midpoint at ~435px: a deliberate gesture carries, a hesitant one
+   *  doesn't. Deliberately NOT solved with a wheel-hijack — see the snap
+   *  comment in `Hebergements.tsx`.
+   *
+   *  Mobile stays shorter still: the same three cards read faster on a small
+   *  screen, and a long pin on a phone feels like the page has stopped
+   *  responding. */
+  stickyDuration: { mobile: "+=300%", desktop: "+=400%" },
   /** Scale reduction per stacked card behind the active one. */
   scaleStep: 0.07,
 } as const;

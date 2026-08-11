@@ -14,7 +14,6 @@ import {
   SLIDES,
   LABELS,
   LAST_INDEX,
-  SLIDE_IMAGE_ZOOM,
   TEXT_SWAP_DELAY_MS,
 } from "./pourquoi/slides";
 import {
@@ -380,7 +379,6 @@ export default function Pourquoi() {
                 sizes="100vw"
                 unoptimized
                 className="object-cover"
-                style={{ transform: `scale(${SLIDE_IMAGE_ZOOM})` }}
               />
             </div>
           </article>

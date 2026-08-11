@@ -166,23 +166,31 @@ verticale empilée pour ce cas, ou rendre la piste focusable avec des
 contrôles visibles. C'est un vrai trou, mais étroit — reduced-motion **et**
 desktop **et** souris.
 
-### `.focus-ring` et `.eyebrow` : la définition existe, la migration non
-Les deux classes sont définies dans `globals.css` mais n'ont **qu'un seul**
-point d'appel chacune. Les chaînes d'utilitaires qu'elles remplacent sont
-toujours écrites en clair dans Header (×3), MapOverlay (×2), ReservePanel
-(×3), Hebergements, NavWheelLink, SocialIcons et Proximite.
+### ~~`.focus-ring` et `.eyebrow`~~ — débloqué, migration à faire
+`.focus-ring` n'avait qu'un point d'appel, et la raison n'était **pas** la
+paresse : la classe figeait `ring-offset-base-noir`, alors que la moitié des
+anneaux inline restants sont sur gris-tan (ReservePanel, SocialIcons). Elle ne
+pouvait littéralement pas les absorber. L'offset est maintenant une variable
+(`--focus-ring-offset`, définie sur `:root`), qu'un conteneur sur une autre
+surface redéfinit pour son sous-arbre. **La passe est désormais mécanique** :
+Header (×3), MapOverlay (×2), ReservePanel (×3), Hebergements, NavWheelLink,
+SocialIcons, Proximite (celui-ci en `ring-offset-4`).
 
-C'est une passe mécanique. Les commentaires dans `globals.css` disent
-maintenant la vérité — ils annonçaient 9 et 6 points d'appel.
+`.eyebrow` est renommée **`.label-caps`** : `SectionHeading` a un prop
+`eyebrow` qui rend `text-xl md:text-2xl font-semibold` — un mot, deux sens, et
+la classe ne s'appliquait même pas au composant qui possédait le mot. Toujours
+un seul point d'appel (`Soir`) : les spellings inline de Hebergements,
+ReservePanel et Header sont chacun d'une taille différente, donc ils ne
+forment pas encore une famille. Définir la famille avant d'extraire.
 
-### Révélation du texte dépendante de la direction
-`Hebergements` révèle le texte de chaque carte selon `self.direction`, avec
-une hystérésis (`TEXT_IN` / `TEXT_OUT`). L'état au repos dépend donc du
-chemin parcouru pour y arriver. Ça fonctionne en scroll continu — vérifié —
-mais c'est fragile : le snap a dû être dérivé de `TEXT_OUT` pour ne pas se
-poser sur un texte caché, et toute retouche de l'un demande d'auditer l'autre.
-Une révélation basée uniquement sur la progression, sans direction, serait
-plus simple à raisonner.
+### ~~Révélation du texte dépendante de la direction~~ — corrigé
+`Hebergements` lisait `self.direction` pour choisir son seuil, et plaçait le
+seuil de masquage **au-dessus** de celui de révélation : entre les deux, l'état
+basculait à chaque changement de direction — exactement le scintillement que le
+commentaire prétendait empêcher. Les deux seuils sont maintenant lus de la même
+façon dans les deux sens, avec une zone morte de 0,03. L'état au repos ne
+dépend plus du chemin parcouru, et les points de snap ont pu redescendre là où
+les cartes arrivent vraiment.
 
 ## 🧱 Code — reste du plan de reprise
 
@@ -198,3 +206,139 @@ plus simple à raisonner.
 - **Réservations non envoyées** — `src/actions/reservation.ts` valide en Zod et retourne un message de succès, mais l'intégration Resend n'a jamais été branchée. Le formulaire ment à l'utilisateur.
 - **Ancres orphelines** — `#choisir`, `#proximite` et `#cta` sont déclarées sur les sections mais absentes de `src/lib/data/nav.ts`.
 - **Sections planifiées jamais implémentées** — `Lieu.tsx` et `Galerie.tsx` (référencées dans CLAUDE.md et `assets-a-generer.md`).
+
+---
+
+## 🎨 Lisibilité — surnom des cartes Hébergements
+
+Le **petit titre** de chaque carte (le `surnom`, `text-creme-dim` sur le
+`RevealChars` du haut) manque de contraste sur une des trois photos. Verdict
+utilisateur, en observation directe :
+
+| Carte | Surnom | Lisibilité |
+|---|---|---|
+| Brume | « Au creux de la forêt » | parfait |
+| Aubépine | — | passe |
+| **Galets** | — | **difficile à lire** |
+
+Le reste du contenu (nom, description, capacité) est lisible sur les trois.
+C'est donc un problème de **ce niveau typographique précis** — 12 px,
+`tracking-[0.3em]`, `creme-dim` (#C9C5BD) — posé sur la zone la plus claire
+d'une photo, pas un problème général de la carte.
+
+Pistes, de la moins à la plus invasive :
+
+1. **Renforcer le dégradé radial de la carte** sous ce coin uniquement. Il
+   existe déjà (`radial-gradient(ellipse 90% 65% at 0% 100%…)`) mais il est
+   ancré en bas à gauche, alors que le surnom est plus haut. Le plus ciblé.
+2. **Passer le surnom en `creme`** plein plutôt que `creme-dim`. Une ligne,
+   mais ça aplatit la hiérarchie surnom → nom sur les trois cartes.
+3. **Regénérer `refuge-galets.avif`** avec une zone basse plus sombre. Coûte
+   des crédits et rouvre l'art direction d'une image déjà validée.
+
+⚠️ Ne pas trancher au jugé : mesurer le ratio de contraste réel sous le texte
+sur les trois cartes avant de choisir. La différence perçue entre « passe » et
+« difficile » est peut-être un écart de 0,3 de ratio, auquel cas la piste 1
+suffit et ne touche à rien d'autre.
+
+## 🧱 Code — reports assumés de la passe simplify
+
+Trouvés par la revue, **volontairement pas corrigés** dans cette passe parce
+que chacun est un vrai refactor et non un ajustement. Consignés avec le
+raisonnement pour ne pas les redécouvrir.
+
+### L'état caché devrait vivre en CSS, pas en JS (le plus rentable)
+Beaucoup d'éléments sont livrés cachés par le markup SSR (`opacity: 0`,
+`visibility: hidden`, `clip-path: inset(100%)`) et **seul JS défait ça**.
+Chaque branche `prefers-reduced-motion: reduce` — il y en a six — ne fait
+qu'annuler à la main l'état caché posé quelques lignes plus haut.
+
+Les deux moitiés de l'invariant sont écrites dans deux langages, dans deux
+fichiers. `AquilonReveal` a déjà **perdu** cette course en production : la
+préférence lit `false` au rendu d'hydratation, un tween de masquage part, et
+la branche `reduce` arrive trop tard. `RevealChars` la gagne aujourd'hui *par
+chance de timing* — son propre commentaire le dit.
+
+Forme correcte : mettre l'état caché derrière la media query, en CSS.
+
+```css
+@media (prefers-reduced-motion: no-preference) {
+  [data-anim="fade"]    { opacity: 0; }
+  [data-anim="curtain"] { visibility: hidden; }
+}
+```
+
+Le JSX porte `data-anim` au lieu d'un style inline, et chaque branche `reduce`
+se réduit à « ne pas animer ». La course disparaît structurellement : le CSS
+s'applique dès la première peinture serveur.
+
+⚠️ Un helper `restAt(targets, props)` **ne marcherait pas** : les états de
+repos sont réellement spécifiques. Ce qui est partagé, c'est l'état *caché*.
+
+### `SectionHeading.linesCompact` → SplitText
+Le prop existe parce que le rideau anime **une entrée de `lines`**, pas une
+ligne rendue. Coût : une souscription `useMediaQuery`, un tableau de
+dépendances porteur, un breakpoint `MQ.belowLg` qui n'existe que pour décrire
+où une phrase française passe à la ligne — et un bug déjà livré (le titre
+Activités rendu « Découvrez les » et rien d'autre).
+
+`gsap/SplitText` est présent dans `node_modules` et libre depuis GSAP 3.13.
+`new SplitText(h2, { type: "lines" })` donne un wrapper par ligne **rendue**,
+re-splittable au resize. `linesCompact`, `MQ.belowLg` et le `useMediaQuery` du
+composant disparaissent, et l'effet devient *plus* correct — aujourd'hui il se
+dé-stagge à toute largeur où une entrée se replie sans qu'on l'ait mesurée.
+
+### MenuOverlay / ReservePanel : les valeurs finales écrites trois fois
+Les branches reduced-motion réénoncent à la main `top: GAP`, `borderRadius:
+RADIUS_OPEN`, `xPercent: 105`… qui existent déjà dans le chemin ouvert et dans
+le chemin fermé. Trois copies des mêmes nombres, rien qui les lie.
+
+Forme correcte : une `gsap.timeline({paused: true})` qui porte les valeurs une
+fois, pilotée par `tl.play()` / `tl.reverse()`, et `tl.progress(isOpen ? 1 : 0)
+.pause()` sous reduced-motion. La chorégraphie de fermeture est asymétrique
+(durées et eases par élément), donc c'est un vrai refactor.
+
+### `createOverlayContext` : extraire `useOverlayState`
+La factory empaquette la machine à états open/close **et** le contexte + hook.
+`MapOverlay` a besoin de la première et ne peut pas l'avoir, parce qu'elle
+n'est atteignable qu'à travers le second — d'où ses `useState`/`useCallback`/
+`useMemo` recopiés. Sortir `useOverlayState()` en export séparé (≈10 lignes)
+règle ça sans rendre la factory générique, ce qui coûterait plus cher.
+
+### `AquilonReveal` ⊂ `RevealChars`
+Depuis le retrait du prop `mode`, `AquilonReveal` n'est plus que `RevealChars`
++ un `clipPath` : même markup `.rc-glyph`, même effet de montage, même branche
+reduced-motion au commentaire près, même tween. Différences réelles :
+`clipPath`, `SLIDE_START_X` 40 au lieu de 110, pas de stagger, texte figé sur
+`SITE_CONFIG.brandMark`.
+
+La duplication a **déjà coûté** : le correctif de la course de tweens a dû
+être appliqué deux fois, et ne l'a été qu'une seule au premier passage — d'où
+le wordmark de footer invisible. Fusionner demande de passer `clip` /
+`slideStartX` en props. Pas fait ici parce que le dégradé du footer dépend de
+la structure `.rc-glyph` et mérite une vérification visuelle, pas un typecheck.
+
+### Contexte d'overlay : séparer actions et état
+`createOverlayContext` mémoïse bien sa valeur, mais regroupe `isOpen` avec les
+trois callbacks stables. Tous les consommateurs re-rendent donc à chaque
+bascule — y compris `Hebergements`, qui ne lit que `open`. Ouvrir le panneau
+Réserver re-rend les trois cartes et leurs six `RevealChars`, dont la
+segmentation par regex n'est pas mémoïsée. Deux contextes (actions constantes /
+état) règlent ça.
+
+### `will-change` permanents
+Quatre déclarations posées dans le JSX, donc actives pour toute la durée de vie
+de la page, alors que la propriété n'est animée que pendant la traversée d'une
+section : `Hebergements` (calque plein écran en `opacity`), `Soir` (deux
+rideaux en `clip-path`, colonne de texte en `transform`). Le correctif propre
+demande de poser/retirer le hint autour de l'animation — pas trivial sur un
+ScrollTrigger scrubbé, qui n'a pas de `onStart`/`onComplete` significatifs.
+
+### `Marquee` : le ticker ne s'éteint jamais
+`gsap.ticker.add()` tourne pour toute la durée de vie du composant, sans porte
+de visibilité. Quatre instances sur la page, dont une dans `MenuOverlay` —
+montée et masquée toute la session, une écriture de transform par frame sur un
+`text-[18vw]` que personne ne peut voir. Avec `pauseOnHover` (activé par
+`Cta`), un listener `mousemove` **et** un listener `scroll` appellent
+`getBoundingClientRect()` à chaque événement : un layout forcé par frame
+pendant un scroll Lenis. Un `IntersectionObserver` réglerait les deux.

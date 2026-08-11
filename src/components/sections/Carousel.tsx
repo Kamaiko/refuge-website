@@ -352,7 +352,10 @@ export default function Carousel() {
                 <article
                   className="relative h-full w-full overflow-hidden rounded-hero"
                   style={{
-                    clipPath: "inset(0 round 60px)",
+                    // Reads the token rather than repeating its value — the
+                    // `rounded-hero` class three lines up is the same 60px,
+                    // and a literal here would silently stop matching it.
+                    clipPath: "inset(0 round var(--radius-hero))",
                     transform: "translateZ(0)",
                   }}
                 >
@@ -422,16 +425,16 @@ function CardOverlay({
       />
 
       <div
-        className={`absolute inset-0 pointer-events-none p-12 lg:p-16 flex flex-col justify-between`}
+        className="absolute inset-0 pointer-events-none p-12 lg:p-16 flex flex-col justify-between"
       >
         <div className="flex items-start justify-between gap-4">
           <h3
-            className={`text-creme font-medium leading-[1] tracking-tight text-5xl lg:text-6xl max-w-[55%]`}
+            className="text-creme font-medium leading-[1] tracking-tight text-5xl lg:text-6xl max-w-[55%]"
           >
             {card.titre}
           </h3>
           <span
-            className={`inline-flex items-center rounded-pill border border-creme/40 text-creme px-5 py-2 text-sm font-medium tracking-wide backdrop-blur-sm bg-base-noir/30`}
+            className="inline-flex items-center rounded-pill border border-creme/40 text-creme px-5 py-2 text-sm font-medium tracking-wide backdrop-blur-sm bg-base-noir/30"
           >
             {card.niveau}
           </span>
@@ -439,7 +442,7 @@ function CardOverlay({
 
         <div className="flex items-end justify-between gap-6">
           <p
-            className={`text-creme font-medium leading-snug text-3xl md:text-4xl lg:text-5xl max-w-2xl`}
+            className="text-creme font-medium leading-snug text-3xl md:text-4xl lg:text-5xl max-w-2xl"
           >
             {card.sous}
           </p>

@@ -49,6 +49,9 @@
 
 :root {
   color-scheme: dark;
+  /* Surface the focus ring is drawn against — see `.focus-ring` below.
+     Override on any container that sits on a different background. */
+  --focus-ring-offset: var(--color-base-noir);
 }
 
 html, body {
@@ -121,13 +124,14 @@ body::-webkit-scrollbar,
 @layer components {
   /* Keyboard-focus ring — the house style, so new interactive elements have
      one thing to reach for.
-     ⚠️ Only the Cta links use it today. The same five utilities are still
-     written out inline in Header (×3), MapOverlay (×2), ReservePanel (×3),
-     Hebergements, NavWheelLink and SocialIcons. Migrating them is a
-     mechanical sweep nobody has done yet — so this is an intention, not a
-     description of the codebase. */
+     The offset colour is a variable, not a baked-in `ring-offset-base-noir`.
+     That was the reason the sweep never happened: half the remaining inline
+     rings sit on gris-tan (ReservePanel, SocialIcons) and the class simply
+     could not absorb them. Any container on another surface redefines
+     `--focus-ring-offset` for its subtree and the class follows. */
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2 focus-visible:ring-offset-base-noir;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-creme focus-visible:ring-offset-2;
+    --tw-ring-offset-color: var(--focus-ring-offset);
   }
 
   /* ── Display type ───────────────────────────────────────────────────
@@ -150,29 +154,32 @@ body::-webkit-scrollbar,
        Manifeste              lg:text-[5.5vw]    (was 5vw — aligned)
        Feedback pull-quote    lg:text-[3.8vw]    (its own role) */
 
-  /* The section headline. Applied once, inside `SectionHeading` — which is
-     itself what Choisir and Activités now share, so the duplication this was
-     created to kill is already gone at the component level. (The Cta intro is
-     NOT one of these: it's `text-base md:text-lg`, a small paragraph acting
-     as the section's semantic title.) */
-  .type-section-title {
-    @apply text-[11vw] md:text-[10vw] font-medium leading-[0.95] tracking-[-0.045em];
-  }
+  /* NOTE — there is no `.type-section-title`. It existed with exactly one
+     call site: inside `SectionHeading`, which is *itself* the abstraction
+     Choisir and Activités share. Two names for one thing; the utilities now
+     live on the `<h2>` in that component. (The Cta intro is NOT one of these:
+     it's `text-base md:text-lg`, a small paragraph acting as the section's
+     semantic title.) */
 
   /* The full-bleed scrolling wordmark bands: MarqueeBrand, the Menu
-     overlay, and the Hebergements background. They share the md size;
-     the two that need a smaller mobile size override it with `max-md:`. */
+     overlay, and the Hebergements background.
+     Only the md+ size is shared. The mobile size is NOT declared here —
+     all three bands differ there (24 / 18 / 14vw), so a default would have
+     been wrong for two of the three consumers, which then overrode it with
+     `max-md:`. A shared class should only assert what is actually shared. */
   .type-wordmark-band {
-    @apply text-[24vw] md:text-[12vw] font-semibold leading-none tracking-[-0.04em];
+    @apply md:text-[12vw] font-semibold leading-none tracking-[-0.04em];
   }
 
-  /* Section eyebrow — the small uppercase label above a headline.
-     ⚠️ Only `Soir` uses it today. `text-xs uppercase tracking-[0.3em]` is
-     still inline in Hebergements, Header and ReservePanel; Choisir and
-     Activités get theirs from `SectionHeading`, which spells the utilities
-     out rather than using this class. Same situation as `.focus-ring`: the
-     definition exists, the sweep doesn't. */
-  .eyebrow {
+  /* The small uppercase label above a headline.
+     Named `.label-caps`, NOT `.eyebrow`: `SectionHeading` has an `eyebrow`
+     prop that renders `text-xl md:text-2xl font-semibold` — a large line in
+     sentence case, visually unrelated to this. One word, two meanings, and
+     the class didn't even apply to the component that owned the word.
+     ⚠️ One call site (`Soir`) so far. The inline spellings in Hebergements,
+     ReservePanel and Header are each a different size, so they are not yet
+     one family — define the family before extracting it. */
+  .label-caps {
     @apply text-xs uppercase tracking-[0.3em];
   }
 

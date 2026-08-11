@@ -1,6 +1,3 @@
-"use client";
-
-import { useRef } from "react";
 import BgGradient from "@/components/common/BgGradient";
 import SectionHeading from "@/components/common/SectionHeading";
 import { SITE_CONFIG } from "@/lib/constants";
@@ -28,10 +25,8 @@ const FEATURES = [
  *  background so the section seams cleanly into Hebergements below.
  *  Reduced-motion: lines are revealed instantly, no scroll-driven motion. */
 export default function Choisir() {
-  const sectionRef = useRef<HTMLElement>(null);
-
   return (
-    <section ref={sectionRef} id="choisir" className="relative w-full bg-gris-tan">
+    <section id="choisir" className="relative w-full bg-gris-tan">
       <BgGradient
         from="var(--color-base-noir)"
         to="var(--color-gris-tan)"

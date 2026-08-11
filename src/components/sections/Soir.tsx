@@ -4,34 +4,37 @@ import Image from "next/image";
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
+import BgGradient from "@/components/common/BgGradient";
 import RevealText from "@/components/common/RevealText";
 
-/** One medallion's imagery.
+/** One card: the same frame photographed unlit and lit.
  *
- *  `before` is optional. When it's present the card becomes a two-layer
- *  frame and a scroll-driven curtain wipes `before` away to reveal `after`;
- *  when it's absent the card is a plain single image and only the parallax
- *  applies. That lets a medallion ship before its paired frame exists
- *  instead of blocking the whole section on a full set of images. */
-type Medallion = {
-  /** The revealed state — the fire lit, the lanterns burning. Required. */
+ *  Both halves are required. `before` used to be optional, on the theory that
+ *  a card could ship ahead of its paired frame — but the section has never
+ *  been in that state, nothing on the backlog would put it there, and the
+ *  optionality bought a JSX ternary plus a `curtainRefs` array that could
+ *  legally contain holes. If a lone frame ever turns up, three lines bring
+ *  the branch back. */
+type FramePair = {
+  /** The revealed state — the fire lit, the lanterns burning. */
   after: string;
   /** The starting state: identical framing, same hour, same objects, but
    *  nothing lit. Must be generated FROM `after` so the two line up exactly
    *  — otherwise the wipe reads as a cut between two places rather than one
    *  place changing. */
-  before?: string;
+  before: string;
 };
 
 /** Ordered top-to-bottom. Both get a downward curtain, offset — see
- *  {@link Soir}.
+ *  {@link Soir}. (The `medaillons/` asset folder keeps the section's former
+ *  name; renaming 4 shipped files buys nothing.)
  *
  *  No people appear in any of these frames, deliberately. The headline says
  *  the fire burns "qu'il y ait quelqu'un ou non", and an empty ring of
  *  chairs around a lit fire states that far more precisely than a couple of
  *  anonymous backs did. The human trace is left in the props instead — a
  *  folded blanket over a chair arm, a table already set. */
-const MEDALLIONS: readonly Medallion[] = [
+const FRAME_PAIRS: readonly FramePair[] = [
   {
     before: "/images/medaillons/feu-eteint.avif",
     after: "/images/medaillons/feu-allume.avif",
@@ -47,6 +50,24 @@ const MEDALLIONS: readonly Medallion[] = [
   },
 ] as const;
 
+/** The curtain's two states. Hoisted to module scope so the reduced-motion
+ *  branch lands on the *same* value the wipe ends at, rather than its own
+ *  spelling of "fully retracted" — `inset(0 0 100% 0)` and `inset(100% 0 0 0)`
+ *  both hide the layer, but only one of them stays right if the wipe direction
+ *  ever changes. */
+const WIPE_FROM = { clipPath: "inset(0 0 0% 0)" } as const;
+const WIPE_TO = { clipPath: "inset(100% 0 0 0)" } as const;
+
+/** Scroll offset, in timeline units, between one card's wipe and the next.
+ *  Enough that the two read as two beats, tight enough that both resolve
+ *  inside the trigger window. */
+const CURTAIN_STAGGER = 0.6;
+
+/** Parallax travel, in px, for a card. Cards alternate direction so the pair
+ *  converges; the text column drifts a third of this against them. */
+const CARD_DRIFT = 80;
+const TEXT_DRIFT = 28;
+
 /**
  * The evening section. Sits after the Carousel, whose last card is "Le feu de
  * minuit" — so it lands as an amplification: the carousel names the fire as
@@ -55,22 +76,22 @@ const MEDALLIONS: readonly Medallion[] = [
  * turning it into an obligation — hence "qu'il y ait quelqu'un ou non".
  *
  * Two landscape cards parallax *towards each other* on scroll (the top one
- * descends, the bottom one rises). On top of that, each card that has a paired
- * frame runs a `clip-path` curtain revealing the lit version underneath. Both
+ * descends, the bottom one rises). On top of that, each card runs a
+ * `clip-path` curtain revealing the lit version underneath. Both
  * curtains wipe downward, offset from one another so they still read as the
  * headline's two beats ("Le feu est allumé tous les soirs." / "Qu'il y ait
  * quelqu'un ou non.") without competing.
  *
- * Background: `bg-gris-tan`, continuing the warm band that Activités opens and
- * the Carousel carries. Feedback below fades it back to base-noir over its top
- * 45% — that fade assumes it arrives onto gris-tan, so this section must not
- * break the chain by falling back to the body's base-noir.
+ * Background: opens on `bg-gris-tan`, continuing the warm band that Activités
+ * starts and the Carousel carries — and CLOSES it, fading to base-noir over
+ * its own bottom 60%. Feedback below therefore arrives on base-noir already
+ * and carries no gradient of its own; it used to own this fade, compressed
+ * into its top 45%. Moving it here is what shortens the run of flat gris-tan.
+ * ⚠️ The two files are a chain: change the landing colour in one and the other
+ * seams visibly.
  *
  * Reduced-motion: no parallax, no curtain. Each card shows its `after` frame
  * at rest — that's the one carrying the meaning, so nothing is lost.
- *
- * Named `Medaillons` until the cards stopped being oval medallions; the shape
- * changed, the name hadn't.
  */
 export default function Soir() {
   const ref = useRef<HTMLDivElement>(null);
@@ -96,27 +117,49 @@ export default function Soir() {
       mm.add("(prefers-reduced-motion: reduce)", () => {
         // Retract every curtain so the lit frame is what's on screen.
         curtainRefs.current.forEach((el) => {
-          if (el) gsap.set(el, { clipPath: "inset(0 0 100% 0)" });
+          if (el) gsap.set(el, WIPE_TO);
         });
       });
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const [card1, card2] = cardRefs.current;
-        const [curtain1, curtain2] = curtainRefs.current;
-
-        // Parallax — unchanged. The top card descends and the bottom one
-        // rises, so the pair converges as the section crosses the viewport.
-        const parallax = {
-          ease: "none" as const,
+        // Parallax. The cards alternate direction so the pair converges as the
+        // section crosses the viewport, and the text column drifts against
+        // them — noticeable as life, not as movement.
+        //
+        // All three share ONE timeline, so they cost one ScrollTrigger between
+        // them instead of three identical ones. Three meant three sets of
+        // per-frame progress bookkeeping and, more importantly, three
+        // `getBoundingClientRect` on every `ScrollTrigger.refresh()` — which
+        // fires on resize, on font load, and every time a pinned section above
+        // re-measures. Same reasoning as the curtains just below.
+        const parallax = gsap.timeline({
           scrollTrigger: {
             trigger: ref.current,
             start: "top bottom",
             end: "bottom top",
             scrub: 1,
           },
-        };
-        if (card1) gsap.fromTo(card1, { y: -80 }, { y: 80, ...parallax });
-        if (card2) gsap.fromTo(card2, { y: 80 }, { y: -80, ...parallax });
+        });
+
+        cardRefs.current.forEach((card, i) => {
+          if (!card) return;
+          const dir = i % 2 === 0 ? -1 : 1;
+          parallax.fromTo(
+            card,
+            { y: dir * CARD_DRIFT },
+            { y: -dir * CARD_DRIFT, ease: "none", duration: 1 },
+            0,
+          );
+        });
+
+        if (textColRef.current) {
+          parallax.fromTo(
+            textColRef.current,
+            { y: TEXT_DRIFT },
+            { y: -TEXT_DRIFT, ease: "none", duration: 1 },
+            0,
+          );
+        }
 
         // Curtains. One timeline for both so they share a single
         // ScrollTrigger and stay sequenced relative to each other rather
@@ -150,15 +193,17 @@ export default function Soir() {
         // echo the converging parallax, but two edges moving against each
         // other reads as busy at this size; a single shared direction is
         // calmer and lets the eye follow one movement down the column.
-        const wipeDown = {
-          from: { clipPath: "inset(0 0 0% 0)" },
-          to: { clipPath: "inset(100% 0 0 0)", ease: "none", duration: 1 },
-        };
-
-        if (curtain1) tl.fromTo(curtain1, wipeDown.from, wipeDown.to, 0);
-        // Offset rather than sequenced: enough delay that the two still read
-        // as two beats, tight enough that both resolve inside the window.
-        if (curtain2) tl.fromTo(curtain2, wipeDown.from, wipeDown.to, 0.6);
+        //
+        // Offset rather than sequenced — see CURTAIN_STAGGER.
+        curtainRefs.current.forEach((curtain, i) => {
+          if (!curtain) return;
+          tl.fromTo(
+            curtain,
+            WIPE_FROM,
+            { ...WIPE_TO, ease: "none", duration: 1 },
+            i * CURTAIN_STAGGER,
+          );
+        });
 
         // ─── The headline catches the firelight ──────────────────────────
         //
@@ -173,28 +218,16 @@ export default function Soir() {
         // written here, so the palette stays single-sourced in globals.css.
         // GSAP needs a concrete value; it can't tween to `var(--x)`.
         if (beat1Ref.current) {
-          const token = (name: string) =>
-            getComputedStyle(document.documentElement)
-              .getPropertyValue(name)
-              .trim();
+          // One `getComputedStyle` for both reads. It's a forced style flush
+          // and this runs inside `useGSAP`, i.e. a layout effect — no reason
+          // to pay for it twice.
+          const rootStyle = getComputedStyle(document.documentElement);
+          const token = (name: string) => rootStyle.getPropertyValue(name).trim();
           tl.fromTo(
             beat1Ref.current,
             { color: token("--color-creme-dim") },
             { color: token("--color-creme"), ease: "none", duration: 1 },
             0,
-          );
-        }
-
-        // Slow counter-drift on the text column. The two medallions converge
-        // (top descends, bottom rises); the text rising against them keeps
-        // the composition breathing instead of locking into one direction.
-        // Deliberately a third of the medallions' travel — noticeable as
-        // life, not as movement.
-        if (textColRef.current) {
-          gsap.fromTo(
-            textColRef.current,
-            { y: 28 },
-            { y: -28, ...parallax },
           );
         }
       });
@@ -209,12 +242,28 @@ export default function Soir() {
       ref={ref}
       className="relative w-full bg-gris-tan px-5 md:px-10 py-32 md:py-40 overflow-hidden"
     >
-      <div className="mx-auto max-w-7xl grid gap-16 md:grid-cols-12 items-center">
+      {/* The warm band ends HERE, not in Feedback. Activités opens gris-tan,
+          the Carousel carries it, and this section used to carry it flat all
+          the way down — which meant roughly two and a half screens of
+          undiluted gris-tan before anything moved. The fade now starts at 40%
+          of this section and lands solid base-noir before its bottom edge, so
+          the transition runs over about an entire screen instead of the top
+          45% of Feedback. `toAt` guarantees a flat landing colour rather than
+          a stop that resolves exactly on the seam, which bands. */}
+      <BgGradient
+        from="var(--color-gris-tan)"
+        to="var(--color-base-noir)"
+        direction="down"
+        toAt={90}
+        className="top-[40%]"
+      />
+
+      <div className="relative mx-auto max-w-7xl grid gap-16 md:grid-cols-12 items-center">
         <div
           ref={mediaColRef}
           className="md:col-span-5 relative flex flex-col items-start gap-8 md:gap-10"
         >
-          {MEDALLIONS.map((m, i) => (
+          {FRAME_PAIRS.map((m, i) => (
             <div
               key={m.after}
               ref={(el) => {
@@ -236,26 +285,23 @@ export default function Soir() {
                 className="object-cover object-center"
               />
 
-              {/* Covering layer + curtain. Only rendered when a paired frame
-                  exists; `will-change: clip-path` because that's the animated
-                  property here, not transform. */}
-              {m.before ? (
-                <div
-                  ref={(el) => {
-                    curtainRefs.current[i] = el;
-                  }}
-                  className="absolute inset-0 [will-change:clip-path]"
-                >
-                  <Image
-                    src={m.before}
-                    alt=""
-                    role="presentation"
-                    fill
-                    sizes="440px"
-                    className="object-cover object-center"
-                  />
-                </div>
-              ) : null}
+              {/* Covering layer + curtain. `will-change: clip-path` because
+                  that's the animated property here, not transform. */}
+              <div
+                ref={(el) => {
+                  curtainRefs.current[i] = el;
+                }}
+                className="absolute inset-0 [will-change:clip-path]"
+              >
+                <Image
+                  src={m.before}
+                  alt=""
+                  role="presentation"
+                  fill
+                  sizes="440px"
+                  className="object-cover object-center"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -265,7 +311,7 @@ export default function Soir() {
             mode="words"
             stagger={0.04}
             duration={0.9}
-            className="eyebrow text-creme-dim mb-8"
+            className="label-caps text-creme-dim mb-8"
           >
             À la tombée
           </RevealText>

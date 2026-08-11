@@ -1,7 +1,3 @@
-"use client";
-
-import { useRef } from "react";
-
 import BgGradient from "@/components/common/BgGradient";
 import SectionHeading from "@/components/common/SectionHeading";
 
@@ -34,10 +30,8 @@ const NIVEAUX = [
  * Reduced-motion : lines reveal at rest, no scroll-driven motion.
  */
 export default function Activites() {
-  const sectionRef = useRef<HTMLElement>(null);
-
   return (
-    <section ref={sectionRef} className="relative w-full bg-base-noir">
+    <section className="relative w-full bg-base-noir">
       {/* Background gradient kicks in BELOW the title — the top half of
           the section stays bg-base-noir so the eyebrow + title sit on
           pure black, then a base-noir → gris-tan blend takes over for

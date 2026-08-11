@@ -14,7 +14,7 @@ import RevealChars from "@/components/common/RevealChars";
 
 /**
  * Pinned scroll-scrub slideshow for the three refuges. The section pins for
- * ~6 viewports on desktop (3 on mobile) — within that range the cards
+ * ~4 viewports on desktop (3 on mobile) — within that range the cards
  * stack: card 0 grows from a stadium pill into a fullscreen rounded card,
  * then cards 1 and 2 slide up over it, scaling the stack down underneath.
  *
@@ -40,11 +40,6 @@ export default function Hebergements() {
   const bgFadeRef = useRef<HTMLDivElement>(null);
   const loadingBarRef = useRef<HTMLDivElement>(null);
   const loadingBarFillRef = useRef<HTMLDivElement>(null);
-  const [activeIdx, setActiveIdx] = useState(0);
-  // Mirrors `activeIdx` for the scroll-tick guard — `onUpdate` fires every
-  // frame during the pinned scrub, but React state reads inside the
-  // callback would be stale. The ref reflects the latest committed value.
-  const activeIdxRef = useRef(0);
   const [revealActive, setRevealActive] = useState<boolean[]>([false, false, false]);
   const { open: openReservePanel } = useReservePanel();
 
@@ -56,8 +51,8 @@ export default function Hebergements() {
 
       const mm = gsap.matchMedia();
 
-      // Mobile pin range is halved (3 viewports vs 6) — the full 6-viewport
-      // scroll is exhausting on touch and the cards are still readable.
+      // Mobile pins shorter than desktop (3 viewports vs 4) — see the
+      // `stickyDuration` TSDoc in `lib/motion.ts` for both values.
       mm.add(
         {
           isDesktop: `(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`,
@@ -101,21 +96,65 @@ export default function Hebergements() {
             1 - HEBERGEMENTS.scaleStep,
             1,
           ] as const;
-          // Progress at which each card's text reveals on the way down, and
-          // re-hides on the way back up. The hide threshold sits ABOVE the
-          // reveal one on purpose — the hysteresis keeps a jitter at the
-          // boundary from flickering the text.
+          // Progress at which each card's text reveals, and the lower band at
+          // which it hides again. Both thresholds are read the same way in
+          // BOTH scroll directions: whether the text is up depends only on
+          // where you are, never on how you got there. The 0.03 dead band is
+          // what keeps a jitter at the boundary from flickering the text.
+          //
+          // The previous version keyed the hide threshold off `self.direction`
+          // and placed it ABOVE the reveal one, which is hysteresis backwards:
+          // between the two values the state flipped with every direction
+          // change — the exact flicker the comment claimed to prevent.
           const TEXT_IN = [0.20, 0.47, 0.74] as const;
-          const TEXT_OUT = [0.25, 0.52, 0.95] as const;
+          const TEXT_OUT = [0.17, 0.44, 0.71] as const;
 
-          // Snap targets, derived from TEXT_OUT so the two can't drift apart.
-          // The obvious derivation — "where each card finishes arriving",
-          // i.e. `(PHASE_STARTS[i] + 1) / 5.5` — gives 0.18 / 0.45 / 0.73,
-          // every one of which lands just BELOW its threshold. The reader
-          // would settle on a card whose name and description had just been
-          // animated away. Clearing TEXT_OUT keeps the text up in both scroll
-          // directions.
-          const SNAP_POINTS = [0, ...TEXT_OUT.map((t) => t + 0.02)];
+          // Snap targets: just past the point where each card finishes
+          // arriving, which is `(PHASE_STARTS[i] + 1) / 5.5` = 0.18 / 0.45 /
+          // 0.73 — hence TEXT_IN sitting where it does, and hence a 0.02
+          // clearance so the reader never rests on text that hasn't revealed.
+          //
+          // These used to be derived from TEXT_OUT, back when TEXT_OUT[2] was
+          // 0.95. That put the third resting point at the far end of the
+          // 1.5-unit hold: ~2320px of scroll to leave card 3, against ~1460px
+          // for the others. The trailing 1 is what card 3 now snaps toward on
+          // the way out, so exiting the pin is a target rather than a drift.
+          const SNAP_POINTS = [0, ...TEXT_IN.map((t) => t + 0.02), 1];
+
+          // Where a released gesture comes to rest.
+          //
+          // GSAP's built-in array snapping resolves to the NEAREST point, so a
+          // gesture covering less than half an interval is pulled back to the
+          // card it just left — that's what made advancing cost two scrolls.
+          // Shortening the pin only moved that half-interval from ~730px to
+          // ~486px; still more than one wheel gesture delivers. So the rule
+          // goes, not the distance: past a small dead zone, a gesture resolves
+          // in its own DIRECTION and always lands on the next card.
+          //
+          // Still not a wheel-hijack — nothing is intercepted, the scrub runs
+          // under the finger, and stopping mid-transition to watch the capsule
+          // open works exactly as before. This only decides where a gesture
+          // that has already been released settles. (`snap.directional` is not
+          // set: GSAP ignores it once `snapTo` is a function.)
+          const SNAP_DEADZONE = 0.04; // ≈145px of scroll — below this, stay put.
+          const snapDirectional = (value: number, self?: ScrollTrigger) => {
+            let below = SNAP_POINTS[0];
+            let above = SNAP_POINTS[SNAP_POINTS.length - 1];
+            for (const p of SNAP_POINTS) {
+              if (p <= value) below = p;
+              else {
+                above = p;
+                break;
+              }
+            }
+            return (self?.direction ?? 1) === 1
+              ? value - below < SNAP_DEADZONE
+                ? below
+                : above
+              : above - value < SNAP_DEADZONE
+                ? above
+                : below;
+          };
 
           const tl = gsap.timeline({
             scrollTrigger: {
@@ -124,44 +163,31 @@ export default function Hebergements() {
               end: stickyDuration,
               pin: true,
               scrub: 1,
-              // Settle on the nearest refuge when the reader stops, instead of
-              // leaving a card half-arrived. Deliberately NOT a wheel-hijack:
-              // Pourquoi disables its own hijack below 768px because trapping
-              // touch scroll is hostile, and two locked sections would make
-              // the page read as a slideshow. `delay` waits out Lenis' inertia
-              // so the snap doesn't fight momentum that's still unwinding.
+              // See `snapDirectional` above for where it lands; this is how it
+              // gets there. `delay` waits out Lenis' inertia so the snap
+              // doesn't fight momentum that's still unwinding.
+              //
+              // `power2.inOut` over `power2.out`, and roughly twice the
+              // duration: an out-ease starts at full speed, which reads as the
+              // page yanking the card into place the instant you let go. The
+              // in-half gives the movement a moment to pick up, so it reads as
+              // the section finishing your gesture rather than overriding it.
               snap: {
-                snapTo: SNAP_POINTS,
-                duration: { min: 0.2, max: 0.5 },
+                snapTo: snapDirectional,
+                duration: { min: 0.4, max: 0.9 },
                 delay: 0.12,
-                ease: "power2.out",
+                ease: "power2.inOut",
               },
               onUpdate: (self) => {
                 const p = self.progress;
-                const idx = p < 0.36 ? 0 : p < 0.64 ? 1 : 2;
-                // Guard against same-value setState — onUpdate fires every
-                // scroll frame during the pinned scrub. Without this, React
-                // is notified on each tick even when the active card hasn't
-                // changed (the bands cover ~30% of progress each).
-                if (idx !== activeIdxRef.current) {
-                  activeIdxRef.current = idx;
-                  setActiveIdx(idx);
-                }
-
-                const dir = self.direction;
+                // Returning `prev` unchanged is what keeps React out of the
+                // loop — onUpdate fires every frame of the pinned scrub, but
+                // only the four threshold crossings actually commit.
                 setRevealActive((prev) => {
-                  const next: boolean[] = [...prev] as boolean[];
-                  if (dir === 1) {
-                    if (p >= TEXT_IN[0] && !next[0]) next[0] = true;
-                    if (p >= TEXT_IN[1] && !next[1]) next[1] = true;
-                    if (p >= TEXT_IN[2] && !next[2]) next[2] = true;
-                  } else {
-                    if (p < TEXT_OUT[2] && next[2]) next[2] = false;
-                    if (p < TEXT_OUT[1] && next[1]) next[1] = false;
-                    if (p < TEXT_OUT[0] && next[0]) next[0] = false;
-                  }
-                  if (next[0] === prev[0] && next[1] === prev[1] && next[2] === prev[2]) return prev;
-                  return next;
+                  const next = prev.map((was, i) =>
+                    p >= TEXT_IN[i] ? true : p < TEXT_OUT[i] ? false : was,
+                  );
+                  return next.every((v, i) => v === prev[i]) ? prev : next;
                 });
 
                 fillSetter?.(p);
@@ -229,13 +255,13 @@ export default function Hebergements() {
     () => {
       if (!loadingBarRef.current) return;
       gsap.to(loadingBarRef.current, {
-        opacity: revealActive[0] || revealActive[1] || revealActive[2] || activeIdx > 0 ? 1 : 0,
+        opacity: revealActive.some(Boolean) ? 1 : 0,
         duration: 0.5,
         ease: "expo.out",
         overwrite: true,
       });
     },
-    { dependencies: [revealActive, activeIdx] },
+    { dependencies: [revealActive] },
   );
 
   return (

@@ -4,8 +4,8 @@ import { useRef } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { MQ } from "@/lib/breakpoints";
 import { SITE_CONFIG } from "@/lib/constants";
-import BgGradient from "@/components/common/BgGradient";
 
 const EYEBROW = "Et eux, qu'en pensent-ils ?";
 const QUOTE = `Un séjour à ${SITE_CONFIG.brandMark} au Québec a redéfini ce que repos veut dire — le design moderne se mêle à la nature, et chaque coucher de soleil ressemble à un tableau suspendu.`;
@@ -82,10 +82,10 @@ export default function Feedback() {
         }
       };
 
-      mm.add("(prefers-reduced-motion: no-preference) and (min-width: 768px)", () => {
+      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.mdUp}`, () => {
         setup({ start: "top 50%", end: "center 60%" });
       });
-      mm.add("(prefers-reduced-motion: no-preference) and (max-width: 767px)", () => {
+      mm.add(`(prefers-reduced-motion: no-preference) and ${MQ.belowMd}`, () => {
         setup({ start: "top 85%", end: "center 70%" });
       });
 
@@ -117,13 +117,11 @@ export default function Feedback() {
           shorter band read as a too-sharp seam at the section
           boundary; 45% lets the eye drift through the transition
           rather than catching the edge. */}
-      <BgGradient
-        from="var(--color-gris-tan)"
-        to="var(--color-base-noir)"
-        direction="down"
-        className="bottom-[55%]"
-      />
-
+      {/* No BgGradient here any more. This section used to own the gris-tan →
+          base-noir fade, compressed into its top 45% — which left the whole
+          warm band flat until the very last moment. `Soir` now closes the band
+          within itself and hands off on base-noir, which is also the body's
+          colour, so this section needs no background of its own. */}
       {/* Eyebrow — top-left. Acts as the section's semantic title. */}
       <h2 className="text-creme text-lg md:text-xl font-semibold tracking-tight m-0">
         <WordSplit text={EYEBROW} />

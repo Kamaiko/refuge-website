@@ -3,7 +3,7 @@
 import Image from "next/image";
 import RevealChars from "@/components/common/RevealChars";
 import SlideIndicators from "@/components/common/SlideIndicators";
-import { SLIDE_IMAGE_ZOOM, TEXT_REVEAL, TEXT_SWAP_DELAY_MS } from "./slides";
+import { TEXT_REVEAL, TEXT_SWAP_DELAY_MS } from "./slides";
 
 /**
  * The presentational pieces of the Pourquoi carousel.
@@ -64,34 +64,25 @@ export function RoundedFrame({ children }: { children: React.ReactNode }) {
 /** Single full-bleed image inside a slide's frame.
  *
  *  `unoptimized` because the source AVIFs are already encoded at the right
- *  size — Next's re-encode at quality 75 would only soften them. `scale`
- *  tightens the crop (defaults to `SLIDE_IMAGE_ZOOM`, currently 1; composes
- *  multiplicatively with the GSAP dolly on imageCardA). `objectPosition`
- *  shifts the visible framing — a lower X% pulls the focal point left. */
+ *  size — Next's re-encode at quality 75 would only soften them.
+ *
+ *  This used to expose `scale` and `objectPosition` knobs. No call site ever
+ *  passed either, and the `scale` default was `1` — so every slide emitted an
+ *  inline `transform: scale(1)`. The photos are framed 4:5 for the portrait
+ *  card and need no crop correction; the only real zoom in the section is the
+ *  GSAP dolly, which owns `imageCardA`'s transform directly. */
 export function SlideImage({
   src,
   alt = "",
-  objectPosition = "50% 50%",
-  scale = SLIDE_IMAGE_ZOOM,
 }: {
   src: string;
   /** Defaults to empty so the layered image stacks used during a slide
    *  transition don't all announce themselves to screen readers. Pass a real
    *  label on the foreground image only. */
   alt?: string;
-  objectPosition?: string;
-  scale?: number;
 }) {
   return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      sizes="50vw"
-      unoptimized
-      className="object-cover"
-      style={{ objectPosition, transform: `scale(${scale})` }}
-    />
+    <Image src={src} alt={alt} fill sizes="50vw" unoptimized className="object-cover" />
   );
 }
 
