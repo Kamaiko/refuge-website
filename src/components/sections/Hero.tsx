@@ -231,6 +231,20 @@ export default function Hero() {
           }}
         />
 
+        {/* Taller TOP darkening below `md`, stacked on the one above. The
+            shared gradient fades out at 25% — about y=205 on an 820px frame —
+            which is exactly where the wordmark's baseline sits. Measured down
+            the wordmark's own column: 1.75 at its top, 1.16 at its bottom,
+            1.09 forty pixels lower. Without this the 22vw size would land its
+            whole lower half in the palest band of the frame. */}
+        <div
+          className="absolute inset-0 pointer-events-none md:hidden"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(24,23,23,0.34) 0%, rgba(24,23,23,0.18) 22%, rgba(24,23,23,0) 38%)",
+          }}
+        />
+
         {/* Extra bottom darkening below `md` only, stacked on the one above.
             The portrait source is a much brighter frame than the landscape
             crop — mean luminance 161 against 116 — and the tagline and
@@ -252,7 +266,13 @@ export default function Hero() {
             <h1
               ref={wordmarkRef}
               style={{ opacity: 0 }}
-              className="text-creme font-semibold leading-[0.85] tracking-[-0.04em] text-[18vw] md:text-[15vw]"
+              // 22vw on mobile, not 18. Measured at 390: 18vw put the wordmark
+              // at 58.7% of the viewport width against 48.9% on desktop, so it
+              // already read smaller relative to its frame. ⚠️ Growing it is
+              // only safe alongside the taller top gradient below — the
+              // wordmark's bottom edge sits right where the original 25% stop
+              // died, and the band under it measures 1.09.
+              className="text-creme font-semibold leading-[0.85] tracking-[-0.04em] text-[22vw] md:text-[15vw]"
             >
               <BrandMark />
             </h1>

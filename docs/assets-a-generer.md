@@ -208,14 +208,42 @@ marche est **chiffrée et bilatérale** :
 Et **interdire explicitement le terrain non présent dans la référence** : une
 passe a inventé un précipice de toutes pièces sous un refuge qui n'en a pas.
 
-#### ⚠️ Réserver une zone pour la typographie
+#### ⚠️ Réserver une zone pour la typographie — et elle est PLUS GRANDE qu'un tiers
 
-Les cartes `Hebergements` typographient le surnom et le nom **en bas à
-gauche**. Le demander noir sur blanc dans le prompt :
+Les cartes `Hebergements` typographient surnom, nom, description et capacité
+**en bas à gauche**. Mesuré à 390×844, texte masqué, fond échantillonné sous
+chaque niveau :
 
-> the BOTTOM THIRD must stay visually QUIET and DARK, especially in its LEFT
-> half: a caption is typeset over that corner, so no bright highlight, no busy
-> detail and no light-coloured object may sit in the bottom-left of the frame
+| Niveau | Hauteur dans la carte | Ratio |
+|---|---|---|
+| surnom | 39 % | 4,29 |
+| **nom** | 45 % | **2,03** — posé sur l'intérieur éclairé |
+| description | 54–70 % | 3,30 – 3,85 |
+| capacité | 80 % | 8,10 |
+
+Deux enseignements coûteux :
+
+1. **Le niveau qui échoue est le NOM, pas le surnom.** Le backlog accusait le
+   surnom depuis une observation à l'œil ; c'est le seul des quatre qui passe.
+2. **Le bloc texte occupe de 39 % à 100 % de la hauteur** sur un écran étroit,
+   parce que la description y passe à cinq lignes au lieu de trois. Demander
+   « le tiers bas sombre » ne couvre donc que la moitié du problème.
+
+La consigne correcte, à mettre dans le prompt :
+
+> the LOWER SIXTY PERCENT of the frame must stay visually quiet and DARK,
+> especially on its LEFT side: a caption, a large title and a paragraph are
+> typeset over that area. No lit window, no bright highlight and no
+> light-coloured object may sit there. The lit interior of the cabin must be in
+> the UPPER half of the frame.
+
+⚠️ **Ne pas régler ça par un voile CSS.** Un dégradé plein cadre a été
+construit et mesuré — il faisait passer le nom de 2,03 à largement au-delà de
+AA — puis retiré : assombrir les 60 % bas de la photo va contre l'objet même
+de la section, qui est de montrer le refuge. La typographie a été resserrée de
+son côté (nom `text-6xl` → `text-5xl`, description `text-lg/relaxed` →
+`text-base/snug` sous `md`, ~45 px gagnés), mais elle ne peut pas fermer
+l'écart seule. **C'est le cadrage de l'image qui doit céder, pas la photo.**
 
 Respecté du premier coup, et ça travaille directement pour le contraste du
 surnom. Même logique pour le hero, en trois bandes : tiers haut vide (wordmark

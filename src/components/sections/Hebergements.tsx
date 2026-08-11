@@ -354,6 +354,15 @@ export default function Hebergements() {
                   }}
                 />
 
+                {/* ⚠️ NO full-width scrim here, and that is a decision, not an
+                    oversight. One was built and measured — it lifted the nom
+                    from 2.03 to well past AA — and then removed: veiling the
+                    lower 60% of the photo defeats what the section is for,
+                    which is showing the refuge. The contrast is fixed in the
+                    IMAGE BRIEF instead (see docs/assets-a-generer.md): the
+                    portrait must be dark from ~38% of its height downward, not
+                    merely in its bottom third. */}
+
                 <RefugeCardContent
                   refuge={refuge}
                   play={revealActive[i] ?? false}
@@ -455,12 +464,19 @@ function RefugeCardContent({
         play={play}
         delay={0.1}
         duration={1.1}
-        className="block whitespace-nowrap pr-8 text-creme text-6xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.02em] m-0"
+        className="block whitespace-nowrap pr-8 text-creme text-5xl md:text-8xl lg:text-[8vw] font-semibold leading-[0.9] tracking-[-0.02em] m-0"
       />
       <div className="max-w-3xl">
         <p
           ref={descRef}
-          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-lg xs:leading-relaxed md:text-xl will-change-transform"
+          // Measured at 390×844: at `xs:text-lg` + `leading-relaxed` the
+          // description wrapped to FIVE lines and pushed the whole block up to
+          // 39% of the card height, onto the lit interior of the photo. The
+          // naturally dark part of the image only starts around 72%. Dropping
+          // to `text-base` + `leading-snug` below `md` shortens the block by
+          // ~45px. It does not close the gap on its own — the rest is the
+          // image brief — but it stops the copy from climbing.
+          className="block text-creme-dim mt-6 max-w-xl text-sm leading-snug xs:text-base md:text-xl md:leading-relaxed will-change-transform"
         >
           {refuge.description}
         </p>
