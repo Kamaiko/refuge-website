@@ -4,6 +4,19 @@ export type Slide = {
   title: string;
   body: string;
   image: string;
+  /** `object-position` for the MOBILE stack only — and the name says "mobile"
+   *  because that is the only place it can do anything.
+   *
+   *  Measured: the desktop card is 702×876 (ratio 0.801) against a 0.806
+   *  source, so `object-cover` throws away **1%** of the width — there is no
+   *  crop margin to slide within. The mobile card is `aspect-[16/10]` (1.600)
+   *  against the same 0.806 source, so it throws away **50% of the height**
+   *  and only the middle band is ever seen.
+   *
+   *  Which is why `SlideImage` (desktop) deliberately does NOT take this prop
+   *  back: it was removed in the simplify pass for having no call site, and
+   *  wiring it there would reintroduce a knob that cannot move anything. */
+  objectPositionMobile?: string;
 };
 
 /** Three reasons answering the "Pourquoi Aquilon ?" question posed by
@@ -20,6 +33,8 @@ export const SLIDES: readonly Slide[] = [
     title: "Le matin ne commence pas. Il monte du fleuve.",
     body: "La brume passe sous le plancher vers six heures. Vous n'avez rien d'autre à faire que la regarder.",
     image: "/images/pourquoi/aube.avif",
+    // Centré, la terrasse est coupée par le bord bas du cadre 16/10.
+    objectPositionMobile: "50% 75%",
   },
   {
     title: "Le fjord change de couleur toutes les vingt minutes.",
@@ -30,6 +45,9 @@ export const SLIDES: readonly Slide[] = [
     title: "Le soir, la lumière la plus proche est à quinze minutes de marche.",
     body: "Assez pour ne rien entendre. Assez peu pour changer d'avis.",
     image: "/images/pourquoi/crete.avif",
+    // Plan drone : le refuge est dans le bas de la photo et le cadrage centré
+    // le sectionnait au bord. Sans ça, la bande visible n'est que du fjord.
+    objectPositionMobile: "50% 75%",
   },
 ] as const;
 

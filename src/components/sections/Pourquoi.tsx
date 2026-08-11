@@ -372,6 +372,10 @@ export default function Pourquoi() {
               </div>
             </div>
             <div className="relative aspect-[16/10] w-full rounded-[20px] overflow-hidden">
+              {/* `aspect-[16/10]` against a 4:5 source throws away half the
+                  image height, so the default centred crop shows only the
+                  middle band — which on these two slides is sky and fjord,
+                  with the refuge sliced off at the bottom edge. */}
               <Image
                 src={slide.image}
                 alt={slide.title}
@@ -379,6 +383,7 @@ export default function Pourquoi() {
                 sizes="100vw"
                 unoptimized
                 className="object-cover"
+                style={{ objectPosition: slide.objectPositionMobile }}
               />
             </div>
           </article>
