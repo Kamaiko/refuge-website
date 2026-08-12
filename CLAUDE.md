@@ -1,6 +1,6 @@
-# CLAUDE.md — Refuges Charlevoix
+﻿# CLAUDE.md — Refuges Charlevoix
 
-> Reprise de contexte. À jour au 10 août 2026 — après la passe éditoriale, la régénération complète des images et le ménage de code.
+> Reprise de contexte. Contexte du projet, la régénération complète des images et le ménage de code.
 
 ## Concept
 
@@ -36,7 +36,7 @@ Site portfolio Awwwards-level. **Marque fictive** d'hébergements premium en Cha
 - **React** 19.2.4
 - **TypeScript** 5
 - **Tailwind CSS** 4.2.4 (avec @theme directive)
-- **GSAP** 3.15.0 + @gsap/react 2.1.2
+- **GSAP** 3.15.0 + @gsap/react
 - **Lenis** 1.3.23 (smooth scroll)
 - **Zod** 4.4.1 (validation forms)
 - **clsx** + **tailwind-merge** (utilitaires class)
@@ -67,74 +67,14 @@ les fichiers de projet. L'alias `@/*` pointe sur `./src/*` (`tsconfig.json`).
 | Port dev | 3001 |
 | Nom dossier | refuges-charlevoix |
 
-## Inspection technique de capsules.moyra.co (référence)
 
-Réalisée via Playwright le 2026-04-30. Findings techniques uniquement :
+## Palette
 
-### Stack observé
-- Nuxt.js (vu dans `_nuxt/` URLs)
-- Tailwind v4 avec custom @-prefix container queries (ex: `@p-[10]`, `@mb-[120]`)
-- Pas de scripts GSAP/Lenis externes — bundlés dans Nuxt build chunks
-
-### Typographie
-- **Font unique** : Host Grotesk (poids 400/500/600/700/800) — libre sur Fontshare et Google Fonts ✅
-- Pas de h1/h2/h3 sémantiques (divs stylés à la place — à reconsidérer pour notre version, pour SEO/a11y)
-
-### Couleurs UI
-- Background : `#181717` (presque noir)
-- Texte : `#F4EFE7` (crème chaud)
-- **Insight clé** : palette UI ultra-minimale ; la **photographie** apporte toute la couleur. Pour nous → garder UI sobre, mettre la richesse dans les images AI Charlevoix.
-
-### Structure
-- 9 sections, ~18,618px de scroll total
-- 27 images, 7 vidéos, 0 canvas
-- 18 boutons (CTA persistants : Reserve top-right, Menu bottom-center, badge latéral)
-
-### Patterns techniques observés (à réimplémenter avec contenu original)
-- Hero full-viewport (h-svh) avec architecture en photo + wordmark massif
-- Section unit showcase scroll-pinned avec image en rounded card centrée
-- Background wordmark parallax (s'étire derrière l'image au scroll)
-- Manifesto avec scroll-driven typography (texte qui passe de transparent à opaque mot par mot)
-- Activity grid horizontal scroll avec rounded card images + métadonnées (difficulté, durée)
-- Persistent floating menu CTA bottom-center
-
-## Palette tokens (globals.css)
-
-```css
-/* En usage */
---color-base-noir: #181717        /* fond principal */
---color-base-noir-soft: #1F1E1E   /* surfaces secondaires */
---color-creme: #F4EFE7            /* texte principal */
---color-creme-dim: #C9C5BD        /* texte secondaire */
---color-creme-terre: #E8DCC4      /* texte secondaire chaud */
---color-gris-tan: #2A2725         /* panneaux, cartes */
---color-gris-tan-soft: #3A3631
---color-gris-secondaire: #6B6660
---color-turquoise: #4FB8B0        /* ::selection */
---color-orange-sunset: #C2410C    /* erreurs de formulaire */
-
-/* Palette de réserve — déclarée, aucun point d'appel. Gardée volontairement :
-   c'est la palette Charlevoix documentée et le grade des photos est construit
-   autour. Signalée comme telle dans globals.css pour qu'on ne la prenne pas
-   pour un oubli. */
---color-vert-sapin: #2D5F4E
---color-vert-sapin-deep: #1F4338
---color-turquoise-deep: #2C8A82
---color-or-ambre: #D97706
-```
-
-**Autres tokens** (`@theme` dans `globals.css`) : rayons `--radius-{pill,card,
-soft,frame,hero}` — utiliser ces tokens, pas des `rounded-[Npx]`. Classes
-composants : `.focus-ring` (l'anneau de focus clavier, était recopié 6 fois),
-`.eyebrow`, `.type-section-title`, `.type-wordmark-band`.
-
-⚠️ `--ease-cinematic` / `--ease-soft` ont été **supprimés** : `lib/motion.ts`
-prétendait les refléter mais utilisait des eases GSAP nommés — un contrat
-faux valait moins que pas de contrat.
+Les tokens font foi dans `src/app/globals.css` — ne pas les recopier ailleurs.
 
 ## Structure du site (sections)
 
-Ordre réel dans `src/app/page.tsx` (13 sections). La liste antérieure de ce
+Ordre réel dans `src/app/page.tsx` . La liste antérieure de ce
 fichier décrivait un plan de conception jamais implémenté tel quel — voici ce
 qui existe :
 
@@ -213,19 +153,7 @@ plus tard.
 
 Toutes les images live sont générées et rangées par section :
 
-```
-public/images/
-├── hero-shape.avif           poster LCP paysage + image OG
-├── hero-shape-portrait.avif  poster 9:16, servi sous md
-├── photo-patrick.avif        avatar Feedback
-├── refuges/     brume, aubepine, galets  (+ brume-portrait)
-├── pourquoi/    aube, fjord, crete
-├── medaillons/  feu-{eteint,allume}, terrasse-{eteint,allume}
-└── activites/   kayak, sommet, via-ferrata, belugas, veillee
-public/videos/
-├── hero-loop.mp4             desktop, 5,08 s
-└── hero-loop-portrait.mp4    mobile, 4,04 s
-```
+Toutes les images live sont generees et rangees par section sous `public/images/` (un dossier par section) et `public/videos/`.
 
 ⚠️ **Art direction, pas responsive.** Le hero et les cartes `Hebergements`
 sont `absolute inset-0` dans un cadre `~100svh` : sur un téléphone ce cadre
@@ -245,8 +173,8 @@ sur tête ; la recette et les mesures sont dans `docs/assets-a-generer.md`.
 
 ⚠️ Les sources 4k et les variantes écartées vivent dans **`/assets-raw/`** à la
 racine, **hors de `public/`** et gitignorées. Elles y étaient auparavant
-(`public/images/_raw/`, 1,25 Go) : gitignorées mais tout de même servies par
-`next dev` et copiées par tout build local. `public/` fait 6,8 Mo aujourd'hui.
+(`public/images/_raw/`, volumineux) : gitignorées mais tout de même servies par
+`next dev` et copiées par tout build local. `public/` doit rester leger.
 
 Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
 **`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
@@ -263,117 +191,26 @@ réel des réservations (Resend jamais branché), audit Lighthouse.
 
 **Pour renommer** : éditer `SITE_CONFIG.name` et `SITE_CONFIG.brandMark` dans `src/lib/constants.ts`. Les chaînes affichées (eyebrow, marquee, manifeste, feedback) sont actuellement hardcoded — chercher littéralement "Aquilon" pour les retrouver.
 
-## Reduced motion — règles du projet
+## Reduced motion
 
-> **L'état caché vit en CSS, plus en JSX.** C'est la règle numéro un depuis
-> août 2026, et elle remplace un mécanisme qui avait déjà coûté trois pertes
-> de contenu — dont un Hero qui rendait une image sans un seul mot dessus.
->
-> ```css
-> @media (prefers-reduced-motion: no-preference) {
->   [data-anim="fade"]   { opacity: 0; }
->   [data-anim="hidden"] { visibility: hidden; }
-> }
-> ```
->
-> Un élément qui doit apparaître porte `data-anim` **au lieu** d'un
-> `style={{opacity:0}}` inline, et il n'y a **plus rien à écrire côté
-> reduced-motion** : sous `reduce` il n'est jamais caché, donc il n'y a rien à
-> annuler. Écrire une branche `reduce` pour ré-afficher quelque chose est
-> désormais le signe qu'on a caché l'élément au mauvais endroit.
->
-> Le bloc est **hors de toute cascade layer**, donc il bat les utilitaires
-> Tailwind quel que soit l'ordre ; un style inline gagne encore, et c'est
-> exactement par là que GSAP révèle l'élément.
->
-> ⚠️ Ne s'applique pas aux états cachés qui sont des **transforms** (glyphes
-> parqués, clip-path) : GSAP doit les poser lui-même pour tenir son cache. Là,
-> voir la règle 3 ci-dessous.
-
-Trois outils, à ne pas confondre :
-
-1. **`gsap.matchMedia()`** pour les paramètres d'animation. Une seule branche
-   `no-preference` suffit désormais dans le cas courant : l'état caché étant
-   en CSS, il n'y a plus rien à défaire sous `reduce`. Les branches `reduce`
-   qui subsistent (CurtainReveal, MapOverlay, Feedback, Hebergements, Soir)
-   annulent un état posé **en JS**, pas par le markup — c'est ce qui les rend
-   légitimes.
-2. **`usePrefersReducedMotion()`** quand il faut changer de **layout**.
-   Carousel et Pourquoi s'en servent pour rendre leur pile mobile à toutes les
-   largeurs : leur piste desktop est entièrement pilotée par ScrollTrigger, donc
-   sans pin les cartes suivantes seraient inatteignables.
-   ⚠️ **Jamais pour décider d'animer ou non.** Le hook renvoie `false` au rendu
-   d'hydratation — c'est son contrat, voulu pour que le layout animé soit celui
-   qui hydrate — et c'est précisément la course qui a rendu le wordmark du
-   footer invisible en production.
-3. **`wantsReducedMotion()`** pour lire la préférence dans un effet ou un
-   handler. Les effets ne tournent que côté client, donc la lecture directe y
-   est toujours correcte, contrairement au hook. C'est l'outil des primitives
-   dont l'état caché est un **transform** : `RevealChars` et `AquilonReveal`
-   parquent leurs glyphes, `RevealText` pousse ses lignes hors de leur masque.
-   Toutes trois gardent le hook en dépendance, uniquement pour rester
-   réactives à un changement de préférence en cours de session.
-
-**Assertion de contrôle** — sous `prefers-reduced-motion: reduce`, après une
-descente en scroll continu : aucun `[data-anim]` en `visibility: hidden` ou
-`opacity < 0.05`, aucun `.rc-glyph` avec un `transform` non identitaire,
-aucune `.reveal-inner` décalée. Tester `getComputedStyle`, jamais
-`getBoundingClientRect().height` — qui reste non nul sur du `visibility:
-hidden` et a déjà rendu une vérification aveugle.
+Règles complètes : `docs/reduced-motion.md`. Retenir : la règle CSS ne coupe **pas** les tweens ni le ticker GSAP — chaque source de mouvement JS doit se couper elle-même.
 
 ## Références
 
 - Site de référence (format structurel uniquement) : capsules.moyra.co
-- Stack mirroir local : `c:\DevTools\Projects\WaaS-Websites\ttminc-website`
+- Stack mirroir local : `C:\Nexus\Projects\WaaS-Websites\ttminc-website`
 - `docs/assets-a-generer.md` — pipeline Higgsfield, prompts littéraux, règles de brief
 - `docs/backlog.md` — dette assumée, avec le *pourquoi* de chaque report
 
 ## Pièges connus
 
-### Le serveur de dev sert un CSS périmé
-
-Symptôme : les titres rendent à 16 px au lieu de 144, les coins arrondis
-disparaissent, les bandes wordmark rapetissent. Autrement dit **toute
-modification récente de `globals.css` semble ignorée**.
-
-Cause : des processus `node` d'une session précédente restent vivants et
-gardent le port 3001. Un `pnpm dev` lancé par-dessus paraît fonctionner, mais
-c'est l'ancien serveur qui répond, avec son CSS figé. On a compté **huit
-processus de deux générations** simultanément.
-
-Diagnostic en une commande — comparer le disque et ce qui est servi :
-
-```bash
-curl -s http://localhost:3001/ | grep -oE '/_next/static/[^"]+\.css' | head -1 \
-  | xargs -I{} curl -s "http://localhost:3001{}" | grep -c "radius-hero"
-```
-
-Si le compte est 0 alors que le token est bien dans `globals.css`, c'est ça.
-
-Remède :
-```bash
-# PowerShell
-Get-Process node | Stop-Process -Force
-Remove-Item .next -Recurse -Force
-pnpm build && pnpm start   # verifier sur le BUILD, pas sur le dev
-```
-
-⚠️ **Vérifier ce genre de symptôme sur `pnpm build` + `pnpm start`, jamais sur
-le serveur de dev.** J'ai failli réécrire du CSS parfaitement fonctionnel en
-me fiant à ce que servait un serveur zombie.
-
-### Cette panne est silencieuse
-
-Le build passe, le lint passe, le texte rétrécit. Aucun outil ne la signale.
-D'où l'assertion de contrôle à garder dans toute passe de vérification
-navigateur : **le `<h2>` de Choisir doit dépasser 100 px de `font-size` à
-1440 px de large**. Une ligne, et elle couvre toute la famille de tokens.
+Voir `docs/depannage.md` (dont le serveur de dev qui sert un CSS périmé — panne silencieuse).
 
 ## Commandes utiles
 
 ```bash
 # Dev (port 3001)
-cd C:/DevTools/Projects/WaaS-Websites/refuges-charlevoix
+cd C:/Nexus/Projects/WaaS-Websites/refuges-charlevoix
 pnpm dev
 
 # Build production
@@ -392,3 +229,7 @@ higgsfield generate create nano_banana_2 --aspect_ratio 3:2 --resolution 4k \
 ffmpeg -y -i src.png -vf "scale=2400:-2,unsharp=5:5:0.4:5:5:0.0" \
   -c:v libaom-av1 -still-picture 1 -cpu-used 6 -crf 30 -pix_fmt yuv420p out.avif
 ```
+
+
+
+
