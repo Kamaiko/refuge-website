@@ -54,7 +54,6 @@ public/videos/hero-loop-[A-Z].mp4
 /.idea/
 
 # Claude Code local state (per-user settings, harness logs)
-/.claude/
 
 # AI source assets staged before AVIF conversion — 1.2 GB of 4k PNGs and
 # rejected variants. Deliberately OUTSIDE public/: while it lived at
