@@ -53,8 +53,6 @@ public/videos/hero-loop-[A-Z].mp4
 /.vscode/
 /.idea/
 
-# Claude Code local state (per-user settings, harness logs)
-
 # AI source assets staged before AVIF conversion — 1.2 GB of 4k PNGs and
 # rejected variants. Deliberately OUTSIDE public/: while it lived at
 # public/images/_raw/ it was gitignored but still served by `next dev` and
