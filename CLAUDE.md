@@ -198,7 +198,7 @@ Règles complètes : `docs/reduced-motion.md`. Retenir : la règle CSS ne coupe 
 ## Références
 
 - Site de référence (format structurel uniquement) : capsules.moyra.co
-- Stack mirroir local : `C:\Nexus\Projects\WaaS-Websites\ttminc-website`
+- Stack mirroir local : `C:\Nexus\Projects\Web\ttminc-website`
 - `docs/assets-a-generer.md` — pipeline Higgsfield, prompts littéraux, règles de brief
 - `docs/backlog.md` — dette assumée, avec le *pourquoi* de chaque report
 
@@ -210,7 +210,7 @@ Voir `docs/depannage.md` (dont le serveur de dev qui sert un CSS périmé — pa
 
 ```bash
 # Dev (port 3001)
-cd C:/Nexus/Projects/WaaS-Websites/refuges-charlevoix
+cd C:/Nexus/Projects/Web/refuges-charlevoix
 pnpm dev
 
 # Build production
