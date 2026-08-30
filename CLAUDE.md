@@ -55,8 +55,8 @@ les fichiers de projet. L'alias `@/*` pointe sur `./src/*` (`tsconfig.json`).
 | Région | Charlevoix (fjord, fleuve, montagnes) |
 | Saison dominante | Été + automne |
 | Nombre d'unités | 3 |
-| Architecture | Capsule « stadium » — pill horizontal, bouts arrondis. Canon dans `docs/backlog.md`, réf `assets-raw/refs/canon-capsule.jpg` |
-| Matériau dominant | Bois carbonisé noir (Shou Sugi Ban) |
+| Architecture | Modèle **dominant** : silhouette de terrain de course — deux longs bords droits, deux bouts fortement arrondis, rayon ≈ 45 % de la hauteur, jamais une gélule tubulaire. Porté par Brume, Aubépine et le hero. ⚠️ **Pas un invariant** : Galets est volontairement une boîte à coins arrondis, pour que la gamme ne soit pas trois fois le même objet. Canon littéral dans `docs/assets-a-generer.md` (blocs A/B/C) |
+| Matériau dominant | Bois carbonisé noir (Shou Sugi Ban) — mais rendu en **peau lisse et continue**, sans grain, planche ni latte visible. Écrire « timber » seul dans un prompt produit du bardage strié, hors famille |
 | Tonalité | Poétique / contemplative |
 | Langue | Français seulement |
 | Manifeste | Gardé (scroll-driven typography) |
@@ -89,14 +89,14 @@ qui existe :
 | 7 | **Pourquoi** | 3 slides, wheel-hijack + rideau + dolly |
 | 8 | **Activites** | `SectionHeading` + paliers d'engagement |
 | 9 | **Carousel** | 5 cartes en scroll horizontal épinglé |
-| 10 | **Soir** | 2 rideaux éteint→allumé + titre qui se réchauffe |
+| 10 | **Soir** | 2 photos en parallax convergent + titre qui se réchauffe |
 | 11 | **Feedback** | Citation, reveal mot à mot |
 | 12 | **Cta** | Marquee + nav + socials |
 | 13 | **Footer** | Wordmark géant `AquilonReveal` |
 
 ⚠️ **`Soir` ne doit pas remonter avant Hebergements.** Elle était en position 3
 et promettait « le soir, ensemble » six sections avant que le site n'en
-reparle, en contradiction directe avec Hebergements (« aucun voisin ») juste
+reparle, en contradiction directe avec Hebergements, qui vend la solitude, juste
 dessous. En 10 elle prolonge le Carousel, dont la dernière carte est « Le feu
 de minuit » : le carousel nomme le feu comme une activité, `Soir` révèle que
 c'en est une habitude.
@@ -121,9 +121,33 @@ Le logement reste absolument solitaire ; c'est la promesse produit et c'est ce
 que vendent les trois descriptions de refuges. Le social est **optionnel** et
 vit hors du refuge — le feu, le soir. Silence = registre dominant, ~70/30.
 
-Tout ajout de copy ou d'image se juge là-dessus. Le registre « fête » a été
-retiré partout : « Terrasse en fête » est devenue « Le passage des bélugas »,
-et les médaillons ne montrent plus personne.
+Tout ajout de copy ou d'image se juge là-dessus.
+
+⚠️ **La borne a bougé le 2026-08-29, et dans le sens de l'ouverture.** La
+version précédente disait que le registre « fête » avait été retiré *partout*
+et que les médaillons ne montraient plus personne. Ce n'est plus vrai : la
+section `Soir` sert désormais deux photos de monde autour du feu, dont une
+vingtaine de personnes sous des guirlandes (`medaillons/rassemblement.avif`).
+Décision assumée de Patrick, prise en connaissance du conflit — les images
+générées sans personne étaient plates, celles-ci sont cinématographiques.
+
+Ce qui **tient toujours**, et qui est le vrai invariant : le social vit **hors
+du refuge**, et le logement reste solitaire. Les trois descriptions de refuges
+ne promettent aucune vie commune, et le titre de `Soir` retire explicitement
+l'obligation (« Qu'il y ait quelqu'un ou non »). Le ratio 70/30 se mesure sur
+l'ensemble du parcours, pas section par section.
+
+Ce qui reste **interdit** : montrer du monde sur la terrasse **privée** d'un
+refuge loué, ou promettre le social comme un service inclus. La foule est un
+fait du territoire un soir donné, jamais un argument de vente.
+
+⚠️ **Cette dernière ligne a dû être reformulée dans la foulée.** Écrite
+d'abord comme « interdit de montrer du monde au refuge même », elle était
+fausse à l'instant où elle a été posée : `medaillons/feu.avif`, l'autre image
+restaurée, montre cinq personnes sur une terrasse à garde-corps sous des
+guirlandes. Le partage se lit à l'échelle du **domaine** — un feu commun, une
+terrasse commune —, pas à l'échelle du logement. C'est cette frontière-là qui
+est l'invariant, et elle seule.
 
 ## Primitives partagées
 

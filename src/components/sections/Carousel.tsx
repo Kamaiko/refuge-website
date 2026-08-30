@@ -70,20 +70,26 @@ const CARDS: readonly Card[] = [
     objectPosition: "62% 50%",
   },
   {
-    // Replaced "Terrasse en fête", which was the last remnant of the
-    // festival register the site dropped everywhere else — and its photo
-    // showed a smartly-dressed crowd, reading as an event rather than as
-    // the territory. Belugas were already seeded in the copy: the Galets
-    // refuge description says "Les bélugas passent l'été, parfois".
-    titre: "Le passage des bélugas",
-    sous: "Une heure à fixer l'eau grise pour trois secondes de dos blanc. Personne ne s'en est jamais plaint.",
+    // Third occupant of this slot. It was "Terrasse en fête" (dropped: last
+    // remnant of the festival register), then "Le passage des bélugas"
+    // (dropped August 2026: the image never rose above passable — three
+    // white backs on grey water is a hard subject, and four passes did not
+    // fix it). The replacement is a *place* rather than a sighting, which is
+    // what makes it photographable at all: a subject that is reliably there
+    // beats one that may not show up.
+    //
+    // ⚠️ The belugas were seeded in the copy — the Galets refuge description
+    // used to end on "Les bélugas passent l'été, parfois". That sentence was
+    // removed in the same pass, so nothing dangles.
+    titre: "Les pierres debout",
+    sous: "À marée basse, la grève découvre des colonnes que la mer a taillées par en dessous. Elles seront sous l'eau dans six heures.",
     // « Après-midi » a été aligné sur le vocabulaire des `NIVEAUX` d'Activités
     // (Demi-journée / Journée / Multijour), qui présente les mêmes pastilles
     // deux sections plus haut. « Soirée » reste sur la carte suivante : le feu
     // n'est pas un palier d'effort, c'est un moment, et c'est justement ce que
     // la section `Soir` révèle juste après.
     niveau: "Demi-journée",
-    image: "/images/activites/belugas.avif",
+    image: "/images/activites/pierres-debout.avif",
     zoom: 1,
   },
   {

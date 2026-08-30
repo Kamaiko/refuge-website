@@ -1,0 +1,10 @@
+Recompose this exact scene as a VERTICAL 9:16 photograph. Same cabin, same architecture, same landscape, same light direction, same colour palette and same saturation as the reference image. Do not invent a different building.
+
+FRAMING IS THE ENTIRE POINT OF THIS IMAGE:
+- The cabin spans only about FORTY-FIVE PERCENT of the frame width. It is NOT a close-up. It must NOT fill the frame.
+- Leave generous open landscape on BOTH sides of it: at least TWENTY-FIVE PERCENT of the frame width empty on the left AND on the right. No part of the cabin, its deck, its hot tub or its steps may come near either edge of the frame.
+- The cabin sits in the middle band, its centre around 35-40% of the frame height, so the whole building and its lit interior are in the UPPER HALF.
+- The upper third is sky and distant ridges: calm, open, uncluttered.
+- The LOWER SIXTY PERCENT of the frame must stay visually quiet and DARK, especially on its LEFT side: a caption, a large title and a paragraph are typeset over that area. No lit window, no bright highlight and no light-coloured object may sit there.
+
+Late afternoon into sunset, sun low and raking from the LEFT. Warm tan-cream sky around RGB 237-220-209, never pink, never magenta. Interior amber around RGB 142-88-61. Deep blacks in the shell. Natural colour grade, NOT HDR, NOT CGI-looking, crisp sharp detail, real photographic grain. 35mm lens, architectural editorial photography. No people, no signage, no logos, no text. Vertical 9:16 composition.

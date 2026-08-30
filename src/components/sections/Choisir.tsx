@@ -45,7 +45,13 @@ export default function Choisir() {
 
         <div className="mt-16 md:mt-32 grid gap-12 md:grid-cols-2 md:gap-16">
           <p className="text-creme-terre/70 max-w-4xl text-xl xs:text-2xl md:text-5xl font-medium leading-snug">
-            L&apos;un se dérobe dans la forêt. L&apos;autre se penche sur le fleuve. Le dernier domine la falaise. Trois rapports distincts au même territoire. Le vôtre se reconnaît avant d&apos;avoir fini de lire.
+            {/* ⚠️ Cette phrase énumère les trois refuges dans l'ordre de
+                `REFUGES` et doit être relue à CHAQUE fois qu'une de leurs
+                photos change. Elle a déjà menti une fois : elle promettait
+                « l'un se dérobe dans la forêt » alors qu'Aubépine était
+                passée sur un cap, et plus aucun refuge n'était en forêt —
+                une promesse faite section 3, intenable section 4. */}
+            L&apos;un domine le fjord. L&apos;autre regarde le couchant. Le dernier touche presque l&apos;eau. Trois rapports distincts au même territoire. Le vôtre se reconnaît avant d&apos;avoir fini de lire.
           </p>
 
           <div className="flex flex-col gap-8">

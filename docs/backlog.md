@@ -91,7 +91,12 @@ higgsfield generate create topaz_image \
 ```
 (le shell bash gère mieux ces guillemets que PowerShell)
 
-### ✅ Médaillons — les deux paires sont en place
+### ⛔ ~~Médaillons — les deux paires sont en place~~ — PÉRIMÉ le 2026-08-29
+
+> Les paires éteint/allumé et leur rideau ont été **retirés** — voir l'entrée
+> dédiée plus bas. Les règles de brief listées ici restent bonnes pour toute
+> image de ce type, à une exception près : « **pas de figures humaines** » a
+> été **renversée** le même jour, les deux photos en place montrent du monde.
 
 `medaillon-{feu,terrasse}-{eteint,allume}`. Les deux rideaux tournent.
 
@@ -111,9 +116,14 @@ Le fichier était **octet pour octet identique à `hero-shape.avif`** : le trois
 
 ### ✅ Carousel carte 4 — « Terrasse en fête » remplacée
 
+> ⛔ **Historique.** Les bélugas ont été remplacés à leur tour le 2026-08-29 —
+> voir l'entrée dédiée plus bas. Ce qui suit décrit l'état de juin, conservé
+> pour la méthode, pas pour l'état du site.
+
 Devenue « Le passage des bélugas ». C'était le dernier vestige du registre
 « festival » retiré partout ailleurs. Le sujet était déjà semé dans le copy :
-la description du refuge Galets dit « Les bélugas passent l'été, parfois ».
+la description du refuge Galets disait alors « Les bélugas passent l'été,
+parfois » — phrase retirée depuis, en même temps que la carte.
 
 L'image a demandé quatre passes, dont trois ratées en cherchant à
 « désaturer » — voir le journal de la méthode dans docs/assets-a-generer.md.
@@ -157,7 +167,12 @@ impossible de toute façon.
 
 ## 📱 Responsive — le vrai sujet n'est pas le paysage
 
-### ✅ Art direction du hero en portrait — livré, mais l'image est à refaire
+### ✅ Art direction du hero en portrait — livré, et l'image reste
+
+> ⛔ La demande de régénération ci-dessous est **close sans suite** : Patrick
+> juge le hero mobile actuel parfait en angle, cadrage et couleur, et s'en est
+> servi comme référence pour briefer les portraits des refuges. Les consignes
+> gardent leur valeur pour toute future image portrait.
 
 Le format est réglé : source 9:16 servie sous `md` par un `<picture>`, vidéo
 choisie en JS, deux `<link rel="preload">` avec `media`. Vérifié à 390×844 —
@@ -233,7 +248,10 @@ ffmpeg -v error -i img.avif -vf "crop=iw:ih*0.18:0:0,scale=1:1" \
   -f rawvideo -pix_fmt rgb24 - | od -An -tu1
 ```
 
-### Cartes `Hebergements` en portrait — même sujet
+### ✅ Cartes `Hebergements` en portrait — LIVRÉ le 2026-08-30
+
+> Les trois portraits sont en place, générés en une passe chacun. Le plan et
+> le prompt littéral sont dans `docs/assets-a-generer.md`.
 Les `refuges/*.avif` sont toutes en 16:9 et les cartes sont `absolute inset-0`
 dans un conteneur `~100lvh` : même crop que le hero avant correction. Un
 portrait 9:16 par refuge, servi par le même `<picture>`. Ajouter un champ
@@ -488,7 +506,12 @@ montée et masquée toute la session, une écriture de transform par frame sur u
 `getBoundingClientRect()` à chaque événement : un layout forcé par frame
 pendant un scroll Lenis. Un `IntersectionObserver` réglerait les deux.
 
-## 🎨 `activites/belugas.avif` — regénérer, palette hors design system
+## ~~`activites/belugas.avif` — regénérer~~ — CLOS, le sujet a été remplacé
+
+> ⛔ **Périmé depuis le 2026-08-29.** La carte ne montre plus de bélugas mais
+> « Les pierres debout » — voir l'entrée dédiée plus bas. Le diagnostic
+> ci-dessous sur les adjectifs de chaleur reste juste et vaut pour toute
+> génération future ; c'est la seule raison de le garder.
 
 Carte 4 du Carousel, « Le passage des bélugas »
 ([Carousel.tsx:81](../src/components/sections/Carousel.tsx#L81)).
@@ -520,3 +543,134 @@ l'image de référence.**
    désaturer jusqu'à les rendre invisibles à nouveau.
 4. Regénération complète depuis zéro, pas une retouche à partir de l'image
    actuelle : chaque itération qui repart d'un rendu perd en netteté.
+
+---
+
+## ✅ Médaillons (`Soir.tsx`) — rideau retiré, anciennes photos remises
+
+Fait le 2026-08-29. `Soir.tsx` passe de **369 à 286 lignes** : le type
+`FramePair`, `WIPE_FROM`/`WIPE_TO`, `CURTAIN_STAGGER`, `curtainRefs`, la
+branche reduced-motion qui rétractait les rideaux, la boucle de tweens et deux
+`will-change: clip-path` ont disparu avec l'effet. Restent le parallax des
+deux cartes et le titre qui se réchauffe.
+
+Les quatre AVIF `{feu,terrasse}-{eteint,allume}` sont **sortis de `public/`**
+vers `assets-raw/alternates/medaillon-*-RIDEAU-RETIRE.avif` — la règle du
+projet veut `public/` léger, et plus rien ne les référençait.
+
+⚠️ **La règle éditoriale a été déplacée en conséquence**, dans `CLAUDE.md` :
+`medaillons/rassemblement.avif` montre une vingtaine de personnes sous des
+guirlandes, ce que l'ancienne formulation interdisait explicitement. Décision
+assumée. L'invariant conservé est plus étroit : le social vit **hors du
+refuge**, et on ne montre jamais de monde **au refuge même**.
+
+## ✅ Carousel carte 4 — les bélugas remplacés par « Les pierres debout »
+
+Fait le 2026-08-29. Troisième occupant de cet emplacement, après « Terrasse en
+fête » et « Le passage des bélugas ».
+
+**Pourquoi changer de sujet plutôt que refaire l'image** : trois dos blancs sur
+de l'eau grise est un sujet difficile, et quatre passes n'en avaient pas tiré
+mieux que du passable. Le remplacement est un **lieu** et non une observation
+— un sujet fiablement présent se photographie, une rencontre possible non.
+
+Écartée en finale : « Les marmites de géant » (cuves circulaires spiralées
+dans le granite). Plus originale, et le seul gros plan qu'aurait eu le
+Carousel — source conservée dans `assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png` si
+l'occasion revient.
+
+⚠️ La mention « Les bélugas passent l'été, parfois » a été retirée de la
+description du refuge Galets dans le même geste : rien ne dangle.
+
+## 🧪 Génération d'images — la leçon payée 8 crédits le 2026-08-29
+
+Deux passes brûlées sur `aubepine` en repartant de `ref-brume.png` avec un
+prompt complet. Les deux ont échoué, et **pas** sur ce qui était décrit :
+
+| Passe | Ce qui était demandé | Ce qui est sorti |
+|---|---|---|
+| v1 | « three-quarter FRONT angle **so the glazed side faces the camera** » | élévation strictement frontale, capsule à ~80 % de largeur |
+| v2 | caméra reculée, « SIXTY PERCENT of the frame width » | capsule à 100 % de largeur, **vitrage disparu** |
+
+Trois enseignements :
+
+1. **« so the glazed side faces the camera » se lit littéralement.** La
+   formulation annulait « three-quarter » placé deux mots plus tôt. Décrire
+   l'angle par ce qui doit être **visible** (« the rounded end cap is visible
+   in perspective, the deck runs diagonally toward the lower-left corner »),
+   jamais par ce qui « fait face ».
+2. **Un bloc intérieur détaillé combat toute consigne d'échelle.** Plus on
+   décrit ce qu'il y a dedans, plus le modèle rapproche la caméra pour le
+   montrer — le pourcentage de largeur perd systématiquement l'arbitrage. Les
+   deux consignes ne peuvent pas tenir dans le même prompt.
+3. **Repartir de zéro perd tout ce que la référence portait gratuitement** :
+   le deck en bois **teinté** est revenu en pin blanc brut, la lumière basse
+   de fin de journée en plein jour diffus, et la composition en tiers
+   (capsule décentrée) en cadrage centré. Aucun de ces trois points n'était
+   dans le prompt — ils n'avaient jamais eu besoin d'y être.
+
+**Méthode retenue** : pour changer l'aménagement d'un refuge, **ne pas
+regénérer la scène**. Partir de l'image live du refuge et demander une
+modification **localisée** (« keep this exact photograph… make ONE change:
+replace the interior »), qui est le seul cas que la doc a mesuré comme
+fiable. Le cadrage, le grade, le matériau et la lumière sont alors préservés
+par construction, et non redemandés.
+
+## ✅ `activites/pierres-debout.avif` — Hopewell assumé, dossier clos
+
+> **Tranché le 2026-08-30 : on garde.** La région exacte importe peu tant que
+> le **climat** est le bon ; le pouvoir visuel a primé. Deux remplaçants ont
+> été essayés et rejetés — les marmites de géant (« cheap ») et les orgues de
+> pierre (« rien de beau là »). Ce qui suit reste utile comme grille d'analyse
+> si le sujet est un jour rouvert.
+
+### Le diagnostic d'origine
+
+**Trouvé par `/code-review` le 2026-08-29**, après coup. L'image montre des
+« pots de fleurs » évasés couronnés d'épinettes sur une batture sableuse :
+c'est la formation signature de la baie de Fundy, **Nouveau-Brunswick**, à
+600 km. `CLAUDE.md` verrouille « Région | Charlevoix » et vise notamment des
+opérateurs touristiques québécois, qui la reconnaissent au premier coup d'œil.
+
+Le brief demandait pourtant « quelque chose d'original, pas exactement
+Hopewell ». La ressemblance avait été signalée à la validation ; ce qui ne
+l'avait pas été, c'est la **sortie de région**.
+
+**Décision** : casser la ressemblance drastiquement, viser une « architecture
+naturelle » unique. Pistes retenues comme géologiquement justes pour le
+bouclier canadien de Charlevoix — donc défendables face au public visé :
+
+- **Les plis de gneiss** — strates pliées en vagues concentriques dans une
+  paroi, motif hypnotique et franchement architectural. Rare en photo
+  touristique, donc sans référence connue à laquelle se comparer.
+- **Le corridor de faille** — deux parois de granite polies, verticales, à
+  quelques mètres l'une de l'autre, la lumière tombant du haut. Lit comme une
+  nef. Le Canyon Sainte-Anne, tout près, rend l'idée plausible.
+- **Les marmites de géant** — déjà générée et payée
+  (`assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png`), donc **zéro crédit** si elle revient
+  dans la course.
+
+⚠️ Écarter le **basalte** (orgues hexagonales) malgré son pouvoir visuel :
+Charlevoix est du bouclier canadien — granite, gneiss, anorthosite. Ce serait
+la même erreur qu'Hopewell, sous une autre forme.
+
+## ✅ `refuges/galets.avif` — forme différente, et c'est VOULU
+
+`/code-review` l'a signalée le 2026-08-29 comme une violation du canon : c'est
+une **boîte à coins arrondis** là où `brume.avif` et `aubepine.avif` portent la
+silhouette de terrain de course. Le constat est juste, la conclusion non.
+
+**Décision de Patrick, le même jour : on garde.** Le décor et la palette
+valaient plus que l'uniformité, et trois capsules rigoureusement identiques
+appauvrissaient la gamme. Galets devient donc une **variante de modèle**, pas
+un raté.
+
+⚠️ **Conséquence pour le canon** : la silhouette de terrain de course reste le
+modèle **dominant** — deux refuges sur trois, plus le hero — mais elle n'est
+plus un invariant absolu. Ne pas « corriger » Galets en la croyant oubliée.
+
+Elle fait aussi doublon de **décor** avec `aubepine.avif` (même promontoire,
+même falaise ocre, même cargo). Ça, ce n'est pas voulu, mais c'est assumé : les
+textes ont été réaccordés à la place (Choisir et les trois descriptions, le
+même jour). Si l'occasion revient, c'est le **paysage** de Galets qu'il faut
+différencier — la descendre vraiment au bord de l'eau —, pas sa forme.

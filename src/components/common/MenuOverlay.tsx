@@ -369,15 +369,28 @@ export default function MenuOverlay() {
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
           >
             <Image
-              src="/images/refuges/brume.avif"
+              src="/images/menu-panel.avif"
               alt=""
               fill
               sizes="25vw"
-              // Source AVIFs (2400×1340, ~150KB) are already optimized.
-              // Next's default re-encode at quality 75 visibly softens them
-              // — match Hebergements.tsx and serve the source directly.
+              // Source AVIFs are already optimized. Next's default re-encode
+              // at quality 75 visibly softens them — match Hebergements.tsx
+              // and serve the source directly.
+              //
+              // Unlike the other refuge AVIFs this one is cropped PORTRAIT
+              // (1200×1800) from the right third of its 16:9 source: the
+              // panel is `basis-[25%]` at full height, so a landscape source
+              // lost most of its width to `object-cover`.
+              //
+              // ⚠️ The upstream crop is NOT the end of it. At 1440×900 the
+              // panel is ~354×876, ratio 0.40 against the source's 0.667, so
+              // `object-cover` still discards ~20% of the width on each side.
+              // Centred, that cut the barrel tub in half and dropped the fire
+              // pit entirely — both sit past x≈0.72 of the source. Biasing
+              // the position right keeps them. Re-check this if the panel's
+              // `basis` ever changes: the safe window is only ~61% wide.
               unoptimized
-              className="object-cover object-[45%_40%]"
+              className="object-cover object-[72%_50%]"
               priority={false}
             />
             <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />

@@ -52,12 +52,13 @@ export const REFUGES: Refuge[] = [
   {
     slug: "aubepine",
     nom: "Aubépine",
-    surnom: "Au creux de la forêt",
+    surnom: "Sur le cap doré",
     description:
-      "Le plus enclavé des trois. Aucun voisin, aucune vue ouverte ; seulement les arbres, le bois noir et le silence. Pour celles et ceux qui viennent vraiment écouter.",
+      "Posé sur un éperon d’herbes sèches, face au couchant. Les caps s’enfoncent dans la lumière l’un derrière l’autre, et les cargos passent si loin qu’on ne les entend pas.",
     capacite: "2 personnes",
     surface: "32 m²",
     image: "/images/refuges/aubepine.avif",
+    imagePortrait: "/images/refuges/aubepine-portrait.avif",
     tarifParNuit: 540,
   },
   {
@@ -65,10 +66,15 @@ export const REFUGES: Refuge[] = [
     nom: "Galets",
     surnom: "Au bord du fleuve",
     description:
-      "Le refuge le plus exposé. La marée, le vent, la lumière qui change toute la journée. Les bélugas passent l’été, parfois.",
+      // ⚠️ Ne pas réintroduire de cycle de marée « le matin / le soir » :
+      // l'estuaire est semi-diurne (deux marées hautes par jour), et la carte
+      // « dans six heures » du Carousel le dit correctement. Les deux textes
+      // sont sur le même scroll, donc ils se contredisaient à voix haute.
+      "Le plus bas des trois, presque au niveau de l’eau. La marée découvre la grève, puis la reprend ; le vent tombe avec le jour.",
     capacite: "2-3 personnes",
     surface: "38 m²",
     image: "/images/refuges/galets.avif",
+    imagePortrait: "/images/refuges/galets-portrait.avif",
     tarifParNuit: 600,
   },
 ];

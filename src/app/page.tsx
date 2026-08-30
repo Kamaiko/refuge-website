@@ -34,7 +34,11 @@ export default function Home() {
             "Le feu est allumé tous les soirs. Qu'il y ait quelqu'un ou non."
             It used to run third, right after the Manifeste — promising "le
             soir, ensemble" six sections before anything picked the thread back
-            up, and directly above Hebergements selling "aucun voisin".
+            up, and directly above Hebergements, which sold solitude. (That
+            phrasing used to quote Aubépine's "aucun voisin"; the refuge was
+            rewritten in August 2026 and the words are gone, but the ordering
+            constraint stands on the same ground: the shared side must not be
+            promised before the private one has been established.)
             It also has to carry `bg-gris-tan`: Feedback below fades gris-tan →
             base-noir over its top 45%, and that fade assumes it arrives onto
             the warm band. */}
