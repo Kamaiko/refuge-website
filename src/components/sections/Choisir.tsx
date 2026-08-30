@@ -51,7 +51,7 @@ export default function Choisir() {
                 « l'un se dérobe dans la forêt » alors qu'Aubépine était
                 passée sur un cap, et plus aucun refuge n'était en forêt —
                 une promesse faite section 3, intenable section 4. */}
-            L&apos;un domine le fjord. L&apos;autre regarde le couchant. Le dernier touche presque l&apos;eau. Trois rapports distincts au même territoire. Le vôtre se reconnaît avant d&apos;avoir fini de lire.
+            L&apos;un domine le fjord. L&apos;autre regarde le couchant. Le dernier surplombe la grève. Trois rapports distincts au même territoire. Le vôtre se reconnaît avant d&apos;avoir fini de lire.
           </p>
 
           <div className="flex flex-col gap-8">

@@ -130,33 +130,100 @@ L'image a demandé quatre passes, dont trois ratées en cherchant à
 Le niveau de la carte est passé de « Après-midi » à « Demi-journée » pour
 rejoindre le vocabulaire des `NIVEAUX` d'Activités.
 
-### `hero-loop.mp4` (desktop) — à regénérer entièrement
+### ⛔ `hero-loop.mp4` (desktop) — regénérée puis ÉCARTÉE le 2026-08-30
 
-La source est médiocre au départ : plan mou, boucle qui reprend mal. Elle a
-été recousue et ré-encodée en attendant, mais on ne répare pas un plan faible
-en post — il faut une nouvelle génération.
+> **La version en place reste l'ancienne.** La nouvelle était objectivement
+> meilleure sur le papier — plus longue, plus légère, couture 22 % plus
+> discrète, plan plus net — mais elle a perdu l'arbitrage sur un critère que
+> je n'avais pas mesuré : **le nombre de sources de mouvement**. L'ancienne
+> en a trois (le feu, la vapeur du bain, l'eau qui bouge), la nouvelle deux —
+> son eau reste figée, parce que le prompt l'exigeait pour protéger la
+> boucle. Patrick : « le loop est fluide » sur l'ancienne malgré l'eau qui
+> bouge, donc la précaution ne servait à rien.
+>
+> ⚠️ **Leçon** : une vidéo d'ambiance se juge à sa RICHESSE de mouvement
+> autant qu'à la propreté de sa couture. Interdire tout mouvement d'eau
+> achète une boucle parfaite et une image morte. Un prochain essai devrait
+> autoriser une eau qui frémit — sans vague qui traverse.
+>
+> Rendu conservé : `assets-raw/alternates/hero-loop-desktop-KLING-2026-08-NON-RETENUE.mp4`.
+> Source 10 s : `assets-raw/finals/hero-loop-desktop-src-10s.mp4`.
+> Tout ce qui suit reste vrai et vaut pour une future tentative.
 
-**Ce qui a été fait en attendant** : fondu de queue sur tête de 2,0 s (7,08 s
-→ 5,08 s), ré-encodage `crf 19`. L'original tournait à 4 840 kbps pour un plan
-lent, soit 4,1 Mo sur le chemin critique du hero ; on est à 2,2 Mo pour une
-perte de netteté de 1,9 % contre la source. ⚠️ Un premier passage en `crf 23`
-coûtait 6,5 % — mesuré, pas estimé. Ne pas redescendre.
+`kling3_0`, 16:9, **10 s, mode pro**, `--sound off`, start-image =
+`assets-raw/refs/ref-hero-desktop.png` (le poster converti en PNG, donc la
+première frame **est** le poster : aucun saut de couleur à la bascule).
+Facturé **17,5 crédits**, alors que `generate cost` en annonçait 25 — le devis
+surestime, vérifier le solde plutôt que le devis. Prompt littéral :
+`docs/prompts/hero-loop-desktop.txt`.
 
-**Aucune source n'existe** dans `assets-raw/finals/` pour l'original : seule
-la version recousue est archivée (`hero-loop-desktop-src-7s.mp4`, qui est en
-fait le fichier livré avant ma passe). Une régénération à l'identique est donc
-impossible de toute façon.
+⚠️ **Syntaxe** : `kling3_0` n'a pas de `--start-image`. Il faut uploader puis
+passer un tableau `medias` :
+```bash
+UP=$(higgsfield upload create poster.png | tail -1)
+higgsfield generate create kling3_0 --aspect_ratio 16:9 --duration 10 --mode pro \
+  --sound off --medias "[{\"role\":\"start_image\",\"data\":{\"type\":\"media_input\",\"id\":\"$UP\"}}]" \
+  --wait --prompt "…"
+```
 
-**Consignes pour la nouvelle** :
-- **Caméra verrouillée.** Aucun mouvement d'appareil. C'est ce qui rend le
-  fondu de bouclage invisible, et ça divise le poids par trois : la portrait,
-  en plan fixe, tient dans 800 Ko contre 2,2 Mo pour la desktop.
-- **Aucun modèle ne boucle**, quoi qu'on lui écrive — il produit N secondes et
-  s'arrête où il en est. Le bouclage se fait toujours en post.
-- Mouvement d'ambiance seulement : brume qui dérive, feuillage qui frémit,
-  vapeur du bain nordique, lueur intérieure **stable** (pas de scintillement).
-- Cadrage : gros plan de la capsule, intérieur lisible — voir la section
-  « Art direction du hero en portrait » pour le détail des consignes.
+#### Le modèle a désobéi, et c'était prévisible
+
+Le prompt interdisait explicitement toute vague et tout mouvement traversant
+le cadre. **Un splash d'eau est apparu à 6,375 s** — détecté à un
+`scene_score` de **0,0287**, contre 0,0094 pour la frame voisine.
+
+Patrick l'a formulé mieux que le prompt : « quand ça bouge naturellement doux
+c'est ok, mais quand trop de vague, impossible à faire quelque chose de loop
+parfait ». C'est exactement la distinction stochastique / trajectoriel.
+
+**Récupéré sans redépenser** : le splash était le SEUL saut de toute la
+vidéo (aucune autre frame au-dessus de 0,004). On coupe la source à 6,3 s et
+on boucle sur ce segment. Réflexe à garder : **détecter les sauts avant de
+jeter une génération** —
+```bash
+ffmpeg -v error -i src.mp4 -vf "select='gt(scene,0.008)',metadata=print:file=-" \
+  -an -f null - 2>&1 | grep -E "pts_time|scene_score" | paste - -
+```
+
+#### Le fondu : mesuré, pas estimé
+
+Test de couture correct = concaténer la boucle **avec elle-même** et mesurer
+le `scene_score` au point de raccord.
+
+| Fondu | Durée finale | Couture |
+|---|---|---|
+| **0,8 s ← retenu** | **5,54 s** | **0,00679** |
+| 1,0 s | 5,33 s | 0,00872 |
+| 1,2 s | 5,12 s | 0,00838 |
+| 1,5 s | 4,83 s | 0,00800 |
+| 2,0 s | 4,33 s | 0,00739 |
+| 2,5 s | 3,83 s | 0,00712 |
+| *ancienne version* | *5,08 s* | *0,00869* |
+
+⚠️ **La règle « le fondu long fantôme moins » NE SE VÉRIFIE PAS ICI.** Le
+fondu de 0,8 s gagne sur les DEUX critères à la fois : la boucle la plus
+longue et la couture la plus discrète. L'ancienne mesure (0,6 s → −10 %,
+2,0 s → −4 %) portait sur une autre vidéo et sur l'énergie de contours, pas
+sur le `scene_score` au raccord. Ici le mouvement est si lent et si diffus
+que deux images éloignées se ressemblent déjà : un fondu court suffit, et il
+ne coûte pas 1,2 s de boucle.
+
+**À retenir : balayer plusieurs valeurs de fondu et mesurer, plutôt que
+d'appliquer 2,0 s par habitude.** Le balayage coûte quelques minutes de CPU
+et zéro crédit.
+
+#### ⚠️ Ne pas juger la netteté au sobel global
+
+Mesurée, la nouvelle vidéo sort à **20,5** contre 25,9 pour l'ancienne — donc
+« plus molle ». **C'est faux.** Comparaison à 1:1 sur la même zone : la
+nouvelle définit nettement le robinet, la bouilloire, les troncs de bouleaux
+et les plis du rideau, là où l'ancienne est lissée. Le sobel global compte
+aussi le **bruit d'encodage**, dont l'ancienne est chargée. Toujours comparer
+un recadrage 1:1, pas une moyenne.
+
+**Résultat** : 5,54 s (plus longue que les 5,08 s précédentes), **1,89 Mo contre 2,30** (−18 % sur le chemin critique
+du hero), couture 22 % meilleure, plan plus net, caméra strictement fixe.
+Cache-buster passé à `?v=7` dans `Hero.tsx`.
 
 ### Encore jamais produits
 - `lieu-charlevoix.avif` (4:5) — section `Lieu.tsx`, non implémentée

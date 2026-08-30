@@ -690,18 +690,22 @@ déjà une, à écraser).
 
 ## ⏳ Reste à produire
 
-- **`refuges/aubepine-portrait.avif`** et **`refuges/galets-portrait.avif`** —
-  9:16, sur le gabarit de `brume-portrait`. Le champ `imagePortrait` de
-  `src/lib/data/refuges.ts` est optionnel : sans eux, ces deux refuges servent
-  leur paysage partout, sans état cassé.
-- **`hero-shape-portrait` en gros plan** — voir `docs/backlog.md`.
-- **`hero-loop.mp4` (desktop)** — plan mou et boucle faible à la source ; la
-  version en place est recousue en post en attendant. Voir `docs/backlog.md`.
+> ✅ **Soldé le 2026-08-30** : `aubepine-portrait`, `galets-portrait` et
+> `brume-portrait` refait. `hero-shape-portrait`
+> est clos sans suite — le rendu mobile actuel est jugé bon et a servi de
+> référence pour briefer les trois portraits.
+
+- **`hero-loop.mp4` desktop** — une regénération Kling a été écartée le
+  2026-08-30 : plus propre mais moins vivante que celle en place. Voir
+  `docs/backlog.md` pour la source, le prompt et la leçon.
 - `lieu-charlevoix.avif` (4:5) — section `Lieu.tsx`, non implémentée
 - Galerie ambiance, 6 images — section `Galerie.tsx`, non implémentée
 - Mini-loops d'ambiance (brume, feuille, eau)
 
----
+⚠️ Pour les mini-loops : **Higgsfield Soul 2.0 coûte 0,12 crédit** et donne un
+rendu bien plus cinématographique que Nano Banana Pro. Il ne sait pas tenir
+une architecture imposée, mais une boucle de brume ou de feuille n'en a
+aucune — c'est exactement son terrain.
 
 ## 📦 Archive sources
 **`/assets-raw/`** à la racine (local, gitignoré) :

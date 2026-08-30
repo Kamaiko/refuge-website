@@ -204,10 +204,16 @@ Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
 **`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
 **`docs/backlog.md`**.
 
-⏳ **Reste** : voir `docs/backlog.md` — portraits d'Aubépine et Galets,
-regénération du hero (le portrait actuel est un plan large là où le desktop
-est un gros plan) et de la vidéo desktop, `lieu-charlevoix`, galerie, envoi
-réel des réservations (Resend jamais branché), audit Lighthouse.
+⏳ **Reste** : voir `docs/backlog.md` — vidéo hero desktop, `lieu-charlevoix`,
+galerie, envoi réel des réservations (Resend jamais branché), audit Lighthouse.
+
+✅ Soldé le 2026-08-30 : les trois portraits mobiles. La régénération du hero
+portrait est close sans suite — le rendu actuel est jugé bon et a servi de
+référence pour briefer les portraits des refuges.
+
+⚠️ La vidéo hero desktop a été regénérée puis **écartée** : la nouvelle était
+plus propre mais plus pauvre en mouvement (deux sources contre trois). Elle
+reste donc au backlog, avec la leçon.
 
 ## Note sur le nom de marque
 

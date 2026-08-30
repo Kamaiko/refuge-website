@@ -64,13 +64,18 @@ export const REFUGES: Refuge[] = [
   {
     slug: "galets",
     nom: "Galets",
-    surnom: "Au bord du fleuve",
+    // ⚠️ Le nom vient de la grève EN CONTREBAS, pas de l'emplacement du
+    // refuge. Deux versions successives l'ont oublié et ont écrit que Galets
+    // était « au bord du fleuve », puis « le plus bas des trois, presque au
+    // niveau de l'eau » — sa photo le montre en haut d'une falaise. Toute
+    // reformulation doit garder la grève à distance, en dessous.
+    surnom: "Au-dessus de la grève",
     description:
       // ⚠️ Ne pas réintroduire de cycle de marée « le matin / le soir » :
       // l'estuaire est semi-diurne (deux marées hautes par jour), et la carte
       // « dans six heures » du Carousel le dit correctement. Les deux textes
       // sont sur le même scroll, donc ils se contredisaient à voix haute.
-      "Le plus bas des trois, presque au niveau de l’eau. La marée découvre la grève, puis la reprend ; le vent tombe avec le jour.",
+      "Le fleuve s’ouvre en grand, et la grève de galets attend en contrebas. Le vent monte de l’eau tout le jour, puis tombe d’un coup au crépuscule.",
     capacite: "2-3 personnes",
     surface: "38 m²",
     image: "/images/refuges/galets.avif",
