@@ -324,18 +324,20 @@ export default function Hebergements() {
                       re-encode at quality 75 visibly softens them), so the
                       component was contributing nothing but `fill`, which is
                       four utility classes.
-                      `imagePortrait` is optional — a refuge without one keeps
-                      serving its landscape at every width. */}
+
+                      The `<source>` carries the LANDSCAPE and the `<img>` the
+                      PORTRAIT, not the other way round: `<source media>` wins
+                      when it matches, so the landscape applies from `md` up
+                      and the portrait is the fallback every phone lands on.
+                      Both are required on every refuge — see `refuges.ts`. */}
                   <picture>
-                    {refuge.imagePortrait && (
-                      <source
-                        media={MQ.mdUp}
-                        srcSet={refuge.image}
-                        type="image/avif"
-                      />
-                    )}
+                    <source
+                      media={MQ.mdUp}
+                      srcSet={refuge.image}
+                      type="image/avif"
+                    />
                     <img
-                      src={refuge.imagePortrait ?? refuge.image}
+                      src={refuge.imagePortrait}
                       alt={refuge.nom}
                       fetchPriority={i === 0 ? "high" : "auto"}
                       loading={i === 0 ? "eager" : "lazy"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -55,6 +55,23 @@ function getClosedRect() {
 export default function MenuOverlay() {
   const { isOpen, close } = useMenu();
   const prefersReducedMotion = usePrefersReducedMotion();
+  /** Latches true on the first open and never flips back, so the image panel
+   *  mounts once and stays cached instead of re-fetching on every toggle.
+   *
+   *  ⚠️ This exists for a measured reason. The panel's `<Image>` used to point
+   *  at `/images/refuges/brume.avif` — the very file Hebergements already
+   *  loads for card 0 with `fetchPriority="high"` — so it cost ZERO extra
+   *  bytes. Pointing it at a dedicated `menu-panel.avif` made it a separate
+   *  124 KB request, and the overlay box is only `invisible` (not
+   *  `display:none`) at a rect inside the viewport, which does NOT suspend
+   *  `next/image`'s IntersectionObserver: every desktop visitor paid for it,
+   *  menu opened or not, competing with the hero video. Same pattern as
+   *  `MapOverlay`, which gates its iframe behind `preloaded`. */
+  const [everOpened, setEverOpened] = useState(false);
+  // Adjusted during render, not in an effect: React supports setting state
+  // while rendering the same component, and it avoids the extra commit — plus
+  // the cascading-render lint rule that an effect would trip here.
+  if (isOpen && !everOpened) setEverOpened(true);
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const imagePanelRef = useRef<HTMLDivElement>(null);
@@ -368,6 +385,7 @@ export default function MenuOverlay() {
             ref={imagePanelRef}
             className="hidden md:block md:basis-[25%] relative overflow-hidden rounded-l-card"
           >
+            {everOpened && (
             <Image
               src="/images/menu-panel.avif"
               alt=""
@@ -378,7 +396,7 @@ export default function MenuOverlay() {
               // and serve the source directly.
               //
               // Unlike the other refuge AVIFs this one is cropped PORTRAIT
-              // (1200×1800) from the right third of its 16:9 source: the
+              // (1000×1500) from the right third of its 16:9 source: the
               // panel is `basis-[25%]` at full height, so a landscape source
               // lost most of its width to `object-cover`.
               //
@@ -393,6 +411,7 @@ export default function MenuOverlay() {
               className="object-cover object-[72%_50%]"
               priority={false}
             />
+            )}
             <div className="absolute inset-0 bg-gradient-to-b from-base-noir/15 via-base-noir/35 to-base-noir/15" />
             <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 pointer-events-none select-none">
               <Marquee

@@ -22,7 +22,7 @@ import RevealText from "@/components/common/RevealText";
  *
  *  (The folder keeps the section's former name, `Medaillons`; renaming
  *  shipped files buys nothing.) */
-const FRAMES: readonly string[] = [
+const FRAMES = [
   "/images/medaillons/feu.avif",
   "/images/medaillons/rassemblement.avif",
 ] as const;
@@ -53,9 +53,7 @@ const TEXT_DRIFT = 28;
  * ⚠️ The two files are a chain: change the landing colour in one and the other
  * seams visibly.
  *
- * Reduced-motion: no parallax, and the headline stays `creme-dim`. The cards
- * are plain images at rest, so nothing needs undoing — the branch that used
- * to retract the curtains went with them.
+ * Reduced-motion: no parallax, and the headline stays `creme-dim`.
  */
 export default function Soir() {
   const ref = useRef<HTMLDivElement>(null);

@@ -5,13 +5,17 @@
  *  - `description`: 2-3 sentences describing the location and ambience.
  *  - `capacite` / `surface`: human-readable specs ("2-4 personnes", "46 m²").
  *  - `image`: `/public` path to the cover AVIF. Landscape, ~16:9.
- *  - `imagePortrait`: **optional** 9:16 variant, served below `md` by the
+ *  - `imagePortrait`: **required** 9:16 variant, served below `md` by the
  *    `<picture>` in Hebergements. The cards are `absolute inset-0` inside a
  *    `~100lvh` container, so on a 390x844 phone the frame ratio is ~0.45 and
- *    a 16:9 source loses most of its width to the crop. Optional on purpose:
- *    each portrait is a separate generation, and a refuge without one simply
- *    keeps serving its landscape everywhere — no broken state, and adding one
- *    later is a single line here.
+ *    a 16:9 source loses ~75% of its width to the crop — silently, with no
+ *    error and nothing in the console.
+ *    ⚠️ It was optional until 2026-08-30, back when only Brume had one. Once
+ *    all three were generated, the two fallbacks it justified in Hebergements
+ *    (`imagePortrait && <source>` and `?? refuge.image`) became branches no
+ *    data could reach — untested code that would fail unnoticed. Requiring
+ *    the field deleted both, and now a fourth refuge cannot ship without its
+ *    portrait: the build stops instead of the phone quietly cropping it.
  *  - `tarifParNuit`: indicative night rate in CAD, drives the Reserve cost
  *    summary.
  *
@@ -19,11 +23,10 @@
  *  onto z-index stacking and slide-up sequencing, so reordering this array
  *  will reorder the scroll-pinned slideshow.
  *
- *  Consumers keep narrowing with `(typeof REFUGES)[number]`, which now
- *  resolves through the annotation below. The annotation exists for one
- *  reason: `imagePortrait` is optional, and on a bare array literal TypeScript
- *  infers a union in which the property exists on some members only — every
- *  read of `refuge.imagePortrait` would then fail to compile. */
+ *  Consumers keep narrowing with `(typeof REFUGES)[number]`. The `Refuge[]`
+ *  annotation below is what they resolve through; it also makes a missing
+ *  field a compile error at the literal, which is the whole point now that
+ *  every field is required. */
 type Refuge = {
   slug: string;
   nom: string;
@@ -32,7 +35,7 @@ type Refuge = {
   capacite: string;
   surface: string;
   image: string;
-  imagePortrait?: string;
+  imagePortrait: string;
   tarifParNuit: number;
 };
 
