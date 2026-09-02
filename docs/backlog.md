@@ -398,7 +398,21 @@ les cartes arrivent vraiment.
   les trois d'Hébergements) — à trancher.
 - **Lot 5** — extraire `<SectionHeading>` (Choisir ↔ Activités ↔ Cta partagent ~125 lignes dont 28 identiques octet pour octet), `createOverlayContext()` (3 contextes quasi jumeaux), `useOverlayA11y()` (Escape + focus save/restore écrits 3 fois).
 - **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par commentaire), unifier les espacements de section (3 échelles `px-*` concurrentes), retirer la graisse 800 jamais utilisée. ✅ `unoptimized` est tranché : il s'applique à tous les `<Image>` raster (Soir, ReservePanel et Feedback y échappaient). ✅ `_raw/` est sorti de `public/` vers `/assets-raw/`.
-- **Perf** — `Feedback.tsx` anime `filter: blur` en scrub sur ~50 spans, chacun promu en couche compositeur. Poste le plus lourd du site ; mesurer, et remplacer par `opacity` + `y` si le coût se confirme.
+- ⏳ **Perf — le stutter est CONSTATÉ, plus seulement soupçonné** · 2026-08-30
+  `Feedback.tsx` anime `filter: blur` en scrub sur ~50 spans, chacun promu en
+  couche compositeur. Poste le plus lourd du site.
+  **Patrick voit un stutter** au déballage de la citation « On est arrivés avec
+  une liste de choses à faire… » (`Feedback.tsx:11`) **et sur le ruban juste en
+  dessous**.
+  ⚠️ Ce ruban est le `Marquee` du `Cta` — section 12, immédiatement après
+  Feedback en 11. Les deux dettes sont donc **voisines dans le scroll et leurs
+  coûts s'additionnent au même instant** : le blur sur 50 couches pendant que
+  quatre tickers `Marquee` écrivent un transform par frame sans porte de
+  visibilité (voir l'entrée « Marquee : le ticker ne s'éteint jamais »). Aucune
+  des deux n'avait été reliée à l'autre.
+  Premier geste : profiler ce segment de scroll dans l'onglet Performance, et
+  regarder si le blur ou les tickers dominent AVANT de corriger l'un des deux —
+  corriger le mauvais ne changerait rien de visible.
 
 ---
 
@@ -565,6 +579,13 @@ demande de poser/retirer le hint autour de l'animation — pas trivial sur un
 ScrollTrigger scrubbé, qui n'a pas de `onStart`/`onComplete` significatifs.
 
 ### `Marquee` : le ticker ne s'éteint jamais
+
+> ⏳ **Relié au stutter constaté le 2026-08-30.** Une des quatre instances est
+> celle du `Cta`, section 12 — juste sous `Feedback`, section 11, qui anime un
+> blur sur ~50 couches. Patrick voit le saut exactement là. Voir l'entrée
+> « Perf — le stutter est CONSTATÉ » plus haut : profiler avant de choisir
+> laquelle des deux corriger.
+
 `gsap.ticker.add()` tourne pour toute la durée de vie du composant, sans porte
 de visibilité. Quatre instances sur la page, dont une dans `MenuOverlay` —
 montée et masquée toute la session, une écriture de transform par frame sur un
@@ -741,3 +762,50 @@ même falaise ocre, même cargo). Ça, ce n'est pas voulu, mais c'est assumé : 
 textes ont été réaccordés à la place (Choisir et les trois descriptions, le
 même jour). Si l'occasion revient, c'est le **paysage** de Galets qu'il faut
 différencier — la descendre vraiment au bord de l'eau —, pas sa forme.
+
+---
+
+## 💡 Panorama horizontal épinglé — idée à instruire
+
+Notée le 2026-08-30. **Pas encore tranchée**, et le point ouvert est le plus
+important : image ou vidéo.
+
+**L'idée** : une image très large (une capsule vue en entier, ou une scène
+panoramique), épinglée pendant que le scroll vertical la fait défiler
+horizontalement de gauche à droite. On découvre la scène au complet sans
+jamais la voir en entier d'un coup.
+
+❓ **Image déplacée ou vidéo ?** Intuition de Patrick : au bout de la ligne, ce
+serait « plus premium » en vidéo qu'en image sur laquelle on se déplace. Les
+deux ne coûtent pas la même chose, ni à produire ni à charger :
+
+| | Image large | Vidéo |
+|---|---|---|
+| Production | 1 génération, ratio large | boucle à générer, plus chère, et le bouclage se recoud en post |
+| Poids | un AVIF, ~300 Ko | plusieurs Mo sur le chemin critique |
+| Mouvement | seulement le déplacement du cadre | mouvement réel dans la scène |
+| Risque | plat si la scène est statique | la couture de boucle, déjà mesurée coûteuse |
+
+⚠️ **Le site a déjà un scroll horizontal épinglé** : `Carousel.tsx`, 5 cartes,
+7,7 hauteurs de viewport de pin. Le mécanisme existe donc et n'est pas à
+réinventer — c'est le contenu qui change, pas la technique. Lire ce composant
+AVANT toute planification : il porte déjà le mapping scroll vertical →
+translation horizontale, la piste mobile de repli et la gestion reduced-motion.
+
+⚠️ **Où l'insérer n'est pas libre.** Le site enchaîne déjà Carousel (9) puis
+Soir (10), toutes deux en `bg-gris-tan` dans la bande chaude qu'Activités
+ouvre et que Feedback referme (voir `CLAUDE.md` § Chaîne de fonds). Une
+section insérée là sans `bg-gris-tan` fait peindre à Feedback une bande chaude
+sortie de nulle part. Et un second scroll horizontal à trois sections du
+premier risque de lire comme une redite.
+
+⚠️ **Un pin de plus s'ajoute au budget de scroll**, dans une page qui en a
+déjà deux (Hebergements, Carousel) plus le wheel-hijack de Pourquoi. À mettre
+en regard du stutter constaté le 2026-08-30 : la page n'a pas de marge de
+performance à dépenser à l'aveugle.
+
+**Premier geste** : prototyper le pin horizontal avec une image DÉJÀ
+existante — un simple recadrage large d'un asset en place — pour juger de
+l'effet avant de générer quoi que ce soit. Si l'effet ne convainc pas en
+image, il ne convaincra pas davantage en vidéo, et on aura tranché la question
+❓ sans dépenser un crédit.
