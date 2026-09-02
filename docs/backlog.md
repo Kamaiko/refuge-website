@@ -410,9 +410,23 @@ les cartes arrivent vraiment.
   quatre tickers `Marquee` écrivent un transform par frame sans porte de
   visibilité (voir l'entrée « Marquee : le ticker ne s'éteint jamais »). Aucune
   des deux n'avait été reliée à l'autre.
-  Premier geste : profiler ce segment de scroll dans l'onglet Performance, et
-  regarder si le blur ou les tickers dominent AVANT de corriger l'un des deux —
-  corriger le mauvais ne changerait rien de visible.
+  ⚠️ **Le même stutter existe dans `adjointe-virtuelle`** — Patrick le voit sur
+  les deux sites. Son `Testimonials.tsx` est un copier-coller de ce
+  `Feedback.tsx` (son commentaire dit « Valeurs Feedback.tsx »), et il porte un
+  diagnostic que CE projet n'a pas : « animer un blur, c'est un recalcul par
+  pixel sur le GPU à chaque frame de scrub, sur ~25 mots à la fois ».
+  **Ça déplace la cause** : le facteur commun aux deux sites est l'animation
+  elle-même, pas le voisinage Feedback/Marquee propre à celui-ci.
+  ⚠️ Mais les deux ont DÉJÀ protégé le mobile, par deux chemins différents :
+  là-bas le blur est desktop-only et mobile garde transform+opacity animés ;
+  ici (`Feedback.tsx:88-93`) mobile ne s'anime pas du tout, l'état final est
+  posé. **Le stutter serait donc sur DESKTOP**, seul endroit où les deux
+  animent encore le blur — et là, aucun des deux projets n'a rien fait.
+  Premier geste : confirmer avec Patrick sur quel appareil il le voit. Si
+  c'est desktop, profiler ce segment dans l'onglet Performance et regarder si
+  le blur ou les tickers dominent AVANT de corriger l'un des deux — corriger
+  le mauvais ne changerait rien de visible. Le correctif éprouvé existe déjà :
+  `adjointe-virtuelle/src/components/sections/Testimonials.tsx:44-62`.
 
 ---
 
