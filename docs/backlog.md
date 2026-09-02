@@ -417,16 +417,27 @@ les cartes arrivent vraiment.
   pixel sur le GPU à chaque frame de scrub, sur ~25 mots à la fois ».
   **Ça déplace la cause** : le facteur commun aux deux sites est l'animation
   elle-même, pas le voisinage Feedback/Marquee propre à celui-ci.
-  ⚠️ Mais les deux ont DÉJÀ protégé le mobile, par deux chemins différents :
-  là-bas le blur est desktop-only et mobile garde transform+opacity animés ;
-  ici (`Feedback.tsx:88-93`) mobile ne s'anime pas du tout, l'état final est
-  posé. **Le stutter serait donc sur DESKTOP**, seul endroit où les deux
-  animent encore le blur — et là, aucun des deux projets n'a rien fait.
-  Premier geste : confirmer avec Patrick sur quel appareil il le voit. Si
-  c'est desktop, profiler ce segment dans l'onglet Performance et regarder si
-  le blur ou les tickers dominent AVANT de corriger l'un des deux — corriger
-  le mauvais ne changerait rien de visible. Le correctif éprouvé existe déjà :
-  `adjointe-virtuelle/src/components/sections/Testimonials.tsx:44-62`.
+  ✅ **Confirmé par Patrick le 2026-08-30 : le stutter est sur DESKTOP**, sur
+  les deux sites.
+  ⚠️ **Et ce projet-ci n'a AUCUNE garde de performance**, contrairement à ce
+  qu'une première version de cette note affirmait. Dans `Feedback.tsx:85-90`,
+  `mdUp` et `belowMd` appellent le MÊME `setup()` et ne changent que les
+  seuils `start`/`end` : le blur est animé partout, mobile compris. Le
+  `gsap.set(..., blur(0px))` de la ligne 93 est dans la branche `reduce`, pas
+  dans `belowMd`.
+  État réel des deux sites :
+  · `adjointe-virtuelle` — blur **desktop-only**, mobile garde transform +
+    opacity animés. Correctif appliqué, son commentaire dit « vécu ».
+  · **ici — blur PARTOUT, aucun correctif.**
+  Donc le desktop anime le blur dans les deux (d'où le stutter commun), et ce
+  projet traîne en plus la dette mobile que l'autre a déjà réglée.
+  Premier geste : profiler ce segment dans l'onglet Performance et regarder si
+  le blur ou les tickers `Marquee` dominent AVANT de corriger l'un des deux —
+  corriger le mauvais ne changerait rien de visible. Deux correctifs distincts
+  attendent ensuite : porter la garde mobile de
+  `adjointe-virtuelle/src/components/sections/Testimonials.tsx:44-62`, et
+  trancher le sort du blur SUR DESKTOP, qu'aucun des deux sites n'a traité —
+  le remplacer par `opacity` + `y` est l'option déjà pressentie.
 
 ---
 
