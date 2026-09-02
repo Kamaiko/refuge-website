@@ -339,8 +339,18 @@ export default function Hebergements() {
                     <img
                       src={refuge.imagePortrait}
                       alt={refuge.nom}
-                      fetchPriority={i === 0 ? "high" : "auto"}
-                      loading={i === 0 ? "eager" : "lazy"}
+                      // ⚠️ Card 0 used to carry fetchPriority="high" +
+                      // loading="eager". It competed, at high priority, with
+                      // the hero poster's own high-priority preload in
+                      // layout.tsx — and that poster IS the LCP element.
+                      // Hebergements is section 4, three screens down: this
+                      // image is never visible at first paint, so it was
+                      // stealing 144 KB of bandwidth from the LCP on a
+                      // constrained connection. Chrome asks for a single
+                      // fetchpriority=high image per page. The section's 400%
+                      // pin leaves the native lazy loader all the time it needs.
+                      fetchPriority="auto"
+                      loading="lazy"
                       decoding="async"
                       className="absolute inset-0 h-full w-full object-cover"
                     />

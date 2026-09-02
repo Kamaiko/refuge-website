@@ -438,6 +438,17 @@ les cartes arrivent vraiment.
   `adjointe-virtuelle/src/components/sections/Testimonials.tsx:44-62`, et
   trancher le sort du blur SUR DESKTOP, qu'aucun des deux sites n'a traité —
   le remplacer par `opacity` + `y` est l'option déjà pressentie.
+  ❓ **Patrick n'a PAS tranché** (2026-08-30) : « on pourrait enlever le blur et
+  fix le problème, mais je suis sûr qu'il y a une méthode plus durable et
+  solide ». Retirer le blur règle le symptôme et coûte une signature visuelle —
+  le fondu-flou fait partie du rendu de la section. Pistes à instruire avant de
+  choisir, par ordre de coût croissant : réduire le rayon (6px → 2-3px, le coût
+  GPU croît avec le rayon) ; n'animer le blur que sur les mots réellement dans
+  la fenêtre de scrub au lieu des ~50 d'un coup ; poser/retirer `will-change`
+  autour du tween plutôt qu'en permanence ; ou remplacer le flou par un masque
+  CSS qui ne recalcule pas par pixel. **Ne pas trancher sans le profilage** :
+  si les tickers `Marquee` dominent, retirer le blur ne changera rien de
+  visible et la signature sera perdue pour rien.
 
 ---
 
@@ -834,3 +845,191 @@ existante — un simple recadrage large d'un asset en place — pour juger de
 l'effet avant de générer quoi que ce soit. Si l'effet ne convainc pas en
 image, il ne convaincra pas davantage en vidéo, et on aura tranché la question
 ❓ sans dépenser un crédit.
+
+---
+
+# 🔬 Audit de qualité du 2026-08-30
+
+Trois passes en parallèle — `vercel-react-best-practices`, `web-perf`,
+`gsap-performance` + `gsap-scrolltrigger` — sur le code existant, pas sur un
+diff. Chaque finding ci-dessous a été **revérifié à la main** ; ceux qui n'ont
+pas tenu ne sont pas listés.
+
+✅ **Déjà corrigés dans la foulée** : les 3 vignettes de `MapOverlay` (565 Ko
+sur mobile), le `fetchPriority="high"` de la carte 0 d'Hébergements, et la
+date de build figée dans `ReservePanel`.
+
+## 🔴 `useGSAP` + `dependencies` ne nettoie PAS — le ticker tourne sous reduced-motion
+
+**Le plus grave de l'audit, et il est confirmé ligne par ligne.**
+
+Dans `@gsap/react` 2.1.2 (`node_modules/@gsap/react/dist/index.js:41-51`) :
+
+```js
+deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
+useIsomorphicLayoutEffect(() => {
+  callback && context.current.add(callback, scope);
+  if (!deferCleanup || !mounted.current) { return () => context.current.revert(); }
+}, dependencies);
+```
+
+Avec des `dependencies` non vides et sans `revertOnUpdate`, **l'effet ne
+retourne aucun cleanup après le premier montage**. La fonction de nettoyage
+écrite dans le callback n'est jamais appelée quand une dépendance change.
+
+Conséquence mesurable sur `Marquee.tsx` : `useMediaQuery` retourne `false` au
+rendu d'hydratation par contrat (`useMediaQuery.ts:28`, `getServerSnapshot`).
+Passe 1, `prefersReducedMotion` vaut `false`, donc `gsap.ticker.add()` part
+(ligne 144). Passe 2, il vaut `true`, sortie anticipée — mais **le ticker de la
+passe 1 n'est jamais retiré**. Quatre instances écrivent un transform par frame
+pour toute la session, chez exactement les visiteurs qui ont demandé l'inverse.
+Le commentaire lignes 88-94 affirme le contraire de ce que le code fait.
+
+Même mécanisme, deux autres endroits vérifiés :
+
+- `SectionHeading.tsx:60-168` — `renderedLines` change au premier commit sous
+  1024 px (seule Activités passe `linesCompact`), le premier `matchMedia()`
+  n'est pas révoqué : deux jeux de tweens scrubbés sur le même élément, et un
+  rideau qui garde une référence à un span démonté. Environ 5 triggers de trop,
+  sur le profil au budget le plus serré.
+- `Header.tsx:88-148` — `pillH`/`circleH` changent au premier commit : seconde
+  timeline d'entrée du pill Menu par-dessus la première. Les valeurs cibles
+  sont identiques donc rien ne se voit, mais c'est le défaut que le commentaire
+  lignes 61-67 dit avoir corrigé — pour le CTA Réserver seulement.
+
+⚠️ **Le correctif n'est PAS `revertOnUpdate: true` partout** : plusieurs
+endroits dépendent de la non-révocation pour ne pas remettre l'état à zéro en
+plein tween (`Header` le documente, `RefugeCardContent` en dépend). Trancher en
+trois catégories : (a) ressource persistante créée — ticker, ScrollTrigger,
+matchMedia, listener — vers `revertOnUpdate: true` ; (b) que des tweens de
+props, garder le défaut et ajouter `overwrite: true` ; (c) dépendance qui ne
+sert qu'à rattraper l'hydratation, lire `wantsReducedMotion()` et retirer la
+dépendance.
+
+Premier geste : traiter `Marquee` seul, c'est le seul dont l'effet est visible.
+
+## 🔴 Piège de déploiement — `localhost:3001` figé dans le SEO
+
+`layout.tsx:24` et `:67`, `robots.ts:52`, `sitemap.ts:68` retombent tous sur
+`"http://localhost:3001"` faute de `NEXT_PUBLIC_SITE_URL`, et aucun `.env*`
+n'existe. Vérifié dans les artefacts du build : `robots.txt`, `sitemap.xml`,
+`og:image` et le JSON-LD portent tous cette URL.
+
+Le site n'est pas déployé, donc rien n'est cassé aujourd'hui — mais ça se
+déclenchera **exactement une fois**, au premier déploiement, avec des aperçus
+sociaux morts et un sitemap invalide. Et le fallback est silencieux.
+
+Premier geste : faire **échouer le build** en production quand la variable
+manque, au lieu de le laisser réussir faux.
+
+## 🟠 Accessibilité — `aria-label` sur un `<span>` est ignoré
+
+`Feedback.tsx:171` (`WordSplit`), `RevealChars.tsx:124` et
+`AquilonReveal.tsx:110` rendent un `<span aria-label={text}>` dont **tous** les
+enfants sont `aria-hidden`. Or un `span` sans `role` mappe sur
+`role="generic"`, qui **interdit le nommage par l'auteur** : `aria-label` y est
+ignoré par Chrome, Firefox et Safari (règle `aria-prohibited-attr` d'axe-core).
+Il ne reste donc rien.
+
+Sont muets : la citation entière de `Feedback`, et **les trois titres et corps
+des slides de `Pourquoi` sur desktop** (`pourquoi/cards.tsx:121,141` — la
+version mobile rend de vrais `<h3>`/`<p>` et va bien), plus les surnoms
+d'`Hebergements:459`. Le `nom` juste en dessous passe `as="h2"` et fonctionne :
+le mécanisme est connu, il n'a été appliqué qu'à un appel sur deux.
+
+Ni `tsc` ni `eslint-config-next` ne l'attrapent.
+
+⚠️ **Gros refactoring** : le correctif doit vivre dans les primitives — miroir
+`sr-only` du texte plus `aria-hidden` sur tout le markup animé —, sinon le
+piège reste pour le prochain usage. Le vrai travail est de vérifier que le
+miroir ne casse ni la mise en page ni les mesures de largeur dont dépendent les
+rideaux. Une cible Awwwards se fait auditer à l'accessibilité.
+
+## 🟠 `Pourquoi` — deux tiers de la section inatteignables sur tablette tactile
+
+`Pourquoi.tsx:298` — avancer de slide dépend uniquement d'un listener `wheel`.
+La pile desktop s'affiche dès `MQ.mdUp`, et la pile mobile est `md:hidden`. Un
+iPad (768 portrait, 1024 paysage) n'émet aucun `wheel` au doigt : les slides 2
+et 3 ne sont jamais atteignables, et le pin `+=200` fait passer tout droit
+après la slide 1. Le Carousel couvre ce cas, Pourquoi non.
+
+Premier geste, quasi gratuit : gater la piste desktop sur `(pointer: fine)` en
+plus de `MQ.mdUp`, la pile verticale prend alors le relais sur tablette. Option
+plus ambitieuse : des flèches prev/next visibles appelant le `tweenTo` déjà
+présent — ça réglerait aussi l'accès clavier.
+
+## 🟡 Chargements — quatre points chiffrés
+
+- **L'iframe Maps se monte pendant le pin d'Hébergements.** `Proximite.tsx:10`
+  déclenche à `1500px`, soit au milieu du scrub épinglé, le moment le plus
+  chargé de la page. Plancher mesuré à la main : 80,3 Ko (1,4 + 2,8 + 76,1)
+  **plus** le bundle Maps et les tuiles. Tout visiteur qui scrolle paie, qu'il
+  ouvre la carte ou non — ce que `MapOverlay.tsx:401-410` affirme pourtant
+  éviter, son commentaire est devenu faux. ⚠️ Et `layout.tsx:136-137`
+  preconnecte `maps.google.com`, l'origine qui ne sert que 1,4 Ko, mais **pas**
+  `maps.googleapis.com` ni `maps.gstatic.com` qui portent tout le poids.
+- **`public/` est servi en `max-age=0`** — 24 images (3,3 Mo) et 2 vidéos
+  (3,0 Mo) revalidées à chaque visite, alors que `/_next/static` est en
+  `immutable`. `next.config.ts` est vide.
+  ⚠️ **Ne pas poser un `max-age` long à l'aveugle** : les noms de `public/` ne
+  sont pas hachés par contenu. Trois images ont été remplacées le 2026-08-30
+  sous le même nom — un cache long aurait servi les anciennes pendant des
+  jours. Soit un `max-age` court, en heures, soit un cache-buster systématique
+  comme le `?v=` déjà utilisé pour la vidéo hero.
+- **`hero-loop.mp4` est sur-encodée** : 2,30 Mo à 3,63 Mbit/s. Un ré-encodage
+  `-crf 24` donne 1,08 Mo, soit **−53 %**, mesuré. Hors chemin critique
+  (`preload="none"`), mais combiné au point précédent c'est 2,25 Mo
+  retéléchargés à chaque visite.
+- **Le poster hero mobile pèse 2,1× le desktop** à surface égale : 192,9 Ko
+  pour 3,26 Mpx contre 92,5 Ko pour 3,22 Mpx. C'est la ressource LCP, servie à
+  la connexion la moins capable de l'absorber. Aucune raison technique à cette
+  asymétrie.
+
+## 🟡 Deux détails à coût nul
+
+- `globals.css:69` — `text-rendering: optimizeLegibility` sur `<body>`, alors
+  que le document prérendu compte **1 372 `<span>`** (découpage par glyphe).
+  `font-feature-settings: "ss01","ss02"` ligne 66 fournit déjà les jeux
+  stylistiques voulus. Suppression d'une ligne, aucun effet visuel attendu.
+- `Hebergements.tsx:203` anime `borderRadius` en scrub sur un `<article>` plein
+  cadre. `border-radius` n'est pas compositable — et le fichier énonce la règle
+  **11 lignes plus bas** (`:214-218`), appliquée au `backgroundColor` sur la
+  même timeline, mais pas ici. ⚠️ Le fait est certain, l'ampleur non : à
+  profiler avant de toucher.
+
+## 📌 Correction à apporter à ce backlog lui-même
+
+L'entrée `will-change` plus haut annonce « quatre déclarations (Hebergements,
+Soir) » et cite les rideaux de `Soir` — qui n'existent plus. Le compte réel est
+**26 déclarations sur 13 fichiers**, et les plus lourdes n'y figurent pas :
+`Carousel.tsx:336` (piste `w-[375vw]`) et `:384` (5 wrappers de pan plein
+cadre) — six couches promues en permanence pour un pin qui n'occupe qu'une
+section sur treize.
+
+## 🧱 Le seul vrai chantier : une porte de visibilité générique
+
+Les deux audits y arrivent séparément. Rien n'éteint aujourd'hui le travail par
+frame d'une section hors champ : 4 tickers `Marquee`, 6 couches compositeur du
+Carousel, les 26 `will-change` permanents, le hit-test de `pauseOnHover`. Le
+backlog traite chacun comme un item isolé — **c'est un seul motif manquant**.
+Un helper (`ScrollTrigger` `onToggle` vers un drapeau dans un ref, plus
+pose/retrait de `will-change`) les règlerait tous d'un coup.
+
+Coût environ une journée, touche `Marquee`, `Carousel`, `Hebergements`, `Soir`
+et `Feedback`. ⚠️ **À profiler d'abord**, comme pour le blur : corriger le
+mauvais poste ne changerait rien de visible.
+
+## ⛔ Écarté, mesuré — ne pas le redécouvrir
+
+**`next/dynamic` sur les trois overlays ne vaut PAS le coup.** Mesuré : le
+chunk qui les porte fait 44 172 o brut / 12 470 o gz, dont Lenis seul 17 722 /
+5 055. Les trois overlays pèsent donc environ 26 Ko brut, **7,4 Ko gz**. Un
+`dynamic()` économiserait 7 Ko gz et ajouterait trois frontières de suspense
+sur des composants montés dans le layout racine. Le code applicatif entier du
+site fait 28,4 Ko gz — **le JS n'est pas le problème de ce site** : le poids
+est React 19 plus Next 16 (~162 Ko gz) et GSAP (46 Ko gz).
+
+Autres angles vérifiés sans rien trouver : gzip actif partout · 2 woff2
+variables (32 Ko) · Zod absent du bundle client · contextes correctement
+mémoïsés · `setRevealActive` par frame retourne `prev` à l'identique donc React
+bail-out · aucun barrel import parasite · pas de data fetching à optimiser.

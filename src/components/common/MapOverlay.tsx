@@ -481,8 +481,19 @@ export default function MapOverlay() {
               drift out of sync with the section again — it used to hardcode
               Brume and Aubépine in duplicated markup, and Galets simply
               wasn't there. */}
+          {/* ⚠️ Gated on `preloaded`, exactly like the iframe above — and for
+              the same measured reason. The overlay box is hidden by a
+              `clip-path`, which does NOT affect the geometry the native lazy
+              loader consults: the box is `fixed inset-0` and this card sits at
+              `top-4 left-4`, so three `loading="lazy"` images inside the
+              initial HTML fire on first layout. On desktop that is free —
+              Hebergements already fetches these same landscape files. On
+              MOBILE Hebergements serves the *portrait* variants instead, so
+              these three were 565 KB (144 + 219 + 202) downloaded on every
+              phone visit for a card most visitors never open. Same trap
+              `MenuOverlay` hit with its panel image. */}
           <div className="mt-7 flex gap-3">
-            {REFUGES.map((refuge) => (
+            {preloaded && REFUGES.map((refuge) => (
               <div
                 key={refuge.slug}
                 className="relative aspect-[3/2] flex-1 overflow-hidden rounded-2xl"

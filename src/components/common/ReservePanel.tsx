@@ -72,8 +72,27 @@ export default function ReservePanel() {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const [refuge, setRefuge] = useState<RefugeSlug>("brume");
-  const [arrivee, setArrivee] = useState(() => isoDate(0));
-  const [depart, setDepart] = useState(() => isoDate(DEFAULT_STAY_NIGHTS));
+  /** ⚠️ Empty on the server, filled on mount — NOT `useState(() => isoDate(0))`.
+   *  The `/` route is statically prerendered, and this panel lives in the root
+   *  layout, so that initialiser ran at BUILD time and baked the build date
+   *  into the HTML (`value="2026-09-02"` was sitting in
+   *  `.next/server/app/index.html`). Two consequences: a hydration mismatch on
+   *  `value`, and a deploy left untouched for months serving a form
+   *  pre-filled with a date months in the past until hydration corrects it.
+   *  The dates are only meaningful once the panel is actually open, so paying
+   *  for them on mount is both cheaper and more honest. */
+  const [arrivee, setArrivee] = useState("");
+  const [depart, setDepart] = useState("");
+  const [datesSeeded, setDatesSeeded] = useState(false);
+  // Adjusted during render rather than in an effect: React supports setting
+  // state while rendering the same component, it avoids the extra commit, and
+  // an effect would trip the cascading-render lint rule. The `datesSeeded`
+  // latch means a user who clears a field does not get it silently refilled.
+  if (typeof window !== "undefined" && !datesSeeded) {
+    setDatesSeeded(true);
+    setArrivee(isoDate(0));
+    setDepart(isoDate(DEFAULT_STAY_NIGHTS));
+  }
   // useActionState (React 19) replaces three pieces of local state at once:
   //  - `formState` carries `{ ok, message, errors }` returned by the server
   //    action (was: `feedback` + `fieldErrors`).
