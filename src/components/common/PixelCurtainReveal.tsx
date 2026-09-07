@@ -136,12 +136,23 @@ const T = {
    *
    *  Épaisseur au bout de la course = `bandThickness + 1 − 1/(1 − tailTaper)`.
    *  À 0,22 elle tombe de 38 % à ~10 % de la hauteur de lettre. */
-  tailTaper: 0.22,
+  tailTaper: 0.15,
+
+  // Note de réglage — les deux valeurs ci-dessus se contrarient : refermer
+  // vite le ruban (tailTaper haut) le fait bien monter, mais vide la queue de
+  // ses pixels. À 0,22 il ne restait qu'une cinquantaine de pixels à la queue
+  // contre 400 à 0,15, pour une hauteur atteinte quasi identique (0,63 contre
+  // 0,72). C'est pour ça que la valeur est basse : la densité de la queue coûte
+  // moins cher que sa hauteur.
 
   /** **AVANCE** : sur quelle distance, DEVANT la bande, les premiers pixels
    *  apparaissent déjà (en cadratins). C'est ce qui fait que la trame précède
-   *  la couleur au lieu d'arriver avec elle. */
-  leadFade: 2.5,
+   *  la couleur au lieu d'arriver avec elle.
+   *
+   *  ⚠️ C'est aussi le flou du bord entre le gris et la couleur. Trop grand,
+   *  des cellules restent grises loin SOUS le niveau atteint par le rideau —
+   *  du gris qui « traîne en bas » au lieu de rester groupé en haut. */
+  leadFade: 1.5,
 
   /** **TRAÎNE** : sur quelle distance, DERRIÈRE la bande, les derniers pixels
    *  s'éteignent un à un (en cadratins). Une longue traîne disperse les
