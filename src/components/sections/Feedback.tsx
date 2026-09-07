@@ -160,11 +160,17 @@ export default function Feedback() {
             d'être esthétique — clarté de la crème pour ne pas voir la couture,
             chroma élevé pour poper : voir le commentaire du jeton dans
             `globals.css`. */}
+        {/* ⚠️ Fenêtre plus tardive sous `md`. Le même texte fait QUATRE
+            lignes à 1600×900 et DIX à 390×844 : à `top 95%`, le rideau part
+            alors que 42 px du bloc seulement sont entrés à l'écran, et
+            l'essentiel se joue avant qu'on ait de quoi le regarder. À
+            `top 75%`, ~210 px sont visibles au départ, soit quatre lignes. */}
         <PixelCurtainReveal
           pendingToken="--color-gris-secondaire"
           accentToken="--color-lime-eclat"
           start="top 95%"
           end="top 8%"
+          narrow={{ query: MQ.belowMd, start: "top 75%", end: "top 5%" }}
           className="text-creme text-4xl xs:text-5xl md:text-5xl lg:text-[5.4vw] font-light leading-[1.02] tracking-[-0.02em] max-w-[82vw] [text-indent:2.6em]"
         >
           {QUOTE}

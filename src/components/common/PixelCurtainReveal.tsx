@@ -333,7 +333,17 @@ function makeReducer(wDev: number, hDev: number, cols: number, rows: number) {
       let cur: HTMLCanvasElement = src;
       for (const s of steps) {
         s.cx.clearRect(0, 0, s.cv.width, s.cv.height);
-        s.cx.drawImage(cur, 0, 0, cur.width, cur.height, 0, 0, s.cv.width, s.cv.height);
+        s.cx.drawImage(
+          cur,
+          0,
+          0,
+          cur.width,
+          cur.height,
+          0,
+          0,
+          s.cv.width,
+          s.cv.height,
+        );
         cur = s.cv;
       }
       ox.clearRect(0, 0, cols, rows);
@@ -362,6 +372,7 @@ export default function PixelCurtainReveal({
   accentToken,
   start = "top 95%",
   end = "top 8%",
+  narrow,
 }: {
   children: string;
   className?: string;
@@ -378,6 +389,18 @@ export default function PixelCurtainReveal({
   accentToken: string;
   start?: string;
   end?: string;
+  /** Fenêtre de scroll de remplacement sous une largeur donnée.
+   *
+   *  ⚠️ Une seule fenêtre pour toutes les largeurs ne marche pas : le nombre
+   *  de lignes change du simple au triple entre un téléphone et un grand
+   *  écran, donc le même `start` en pourcentage de fenêtre ne montre pas la
+   *  même chose. Mesuré sur ce projet — quatre lignes à 1600×900, **dix** à
+   *  390×844 : à `top 95%`, le rideau part alors que 42 px du bloc seulement
+   *  sont entrés à l'écran, et l'essentiel se joue hors de vue.
+   *
+   *  Passée en un objet plutôt qu'en trois props, pour que la requête et les
+   *  bornes qu'elle commande ne puissent pas se désynchroniser. */
+  narrow?: { query: string; start: string; end: string };
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -392,392 +415,464 @@ export default function PixelCurtainReveal({
 
       const mm = gsap.matchMedia();
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        const ctx = canvas.getContext("2d");
-        const para = wrap.querySelector("p");
-        if (!ctx || !para) return;
-        ctx.imageSmoothingEnabled = false;
+      // Deux requêtes, un seul corps. Sous `reduce` aucune ne correspond, donc
+      // le corps ne s'exécute jamais et il n'y a pas de branche à défaire —
+      // c'est la règle 1 de `docs/reduced-motion.md`. Sans `narrow`, la
+      // seconde requête est inatteignable et le comportement est celui d'une
+      // fenêtre unique.
+      const MOTION = "(prefers-reduced-motion: no-preference)";
+      // ⚠️ Les parenthèses autour du `not` ne sont pas décoratives : écrit
+      // `A and not B`, le navigateur parse la requête entière en `not all` et
+      // elle ne correspond JAMAIS — l'animation disparaîtrait en silence sur
+      // grand écran. Vérifié dans Chrome. La grammaire des media queries
+      // n'admet `not` à côté d'un `and` que parenthésé.
+      mm.add(
+        {
+          large: narrow ? `${MOTION} and (not ${narrow.query})` : MOTION,
+          etroit: narrow ? `${MOTION} and ${narrow.query}` : "not all",
+        },
+        (self) => {
+          const win =
+            narrow && self.conditions?.etroit
+              ? { start: narrow.start, end: narrow.end }
+              : { start, end };
+          const ctx = canvas.getContext("2d");
+          const para = wrap.querySelector("p");
+          if (!ctx || !para) return;
+          ctx.imageSmoothingEnabled = false;
 
-        let scene: Scene | null = null;
-        const state = { p: 0 };
+          let scene: Scene | null = null;
+          const state = { p: 0 };
 
-        /** Le texte redevient visible dès que le canvas ne peint plus. */
-        const showDomText = () => {
-          para.style.color = "";
-          canvas.hidden = true;
-        };
-        const hideDomText = () => {
-          para.style.color = "transparent";
-          canvas.hidden = false;
-        };
-
-        const measure = (): Scene | null => {
-          const wrapRect = wrap.getBoundingClientRect();
-          const wCss = wrapRect.width;
-          const hCss = wrapRect.height;
-          if (wCss < 8 || hCss < 8) return null;
-
-          const cs = getComputedStyle(wrap);
-          const fsCss = parseFloat(cs.fontSize) || 16;
-          const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-          const root = getComputedStyle(document.documentElement);
-          const pendingCss = readToken(pendingToken, root);
-          const accentCss = readToken(accentToken, root);
-          const sig = [wCss, hCss, fsCss, dpr, cs.color, pendingCss, accentCss]
-            .join("|");
-          if (scene && scene.sig === sig) return scene;
-
-          const probe = document.createElement("canvas").getContext("2d");
-          if (!probe) return null;
-          const rgbPending = parseColor(probe, pendingCss);
-          const rgbAccent = parseColor(probe, accentCss);
-          const rgbRevealed = parseColor(probe, cs.color);
-          if (!rgbPending || !rgbAccent || !rgbRevealed) return null;
-
-          const spans = Array.from(
-            wrap.querySelectorAll<HTMLElement>("[data-pw]"),
-          );
-          if (!spans.length) return null;
-
-          const words: Word[] = spans
-            .map((el) => {
-              const r = el.getBoundingClientRect();
-              return {
-                x: r.left - wrapRect.left,
-                y: r.top - wrapRect.top,
-                w: r.width,
-                h: r.height,
-                text: el.textContent ?? "",
-                line: 0,
-              };
-            })
-            .filter((b) => b.w > 0 && b.h > 0)
-            .sort((a, b) => a.y - b.y || a.x - b.x);
-          if (!words.length) return null;
-
-          // Regroupement en lignes : deux mots partagent une ligne si leurs
-          // sommets tiennent dans une demi-hauteur de glyphe.
-          type Raw = { top: number; bot: number; left: number; right: number };
-          const raws: Raw[] = [];
-          let inkOver = 0;
-          for (const b of words) {
-            const last = raws[raws.length - 1];
-            if (last && b.y < last.top + b.h * 0.5) {
-              last.top = Math.min(last.top, b.y);
-              last.bot = Math.max(last.bot, b.y + b.h);
-              last.left = Math.min(last.left, b.x);
-              last.right = Math.max(last.right, b.x + b.w);
-            } else {
-              raws.push({ top: b.y, bot: b.y + b.h, left: b.x, right: b.x + b.w });
-            }
-            b.line = raws.length - 1;
-            // Débordement de l'encre hors du bloc : avec un interligne serré,
-            // la boîte de la première ligne monte au-dessus et celle de la
-            // dernière descend en dessous. On le mesure au lieu de le deviner.
-            inkOver = Math.max(inkOver, -b.y, b.y + b.h - hCss);
-          }
-
-          const cell = Math.max(2, Math.round(fsCss * T.pixelSize * dpr));
-          const padCss = Math.max((cell * 3) / dpr, inkOver + 6);
-          const padDev = Math.ceil((padCss * dpr) / cell) * cell;
-          const cols = Math.ceil((wCss * dpr) / cell);
-          const rows = Math.ceil((hCss * dpr + 2 * padDev) / cell);
-          const wDev = cols * cell;
-          const hDev = rows * cell;
-
-          const lsNum = parseFloat(cs.letterSpacing);
-          const raster: Raster = {
-            font: `${cs.fontStyle} ${cs.fontWeight} ${fsCss * dpr}px ${cs.fontFamily}`,
-            letterSpacing: Number.isFinite(lsNum) ? `${lsNum * dpr}px` : null,
-            ascRatio: 0,
-            dpr,
-            padDev,
-            wDev,
-            hDev,
+          /** Le texte redevient visible dès que le canvas ne peint plus. */
+          const showDomText = () => {
+            para.style.color = "";
+            canvas.hidden = true;
           };
-          probe.font = raster.font;
-          const fm = probe.measureText("Hxpg");
-          const asc = fm.fontBoundingBoxAscent || fsCss * dpr * 0.8;
-          const desc = fm.fontBoundingBoxDescent || fsCss * dpr * 0.2;
-          // Ratio, pas valeur absolue : la boîte inline d'un `<span>` vaut
-          // ascendante + descendante de la fonte, quel que soit le nom que le
-          // moteur leur donne. Le rapport est le même des deux côtés.
-          raster.ascRatio = asc / (asc + desc);
+          const hideDomText = () => {
+            para.style.color = "transparent";
+            canvas.hidden = false;
+          };
 
-          // Une seule mesure de largeur par mot — `measureText` déclenche le
-          // shaping, ce n'est pas gratuit, et les échelles ne dépendent pas de
-          // la ligne rendue.
-          if (raster.letterSpacing !== null) {
-            try {
-              (
-                probe as CanvasRenderingContext2D & { letterSpacing: string }
-              ).letterSpacing = raster.letterSpacing;
-            } catch {
-              /* ignoré */
+          const measure = (): Scene | null => {
+            const wrapRect = wrap.getBoundingClientRect();
+            const wCss = wrapRect.width;
+            const hCss = wrapRect.height;
+            if (wCss < 8 || hCss < 8) return null;
+
+            const cs = getComputedStyle(wrap);
+            const fsCss = parseFloat(cs.fontSize) || 16;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+            const root = getComputedStyle(document.documentElement);
+            const pendingCss = readToken(pendingToken, root);
+            const accentCss = readToken(accentToken, root);
+            const sig = [
+              wCss,
+              hCss,
+              fsCss,
+              dpr,
+              cs.color,
+              pendingCss,
+              accentCss,
+            ].join("|");
+            if (scene && scene.sig === sig) return scene;
+
+            const probe = document.createElement("canvas").getContext("2d");
+            if (!probe) return null;
+            const rgbPending = parseColor(probe, pendingCss);
+            const rgbAccent = parseColor(probe, accentCss);
+            const rgbRevealed = parseColor(probe, cs.color);
+            if (!rgbPending || !rgbAccent || !rgbRevealed) return null;
+
+            const spans = Array.from(
+              wrap.querySelectorAll<HTMLElement>("[data-pw]"),
+            );
+            if (!spans.length) return null;
+
+            const words: Word[] = spans
+              .map((el) => {
+                const r = el.getBoundingClientRect();
+                return {
+                  x: r.left - wrapRect.left,
+                  y: r.top - wrapRect.top,
+                  w: r.width,
+                  h: r.height,
+                  text: el.textContent ?? "",
+                  line: 0,
+                };
+              })
+              .filter((b) => b.w > 0 && b.h > 0)
+              .sort((a, b) => a.y - b.y || a.x - b.x);
+            if (!words.length) return null;
+
+            // Regroupement en lignes : deux mots partagent une ligne si leurs
+            // sommets tiennent dans une demi-hauteur de glyphe.
+            type Raw = {
+              top: number;
+              bot: number;
+              left: number;
+              right: number;
+            };
+            const raws: Raw[] = [];
+            let inkOver = 0;
+            for (const b of words) {
+              const last = raws[raws.length - 1];
+              if (last && b.y < last.top + b.h * 0.5) {
+                last.top = Math.min(last.top, b.y);
+                last.bot = Math.max(last.bot, b.y + b.h);
+                last.left = Math.min(last.left, b.x);
+                last.right = Math.max(last.right, b.x + b.w);
+              } else {
+                raws.push({
+                  top: b.y,
+                  bot: b.y + b.h,
+                  left: b.x,
+                  right: b.x + b.w,
+                });
+              }
+              b.line = raws.length - 1;
+              // Débordement de l'encre hors du bloc : avec un interligne serré,
+              // la boîte de la première ligne monte au-dessus et celle de la
+              // dernière descend en dessous. On le mesure au lieu de le deviner.
+              inkOver = Math.max(inkOver, -b.y, b.y + b.h - hCss);
             }
-          }
-          const scales = words.map((b) => {
-            const mw = probe.measureText(b.text).width;
-            return mw > 0.5 ? (b.w * dpr) / mw : 1;
-          });
 
-          const ink = document.createElement("canvas");
-          ink.width = wDev;
-          ink.height = hDev;
-          const inkCx = ink.getContext("2d");
-          const solo = document.createElement("canvas");
-          solo.width = wDev;
-          solo.height = hDev;
-          const soloCx = solo.getContext("2d");
-          const reducer = makeReducer(wDev, hDev, cols, rows);
-          if (!inkCx || !soloCx || !reducer) return null;
+            const cell = Math.max(2, Math.round(fsCss * T.pixelSize * dpr));
+            const padCss = Math.max((cell * 3) / dpr, inkOver + 6);
+            const padDev = Math.ceil((padCss * dpr) / cell) * cell;
+            const cols = Math.ceil((wCss * dpr) / cell);
+            const rows = Math.ceil((hCss * dpr + 2 * padDev) / cell);
+            const wDev = cols * cell;
+            const hDev = rows * cell;
 
-          /* Lignes, et à quelle ligne appartient chaque cellule.
+            const lsNum = parseFloat(cs.letterSpacing);
+            const raster: Raster = {
+              font: `${cs.fontStyle} ${cs.fontWeight} ${fsCss * dpr}px ${cs.fontFamily}`,
+              letterSpacing: Number.isFinite(lsNum) ? `${lsNum * dpr}px` : null,
+              ascRatio: 0,
+              dpr,
+              padDev,
+              wDev,
+              hDev,
+            };
+            probe.font = raster.font;
+            const fm = probe.measureText("Hxpg");
+            const asc = fm.fontBoundingBoxAscent || fsCss * dpr * 0.8;
+            const desc = fm.fontBoundingBoxDescent || fsCss * dpr * 0.2;
+            // Ratio, pas valeur absolue : la boîte inline d'un `<span>` vaut
+            // ascendante + descendante de la fonte, quel que soit le nom que le
+            // moteur leur donne. Le rapport est le même des deux côtés.
+            raster.ascRatio = asc / (asc + desc);
+
+            // Une seule mesure de largeur par mot — `measureText` déclenche le
+            // shaping, ce n'est pas gratuit, et les échelles ne dépendent pas de
+            // la ligne rendue.
+            if (raster.letterSpacing !== null) {
+              try {
+                (
+                  probe as CanvasRenderingContext2D & { letterSpacing: string }
+                ).letterSpacing = raster.letterSpacing;
+              } catch {
+                /* ignoré */
+              }
+            }
+            const scales = words.map((b) => {
+              const mw = probe.measureText(b.text).width;
+              return mw > 0.5 ? (b.w * dpr) / mw : 1;
+            });
+
+            const ink = document.createElement("canvas");
+            ink.width = wDev;
+            ink.height = hDev;
+            const inkCx = ink.getContext("2d");
+            const solo = document.createElement("canvas");
+            solo.width = wDev;
+            solo.height = hDev;
+            const soloCx = solo.getContext("2d");
+            const reducer = makeReducer(wDev, hDev, cols, rows);
+            if (!inkCx || !soloCx || !reducer) return null;
+
+            /* Lignes, et à quelle ligne appartient chaque cellule.
              On rasterise les lignes une à une : c'est la seule façon d'être
              juste quand les boîtes se chevauchent. La même passe compose le
              calque d'encre, donc elle ne coûte rien de plus. */
-          const owner = new Int16Array(cols * rows).fill(-1);
-          const bestInk = new Uint8Array(cols * rows);
-          const lineAdv: number[] = [];
-          const lineLeft: number[] = [];
-          const lineInkBot: number[] = [];
-          const lineInvH: number[] = [];
-          let advStart = 0;
-          let nInk = 0;
+            const owner = new Int16Array(cols * rows).fill(-1);
+            const bestInk = new Uint8Array(cols * rows);
+            const lineAdv: number[] = [];
+            const lineLeft: number[] = [];
+            const lineInkBot: number[] = [];
+            const lineInvH: number[] = [];
+            let advStart = 0;
+            let nInk = 0;
 
-          for (let i = 0; i < raws.length; i++) {
-            const r = raws[i];
-            const left = r.left * dpr;
-            lineAdv.push(advStart);
-            lineLeft.push(left);
-            lineInkBot.push(r.bot * dpr + padDev);
-            lineInvH.push(1 / Math.max(1, (r.bot - r.top) * dpr));
-            advStart += Math.max(1, r.right * dpr - left);
+            for (let i = 0; i < raws.length; i++) {
+              const r = raws[i];
+              const left = r.left * dpr;
+              lineAdv.push(advStart);
+              lineLeft.push(left);
+              lineInkBot.push(r.bot * dpr + padDev);
+              lineInvH.push(1 / Math.max(1, (r.bot - r.top) * dpr));
+              advStart += Math.max(1, r.right * dpr - left);
 
-            soloCx.clearRect(0, 0, wDev, hDev);
-            const idx: number[] = [];
-            const sub = words.filter((wd, k) => {
-              if (wd.line !== i) return false;
-              idx.push(k);
-              return true;
-            });
-            paintWords(soloCx, sub, raster, idx.map((k) => scales[k]));
-            inkCx.drawImage(solo, 0, 0);
+              soloCx.clearRect(0, 0, wDev, hDev);
+              const idx: number[] = [];
+              const sub = words.filter((wd, k) => {
+                if (wd.line !== i) return false;
+                idx.push(k);
+                return true;
+              });
+              paintWords(
+                soloCx,
+                sub,
+                raster,
+                idx.map((k) => scales[k]),
+              );
+              inkCx.drawImage(solo, 0, 0);
 
-            const g = reducer.reduce(solo);
-            for (let k = 0; k < owner.length; k++) {
-              const v = g[k * 4 + 3];
-              if (v > 6 && v > bestInk[k]) {
-                if (owner[k] < 0) nInk++;
-                bestInk[k] = v;
-                owner[k] = i;
+              const g = reducer.reduce(solo);
+              for (let k = 0; k < owner.length; k++) {
+                const v = g[k * 4 + 3];
+                if (v > 6 && v > bestInk[k]) {
+                  if (owner[k] < 0) nInk++;
+                  bestInk[k] = v;
+                  owner[k] = i;
+                }
               }
             }
-          }
 
-          // Géométrie dérivée des deux réglages lisibles. La montée est la
-          // distance qu'il faut à un niveau pour grimper toute la hauteur de
-          // lettre ; le retard est l'écart entre les deux niveaux, donc
-          // l'épaisseur du ruban. Leur somme fait la longueur de la bande.
-          const em = fsCss * dpr;
-          const rise = (T.bandLength * em) / (1 + T.bandThickness);
-          const lag = T.bandLength * em - rise;
-          const softLead = Math.max(0.05, (T.leadFade * em) / rise);
-          const softTrail = Math.max(0.05, (T.trailFade * em) / rise);
+            // Géométrie dérivée des deux réglages lisibles. La montée est la
+            // distance qu'il faut à un niveau pour grimper toute la hauteur de
+            // lettre ; le retard est l'écart entre les deux niveaux, donc
+            // l'épaisseur du ruban. Leur somme fait la longueur de la bande.
+            const em = fsCss * dpr;
+            const rise = (T.bandLength * em) / (1 + T.bandThickness);
+            const lag = T.bandLength * em - rise;
+            const softLead = Math.max(0.05, (T.leadFade * em) / rise);
+            const softTrail = Math.max(0.05, (T.trailFade * em) / rise);
 
-          /* Un seuil par cellule vivante, tout précalculé.
+            /* Un seuil par cellule vivante, tout précalculé.
              Les deux comparaisons de `draw` sont algébriquement des constantes
              de cellule : `(xb/rise − hy)/softLead + 0.5 ≤ th` équivaut à
              `xb ≤ rise·(hy + (th−0.5)·softLead)`. Les sortir d'ici retire cinq
              divisions, un `ign()` et deux `Math.floor` PAR CELLULE ET PAR
              FRAME — de l'ordre de dix millions d'opérations par seconde
              gaspillées sur un texte de cette taille. */
-          const cellOff = new Int32Array(nInk);
-          const cellAdv = new Float32Array(nInk);
-          const leadCut = new Float32Array(nInk);
-          const trailCut = new Float32Array(nInk);
-          const jitter = T.jitterX * cell;
-          let startA = Infinity;
-          let endA = -Infinity;
-          let n = 0;
+            const cellOff = new Int32Array(nInk);
+            const cellAdv = new Float32Array(nInk);
+            const leadCut = new Float32Array(nInk);
+            const trailCut = new Float32Array(nInk);
+            const jitter = T.jitterX * cell;
+            let startA = Infinity;
+            let endA = -Infinity;
+            let n = 0;
 
-          for (let r = 0; r < rows; r++) {
-            for (let c = 0; c < cols; c++) {
-              const k = r * cols + c;
-              const li = owner[k];
-              if (li < 0) continue;
-              const hy = (lineInkBot[li] - (r + 0.5) * cell) * lineInvH[li];
-              const th = ign(c, r) + noiseAt(c, r) * T.grain;
-              const adv =
-                lineAdv[li] +
-                ((c + 0.5) * cell - lineLeft[li]) +
-                noiseAt(li * 7 + c, r * 13 + 5) * jitter;
-              const lead = rise * (hy + (th - 0.5) * softLead);
-              const trail = lag + rise * (hy + (th - 0.5) * softTrail);
-              cellOff[n] = k;
-              cellAdv[n] = adv;
-              leadCut[n] = lead;
-              trailCut[n] = trail;
-              if (adv + lead < startA) startA = adv + lead;
-              if (adv + trail > endA) endA = adv + trail;
-              n++;
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                const k = r * cols + c;
+                const li = owner[k];
+                if (li < 0) continue;
+                const hy = (lineInkBot[li] - (r + 0.5) * cell) * lineInvH[li];
+                const th = ign(c, r) + noiseAt(c, r) * T.grain;
+                const adv =
+                  lineAdv[li] +
+                  ((c + 0.5) * cell - lineLeft[li]) +
+                  noiseAt(li * 7 + c, r * 13 + 5) * jitter;
+                const lead = rise * (hy + (th - 0.5) * softLead);
+                const trail = lag + rise * (hy + (th - 0.5) * softTrail);
+                cellOff[n] = k;
+                cellAdv[n] = adv;
+                leadCut[n] = lead;
+                trailCut[n] = trail;
+                if (adv + lead < startA) startA = adv + lead;
+                if (adv + trail > endA) endA = adv + trail;
+                n++;
+              }
             }
-          }
-          if (!n) return null;
+            if (!n) return null;
 
-          const maskCv = document.createElement("canvas");
-          maskCv.width = cols;
-          maskCv.height = rows;
-          const maskCx = maskCv.getContext("2d");
-          if (!maskCx) return null;
-          const maskImg = maskCx.createImageData(cols, rows);
+            const maskCv = document.createElement("canvas");
+            maskCv.width = cols;
+            maskCv.height = rows;
+            const maskCx = maskCv.getContext("2d");
+            if (!maskCx) return null;
+            const maskImg = maskCx.createImageData(cols, rows);
 
-          canvas.width = wDev;
-          canvas.height = hDev;
-          canvas.style.width = `${wDev / dpr}px`;
-          canvas.style.height = `${hDev / dpr}px`;
-          canvas.style.top = `${-padDev / dpr}px`;
-          ctx.imageSmoothingEnabled = false;
+            canvas.width = wDev;
+            canvas.height = hDev;
+            canvas.style.width = `${wDev / dpr}px`;
+            canvas.style.height = `${hDev / dpr}px`;
+            canvas.style.top = `${-padDev / dpr}px`;
+            ctx.imageSmoothingEnabled = false;
 
-          for (const cv of reducer.canvases) {
-            cv.width = 0;
-            cv.height = 0;
-          }
-          solo.width = 0;
-          solo.height = 0;
+            for (const cv of reducer.canvases) {
+              cv.width = 0;
+              cv.height = 0;
+            }
+            solo.width = 0;
+            solo.height = 0;
 
-          // Marge d'un pixel de bande de chaque côté : à `p = 0` aucune
-          // cellule n'a commencé, à `p = 1` toutes ont fini. Les bornes sont
-          // les extrêmes RÉELS des seuils, pas une estimation — l'ancienne
-          // borne conservatrice tronquait la traîne dès que `grain` montait.
-          const marge = cell * 2;
-          return {
-            cols,
-            rows,
-            ink,
-            maskCv,
-            maskCx,
-            maskImg,
-            maskU32: new Uint32Array(maskImg.data.buffer),
-            cellOff,
-            cellAdv,
-            leadCut,
-            trailCut,
-            cPending: packRgba(...rgbPending),
-            cAccent: packRgba(...rgbAccent),
-            cRevealed: packRgba(...rgbRevealed),
-            a0: startA - marge,
-            span: endA - startA + 2 * marge,
-            sig,
-            owned: [ink, maskCv],
+            // Marge d'un pixel de bande de chaque côté : à `p = 0` aucune
+            // cellule n'a commencé, à `p = 1` toutes ont fini. Les bornes sont
+            // les extrêmes RÉELS des seuils, pas une estimation — l'ancienne
+            // borne conservatrice tronquait la traîne dès que `grain` montait.
+            const marge = cell * 2;
+            return {
+              cols,
+              rows,
+              ink,
+              maskCv,
+              maskCx,
+              maskImg,
+              maskU32: new Uint32Array(maskImg.data.buffer),
+              cellOff,
+              cellAdv,
+              leadCut,
+              trailCut,
+              cPending: packRgba(...rgbPending),
+              cAccent: packRgba(...rgbAccent),
+              cRevealed: packRgba(...rgbRevealed),
+              a0: startA - marge,
+              span: endA - startA + 2 * marge,
+              sig,
+              owned: [ink, maskCv],
+            };
           };
-        };
 
-        const draw = (s: Scene, A: number) => {
-          const m = s.maskU32;
-          const off = s.cellOff;
-          const adv = s.cellAdv;
-          const lead = s.leadCut;
-          const trail = s.trailCut;
-          const pending = s.cPending;
-          const accent = s.cAccent;
-          const revealed = s.cRevealed;
+          const draw = (s: Scene, A: number) => {
+            const m = s.maskU32;
+            const off = s.cellOff;
+            const adv = s.cellAdv;
+            const lead = s.leadCut;
+            const trail = s.trailCut;
+            const pending = s.cPending;
+            const accent = s.cAccent;
+            const revealed = s.cRevealed;
 
-          for (let k = 0; k < off.length; k++) {
-            const xb = A - adv[k];
-            m[off[k]] =
-              xb <= lead[k] ? pending : xb > trail[k] ? revealed : accent;
-          }
-          s.maskCx.putImageData(s.maskImg, 0, 0);
+            for (let k = 0; k < off.length; k++) {
+              const xb = A - adv[k];
+              m[off[k]] =
+                xb <= lead[k] ? pending : xb > trail[k] ? revealed : accent;
+            }
+            s.maskCx.putImageData(s.maskImg, 0, 0);
 
-          // La couleur d'abord, agrandie au plus proche voisin — d'où l'arête
-          // franche du pixel. Puis l'intersection avec l'encre, qui redonne la
-          // forme des lettres et leur anticrénelage.
-          ctx.globalCompositeOperation = "copy";
-          ctx.drawImage(s.maskCv, 0, 0, s.cols, s.rows, 0, 0, canvas.width, canvas.height);
-          ctx.globalCompositeOperation = "destination-in";
-          ctx.drawImage(s.ink, 0, 0);
-          ctx.globalCompositeOperation = "source-over";
-        };
+            // La couleur d'abord, agrandie au plus proche voisin — d'où l'arête
+            // franche du pixel. Puis l'intersection avec l'encre, qui redonne la
+            // forme des lettres et leur anticrénelage.
+            ctx.globalCompositeOperation = "copy";
+            ctx.drawImage(
+              s.maskCv,
+              0,
+              0,
+              s.cols,
+              s.rows,
+              0,
+              0,
+              canvas.width,
+              canvas.height,
+            );
+            ctx.globalCompositeOperation = "destination-in";
+            ctx.drawImage(s.ink, 0, 0);
+            ctx.globalCompositeOperation = "source-over";
+          };
 
-        /** Toute peinture passe par ici : si elle échoue, le texte du DOM
-         *  reprend la main plutôt que de laisser un canvas vide sur un
-         *  paragraphe transparent. */
-        const render = () => {
-          if (!scene) return;
-          try {
-            draw(scene, scene.a0 + state.p * scene.span);
-            hideDomText();
-          } catch {
+          /** Toute peinture passe par ici : si elle échoue, le texte du DOM
+           *  reprend la main plutôt que de laisser un canvas vide sur un
+           *  paragraphe transparent. */
+          const render = () => {
+            if (!scene) return;
+            try {
+              draw(scene, scene.a0 + state.p * scene.span);
+              hideDomText();
+            } catch {
+              showDomText();
+            }
+          };
+
+          const remeasure = () => {
+            let next: Scene | null = null;
+            try {
+              next = measure();
+            } catch {
+              next = null;
+            }
+            if (!next) {
+              showDomText();
+              return;
+            }
+            if (next !== scene) releaseScene(scene);
+            scene = next;
+            render();
+          };
+
+          remeasure();
+          // Les métriques de la fonte web arrivent après le premier rendu : la
+          // césure change, donc la hauteur du bloc — et donc les positions de
+          // TOUS les triggers situés en dessous. `refreshWhenIdle` les recale
+          // sans geler une glisse en cours.
+          document.fonts?.ready
+            .then(() => {
+              remeasure();
+              refreshWhenIdle();
+            })
+            .catch(() => showDomText());
+
+          const tl = gsap.timeline({
+            scrollTrigger: {
+              trigger: wrap,
+              start: win.start,
+              end: win.end,
+              scrub: 0.55,
+            },
+            onUpdate: render,
+          });
+          tl.to(state, { p: 1, ease: "none", duration: 1 });
+
+          let raf = 0;
+          const ro = new ResizeObserver(() => {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(remeasure);
+          });
+          ro.observe(wrap);
+
+          // Un contexte perdu laisse un canvas blanc : rendre la main au DOM,
+          // et re-mesurer quand il revient.
+          const onLost = (e: Event) => {
+            e.preventDefault();
             showDomText();
-          }
-        };
+          };
+          canvas.addEventListener("contextlost", onLost);
+          canvas.addEventListener("contextrestored", remeasure);
 
-        const remeasure = () => {
-          let next: Scene | null = null;
-          try {
-            next = measure();
-          } catch {
-            next = null;
-          }
-          if (!next) {
+          return () => {
+            cancelAnimationFrame(raf);
+            ro.disconnect();
+            canvas.removeEventListener("contextlost", onLost);
+            canvas.removeEventListener("contextrestored", remeasure);
             showDomText();
-            return;
-          }
-          if (next !== scene) releaseScene(scene);
-          scene = next;
-          render();
-        };
-
-        remeasure();
-        // Les métriques de la fonte web arrivent après le premier rendu : la
-        // césure change, donc la hauteur du bloc — et donc les positions de
-        // TOUS les triggers situés en dessous. `refreshWhenIdle` les recale
-        // sans geler une glisse en cours.
-        document.fonts?.ready
-          .then(() => {
-            remeasure();
-            refreshWhenIdle();
-          })
-          .catch(() => showDomText());
-
-        const tl = gsap.timeline({
-          scrollTrigger: { trigger: wrap, start, end, scrub: 0.55 },
-          onUpdate: render,
-        });
-        tl.to(state, { p: 1, ease: "none", duration: 1 });
-
-        let raf = 0;
-        const ro = new ResizeObserver(() => {
-          cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(remeasure);
-        });
-        ro.observe(wrap);
-
-        // Un contexte perdu laisse un canvas blanc : rendre la main au DOM,
-        // et re-mesurer quand il revient.
-        const onLost = (e: Event) => {
-          e.preventDefault();
-          showDomText();
-        };
-        canvas.addEventListener("contextlost", onLost);
-        canvas.addEventListener("contextrestored", remeasure);
-
-        return () => {
-          cancelAnimationFrame(raf);
-          ro.disconnect();
-          canvas.removeEventListener("contextlost", onLost);
-          canvas.removeEventListener("contextrestored", remeasure);
-          showDomText();
-          releaseScene(scene);
-          scene = null;
-        };
-      });
+            releaseScene(scene);
+            scene = null;
+          };
+        },
+      );
 
       return () => mm.revert();
     },
-    { scope: wrapRef, dependencies: [start, end, children, pendingToken, accentToken] },
+    {
+      scope: wrapRef,
+      // `narrow` est déplié : passer l'objet ferait une référence neuve à
+      // chaque rendu, donc un démontage complet de la scène pour rien.
+      dependencies: [
+        start,
+        end,
+        children,
+        pendingToken,
+        accentToken,
+        narrow?.query,
+        narrow?.start,
+        narrow?.end,
+      ],
+    },
   );
 
   return (
