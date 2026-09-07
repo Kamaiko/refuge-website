@@ -399,6 +399,16 @@ les cartes arrivent vraiment.
 - **Lot 5** — extraire `<SectionHeading>` (Choisir ↔ Activités ↔ Cta partagent ~125 lignes dont 28 identiques octet pour octet), `createOverlayContext()` (3 contextes quasi jumeaux), `useOverlayA11y()` (Escape + focus save/restore écrits 3 fois).
 - **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par commentaire), unifier les espacements de section (3 échelles `px-*` concurrentes), retirer la graisse 800 jamais utilisée. ✅ `unoptimized` est tranché : il s'applique à tous les `<Image>` raster (Soir, ReservePanel et Feedback y échappaient). ✅ `_raw/` est sorti de `public/` vers `/assets-raw/`.
 - ⏳ **Perf — le stutter est CONSTATÉ, plus seulement soupçonné** · 2026-08-30
+  ⚠️ **Le diagnostic a partiellement expiré le 2026-09-07.** La citation de
+  `Feedback` n'anime plus de blur : elle est passée à `PixelCurtainReveal`, qui
+  peint sur un canvas — deux composites et une boucle sur ~9 000 cellules par
+  frame, mesuré à 6,9 ms médian / 7,1 ms p99 en scroll continu à 1600×900,
+  aucune image sautée. Le blur en scrub subsiste sur **l'eyebrow seul, cinq
+  mots**, à toutes les largeurs. Le poste lourd décrit ci-dessous n'existe donc
+  plus sous cette forme ; ce qui reste à trancher, c'est le voisinage avec les
+  tickers `Marquee` du `Cta`, qui lui n'a pas bougé. **Reprofiler avant de
+  corriger quoi que ce soit** : le point de départ de 2026-08-30 est mort.
+  <br>Texte d'origine, conservé pour la chronologie :
   `Feedback.tsx` anime `filter: blur` en scrub sur ~50 spans, chacun promu en
   couche compositeur. Poste le plus lourd du site.
   **Patrick voit un stutter** au déballage de la citation « On est arrivés avec
@@ -931,7 +941,12 @@ enfants sont `aria-hidden`. Or un `span` sans `role` mappe sur
 ignoré par Chrome, Firefox et Safari (règle `aria-prohibited-attr` d'axe-core).
 Il ne reste donc rien.
 
-Sont muets : la citation entière de `Feedback`, et **les trois titres et corps
+✅ **La citation de `Feedback` est sortie de cette liste le 2026-09-07** :
+`PixelCurtainReveal` rend un vrai `<p>` avec le texte réel, non masqué —
+le canvas qui le peint est, lui, `aria-hidden`. Le défaut subsiste pour
+l'eyebrow, qui utilise encore `WordSplit`.
+
+Sont muets : **les trois titres et corps
 des slides de `Pourquoi` sur desktop** (`pourquoi/cards.tsx:121,141` — la
 version mobile rend de vrais `<h3>`/`<p>` et va bien), plus les surnoms
 d'`Hebergements:459`. Le `nom` juste en dessous passe `as="h2"` et fonctionne :

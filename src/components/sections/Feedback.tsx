@@ -5,24 +5,36 @@ import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { MQ } from "@/lib/breakpoints";
+import PixelCurtainReveal from "@/components/common/PixelCurtainReveal";
 
 const EYEBROW = "Et eux, qu'en pensent-ils ?";
 const QUOTE =
   "On est arrivés avec une liste de choses à faire. On n'en a fait aucune, et c'est la première fois que ça ne m'a pas dérangé.";
 
 /**
- * Closing testimonial section. Three blocks (eyebrow, quote, author) are
- * revealed **per word** as the section scrolls into view.
+ * Closing testimonial section. Trois blocs, et **deux grammaires de reveal**,
+ * délibérément :
  *
- * Effect ("voilement") : each word sits inside its own mask, starts below
- * the mask offset (yPercent: 110), invisible (opacity: 0) and blurred
- * (filter: blur). All three properties scrub-tween together as the section
- * progresses through the viewport, with a per-word stagger that produces
- * a wave-like reveal — words don't all rise at once, they cascade.
+ * - l'**eyebrow** garde le « voilement » mot à mot (masque + montée + flou +
+ *   opacité, scrubbé, staggeré). Sur une ligne de 18 px, le flou est une
+ *   nuance, pas un effet ;
+ * - la **citation** est passée à {@link PixelCurtainReveal} en septembre
+ *   2026. Elle portait le même voilement, et à `3.8vw` le `blur(6px)` sur du
+ *   texte de 60 px ne lisait pas comme une mise au point : il lisait comme du
+ *   texte mal rendu — d'autant plus voyant que la citation est la dernière
+ *   chose qu'on lit avant le CTA. Elle est passée de 3,8 à 5,4vw dans la
+ *   foulée, pour que la trame du rideau fasse ~5 px au lieu de ~4 et devienne
+ *   visible — voir le commentaire du bloc, la première explication donnée ici
+ *   était fausse ;
+ * - l'**auteur** monte simplement en opacité.
  *
- * The reveal scrubs IN BOTH DIRECTIONS — scrolling back up makes the
- * words sink, blur out and fade away in reverse. Reduced-motion paints
- * the final state with no animation.
+ * Le voilement scrube DANS LES DEUX SENS — remonter fait redescendre,
+ * refloue et efface les mots de l'eyebrow. Reduced-motion peint l'état final
+ * sans animation.
+ *
+ * ⚠️ `WordSplit` ne sert donc plus qu'à l'eyebrow, et la requête
+ * `.voile-word` du `useGSAP` ne ramasse plus que ses mots — c'est voulu, pas
+ * un reste.
  */
 export default function Feedback() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -110,13 +122,6 @@ export default function Feedback() {
       id="feedback"
       className="relative w-full px-8 md:px-16 pt-16 md:pt-24 pb-20 md:pb-48 flex flex-col"
     >
-      {/* Symmetric counterpart to the Activités base-noir → gris-tan
-          fade. The top 45% of Feedback runs gris-tan → base-noir so
-          the carousel's warm bg melts smoothly back into the rest of
-          the page's pure black. Bumped from the original 25% — the
-          shorter band read as a too-sharp seam at the section
-          boundary; 45% lets the eye drift through the transition
-          rather than catching the edge. */}
       {/* No BgGradient here any more. This section used to own the gris-tan →
           base-noir fade, compressed into its top 45% — which left the whole
           warm band flat until the very last moment. `Soir` now closes the band
@@ -127,13 +132,43 @@ export default function Feedback() {
         <WordSplit text={EYEBROW} />
       </h2>
 
-      {/* Quote — large, left-aligned, capped at ~75% of viewport width with
-          a tighter leading. Smaller display size than the original 5.5vw so
-          the quote reads as one calm block instead of dominating. */}
+      {/* Citation — grand corps, aligné à gauche, plafonné à 82vw.
+          Le `className` porte TOUT ce qui est typographique, alinéa et couleur
+          du texte révélé compris : `PixelCurtainReveal` les lit sur le wrapper
+          via `getComputedStyle` au lieu de les figer.
+          ⚠️ Le corps est passé de 3,8 à 5,4vw pour que la trame du rideau se
+          lise. La justification qu'on trouvait ici — « en dessous de ~5vw les
+          cellules deviennent plus larges que le fût de la lettre » — était
+          FAUSSE : `pixelSize` est une fraction du corps, donc le rapport
+          trame/lettre est invariant par construction (mesuré : 5,5 % à 3,8vw,
+          5,8 % à 5,4vw — la trame est même devenue relativement plus
+          grossière). Le vrai gain est en pixels absolus : à 5,4vw une cellule
+          fait ~5 px au lieu de ~4, et c'est ce qui la rend visible. */}
       <div className="flex-1 flex items-center mt-16 md:mt-24">
-        <p className="text-creme text-2xl xs:text-3xl md:text-4xl lg:text-[3.8vw] font-light leading-snug tracking-[-0.02em] max-w-[75vw]">
-          <WordSplit text={QUOTE} />
-        </p>
+        {/* La fin est calée sur `top`, pas sur `bottom`, **exprès** : une
+            borne en `bottom` dépend de la hauteur du bloc, donc le moindre
+            changement de corps ou de largeur décale la fin du rideau — et si
+            elle passe au-dessus du haut de l'écran, personne ne voit la
+            citation se terminer. `top 8%` dit simplement « fini quand le haut
+            du bloc est à 8 % du haut de la fenêtre », ce qui reste vrai à
+            n'importe quelle taille. */}
+        {/* L'ALINÉA est un **retrait de première ligne**, pas un saut de
+            ligne. Un `<br>` avait été essayé : il passe à la ligne, ce qui est
+            indiscernable d'un retour automatique, donc l'alinéa ne se voyait
+            pas. La référence, elle, décale bien le début du texte.
+            La COULEUR est `--color-lime-eclat`. Le choix est optique avant
+            d'être esthétique — clarté de la crème pour ne pas voir la couture,
+            chroma élevé pour poper : voir le commentaire du jeton dans
+            `globals.css`. */}
+        <PixelCurtainReveal
+          pendingToken="--color-gris-secondaire"
+          accentToken="--color-lime-eclat"
+          start="top 95%"
+          end="top 8%"
+          className="text-creme text-4xl xs:text-5xl md:text-5xl lg:text-[5.4vw] font-light leading-[1.02] tracking-[-0.02em] max-w-[82vw] [text-indent:2.6em]"
+        >
+          {QUOTE}
+        </PixelCurtainReveal>
       </div>
 
       {/* Author — bottom-left, avatar + name + location */}

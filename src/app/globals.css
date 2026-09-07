@@ -29,6 +29,50 @@
 
   --color-creme-terre: #E8DCC4;
 
+  /* Le tan du wordmark « Aquilon » du footer — la couleur du haut de son
+     dégradé. Devenu un token parce que la règle `.aquilon-wordmark-fill` plus
+     bas l'écrivait deux fois en `rgb()` brut.
+     ⚠️ Il a d'abord été présenté ici comme lu au runtime par
+     `PixelCurtainReveal` : c'était vrai le temps d'une itération, ça ne l'est
+     plus. Le rideau utilise `--color-lime-eclat`, et pour une raison écrite
+     juste en dessous. */
+  --color-tan-aquilon: #BEAF91;
+
+  /* Lime éclatant — l'accent du rideau de pixels de la citation
+     (`PixelCurtainReveal`). C'est la valeur relevée au pixel sur
+     produx.design.
+
+     ⚠️ **La famille chaude a été essayée et écartée à l'œil**, après avoir été
+     poussée jusqu'à son maximum : #FFE69E (écrêté, terne), #FFEA87 (chroma 51),
+     puis #FAED51 (chroma 75, soit 15 % au-dessus de cette valeur-ci). Aucune
+     ne tenait. Ce n'est donc pas une couleur choisie faute de mieux — c'est
+     celle qui gagne contre ses concurrentes chaudes les mieux calculées.
+
+     Deux conditions optiques, et il faut les DEUX :
+     1. **Clarté quasi égale à la crème** (L* 92,5 contre 94,6). Sans ça, la
+        couture entre pixels colorés et blanc se voit — le tan de marque tel
+        quel (L* 74) creuse un trou sombre à chaque pixel.
+     2. **Chroma élevé** (65). C'est lui, et non l'écart de teinte, qui fait
+        « poper » : la teinte n'est qu'à 33° de celle de la crème, alors que le
+        chroma est quinze fois le sien.
+
+     ⚠️ **Il n'existe pas de beige à fort chroma à cette clarté**, et ce n'est
+     pas un avis : à L* 92,5 le gamut sRGB plafonne à un chroma de 28 sur la
+     teinte exacte du tan (88°), 30 sur celle de la crème-terre, 14 sur
+     l'or-ambre. C'est pour ça que la piste beige était condamnée d'avance.
+
+     Échelle de puissance, si le réglage doit bouger un jour — même clarté,
+     même teinte, seul le chroma change :
+       chroma 55 → #DDF89E      chroma 85 → #C7F83E
+       chroma 65 → #D0F878  ← ici, la valeur de la référence
+       chroma 75 → #CBF85D      chroma 96 → #BDFE00  (plafond)
+
+     ⚠️ Cette couleur est **hors palette de marque**, et c'est assumé : c'est
+     un accent d'animation, jamais une couleur de surface ou de texte. Elle
+     n'apparaît que pendant le passage du rideau, quelques centaines de
+     millisecondes, et n'existe nulle part ailleurs sur le site. */
+  --color-lime-eclat: #D0F878;
+
   --font-sans: var(--font-host-grotesk), ui-sans-serif, system-ui, sans-serif;
 
   /* Radius scale. `card` / `soft` existed but were being bypassed by
@@ -149,11 +193,12 @@ body::-webkit-scrollbar,
    visually identical to a word-wide gradient since all glyphs share
    the same line-height.
 
-   Colors are inlined as raw RGB (matching `--color-creme-dim` =
-   #C9C5BD and `--color-creme` = #F4EFE7) instead of `var()` +
-   `color-mix()`, to rule out engine-specific gotchas where
-   `color-mix(in oklab, …)` on top of CSS variables fails to compile
-   inside a `background-image` declaration. */
+   The two stops were spelled as raw `rgb()` until septembre 2026, to rule
+   out an engine gotcha where `color-mix(in oklab, …)` on top of a CSS
+   variable fails to compile inside a `background-image`. That reasoning
+   only ever applied to `color-mix()`, not to a plain `var()`, et le haut du
+   dégradé était écrit deux fois — la duplication devait partir. Ne pas
+   réintroduire de `color-mix()` ici pour autant. */
 @layer components {
   /* Keyboard-focus ring — the house style, so new interactive elements have
      one thing to reach for.
@@ -185,7 +230,13 @@ body::-webkit-scrollbar,
        Hebergements card      lg:text-[8vw]
        Proximite / Menu nav   lg:text-[5.5vw]
        Manifeste              lg:text-[5.5vw]    (was 5vw — aligned)
-       Feedback pull-quote    lg:text-[3.8vw]    (its own role) */
+       Feedback pull-quote    md:text-5xl lg:text-[5.4vw]
+
+     ⚠️ Le palier `md` de la citation est délibérément PLUS BAS que celui des
+     autres blocs de lecture. À `md:text-6xl` (60 px) la citation *rétrécissait*
+     en franchissant `lg`, où `5.4vw` ne vaut que 55 px à 1024 px de large — une
+     échelle qui descend, seule du fichier à le faire. Ne pas « harmoniser » ce
+     palier sans refaire le calcul au point de bascule. */
 
   /* NOTE — there is no `.type-section-title`. It existed with exactly one
      call site: inside `SectionHeading`, which is *itself* the abstraction
@@ -217,14 +268,14 @@ body::-webkit-scrollbar,
   }
 
   .aquilon-wordmark-fill {
-    background-image: linear-gradient(to bottom, rgb(190 175 145) 15%, rgb(244 239 231) 85%);
+    background-image: linear-gradient(to bottom, var(--color-tan-aquilon) 15%, var(--color-creme) 85%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
   .aquilon-wordmark-fill .rc-glyph {
-    background-image: linear-gradient(to bottom, rgb(190 175 145) 15%, rgb(244 239 231) 85%);
+    background-image: linear-gradient(to bottom, var(--color-tan-aquilon) 15%, var(--color-creme) 85%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

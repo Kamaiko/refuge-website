@@ -90,7 +90,7 @@ qui existe :
 | 8 | **Activites** | `SectionHeading` + paliers d'engagement |
 | 9 | **Carousel** | 5 cartes en scroll horizontal épinglé |
 | 10 | **Soir** | 2 photos en parallax convergent + titre qui se réchauffe |
-| 11 | **Feedback** | Citation, reveal mot à mot |
+| 11 | **Feedback** | Eyebrow en reveal mot à mot, citation en `PixelCurtainReveal` |
 | 12 | **Cta** | Marquee + nav + socials |
 | 13 | **Footer** | Wordmark géant `AquilonReveal` |
 
@@ -160,6 +160,7 @@ est l'invariant, et elle seule.
 | `usePrefersReducedMotion` | Dans `hooks/useMediaQuery.ts`. Pour **changer de layout**, pas pour animer — les paramètres d'animation passent par `gsap.matchMedia()`. |
 | `wantsReducedMotion()` | Dans `lib/motion.ts`. Lecture ponctuelle dans un handler ou un effet de montage, sans souscription. |
 | `RevealText` / `RevealChars` / `CurtainReveal` / `AquilonReveal` | Primitives de reveal. `RevealText` expose `start`, ce qui permet de découper un titre en plusieurs temps sans la modifier. |
+| `PixelCurtainReveal` | Rideau de pixels scrubbé, relevé à la mesure sur produx.design. **Peint le texte sur un canvas** au lieu de l'animer dans le DOM, le `<p>` restant en place pour la mise en page et l'accessibilité. Ses réglages portent des noms de ce qu'on voit — longueur et épaisseur de bande, avance, traîne, grain — et l'angle s'en déduit, il ne se règle pas. Un seul appelant : la citation de Feedback. |
 | `Marquee`, `BgGradient`, `SlideIndicators`, `NavWheelLink`, `SmoothScroll`, `CustomCursor` | Inchangées. |
 
 **Découpage** : `Pourquoi.tsx` ne garde que sa logique de scroll ; ses cartes

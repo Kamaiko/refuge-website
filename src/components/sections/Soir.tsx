@@ -1,9 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { useRef } from "react";
+import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
+import { readToken } from "@/lib/utils";
 import BgGradient from "@/components/common/BgGradient";
 import RevealText from "@/components/common/RevealText";
 
@@ -152,7 +153,7 @@ export default function Soir() {
           // and this runs inside `useGSAP`, i.e. a layout effect — no reason
           // to pay for it twice.
           const rootStyle = getComputedStyle(document.documentElement);
-          const token = (name: string) => rootStyle.getPropertyValue(name).trim();
+          const token = (name: string) => readToken(name, rootStyle);
           gsap.fromTo(
             beat1Ref.current,
             { color: token("--color-creme-dim") },
