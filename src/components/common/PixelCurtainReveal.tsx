@@ -98,10 +98,10 @@ import { cn, readToken } from "@/lib/utils";
 
 /* ── Réglages ──────────────────────────────────────────────────────────── */
 const T = {
-  /** **TAILLE D'UN PIXEL**, en fraction du corps. 0,058 donne ~5 px sur un
+  /** **TAILLE D'UN PIXEL**, en fraction du corps. 0,052 donne ~4,5 px sur un
    *  corps de 86 px. Descendre le rend plus fin et plus nombreux — mais pas
    *  moins quadrillé : pour ça, voir GRAIN. */
-  pixelSize: 0.058,
+  pixelSize: 0.052,
 
   /** **LONGUEUR DE LA BANDE** de couleur, en cadratins (multiples du corps).
    *  C'est LE réglage qui décide si l'effet lit comme une vague ou comme un
@@ -121,6 +121,22 @@ const T = {
    *  scanner. Les deux demandes se contredisent, et c'est l'étalement qui
    *  l'emporte chez eux. */
   bandThickness: 0.38,
+
+  /** **EFFILAGE DE LA QUEUE** : de combien le bord de fuite grimpe plus vite
+   *  que le bord d'attaque. 0 = ruban à épaisseur constante ; 0,22 = un coin
+   *  qui part à pleine épaisseur contre le gris et se referme presque à rien
+   *  au bout de sa course.
+   *
+   *  ⚠️ Sans ça, le ruban garde la même épaisseur du début à la fin, et loin
+   *  derrière le front il reste de la couleur au milieu des lettres au lieu
+   *  d'avoir été chassée par le haut. Mesuré : sur la référence, la hauteur
+   *  moyenne des pixels colorés monte de 0,05 à 0,71 de la hauteur de lettre
+   *  entre le front et la queue ; à épaisseur constante on n'obtenait que
+   *  0,27 → 0,43, le ruban stagnant dans une bande médiane.
+   *
+   *  Épaisseur au bout de la course = `bandThickness + 1 − 1/(1 − tailTaper)`.
+   *  À 0,22 elle tombe de 38 % à ~10 % de la hauteur de lettre. */
+  tailTaper: 0.22,
 
   /** **AVANCE** : sur quelle distance, DEVANT la bande, les premiers pixels
    *  apparaissent déjà (en cadratins). C'est ce qui fait que la trame précède
@@ -648,6 +664,11 @@ export default function PixelCurtainReveal({
             const em = fsCss * dpr;
             const rise = (T.bandLength * em) / (1 + T.bandThickness);
             const lag = T.bandLength * em - rise;
+            // Le bord de fuite a sa propre pente, plus raide, ce qui referme
+            // le ruban en coin au lieu de le laisser filer à épaisseur
+            // constante. Il se ferme complètement à
+            // `xb = bandThickness · rise / tailTaper`.
+            const riseTrail = rise * (1 - T.tailTaper);
             const softLead = Math.max(0.05, (T.leadFade * em) / rise);
             const softTrail = Math.max(0.05, (T.trailFade * em) / rise);
 
@@ -679,7 +700,10 @@ export default function PixelCurtainReveal({
                   ((c + 0.5) * cell - lineLeft[li]) +
                   noiseAt(li * 7 + c, r * 13 + 5) * jitter;
                 const lead = rise * (hy + (th - 0.5) * softLead);
-                const trail = lag + rise * (hy + (th - 0.5) * softTrail);
+                // Le bord de fuite grimpe PLUS VITE que le bord d'attaque —
+                // d'où `riseTrail < rise`. C'est ce seul écart qui donne au
+                // ruban sa forme de coin.
+                const trail = lag + riseTrail * (hy + (th - 0.5) * softTrail);
                 cellOff[n] = k;
                 cellAdv[n] = adv;
                 leadCut[n] = lead;

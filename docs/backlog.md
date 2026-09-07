@@ -462,6 +462,62 @@ les cartes arrivent vraiment.
 
 ---
 
+## ⏳ Rideau de pixels — deux chantiers ouverts · 2026-09-07
+
+### 1. Le rideau défile trop vite, et la fenêtre de scroll est PLAFONNÉE
+
+Patrick le trouve « vite en maudit », et il a raison. Mais ce n'est **pas** un
+mauvais réglage de `start` / `end` : c'est une limite géométrique.
+
+L'avance totale du rideau vaut la **largeur cumulée du texte rendu** — environ
+5 200 px à `5.4vw` sur quatre lignes. La fenêtre de scroll disponible, elle,
+vaut au mieux **une hauteur de fenêtre** : l'animation ne peut commencer avant
+que le bloc n'entre par le bas (`top 100%`) ni finir après que son haut n'ait
+atteint le haut de l'écran (`top 0%`), sous peine de terminer hors de vue.
+Soit 900 px sur un écran de 900. On est à 783. **Le gain restant est de 9 %,
+donc imperceptible** — inutile de le prendre.
+
+Trois leviers réels, par ordre d'efficacité :
+
+1. **Épingler la section** pendant la lecture. Un pin de `+=100%` porte la
+   fenêtre de 783 à ~1 683 px, soit **2,1× plus lent**. Le site épingle déjà
+   `Hebergements`, `Pourquoi` et le `Carousel`, donc le procédé est dans la
+   maison. Coût : la page s'allonge d'une hauteur d'écran et le rythme du
+   scroll change à cet endroit. ❓ **Non tranché — demande l'accord de Patrick.**
+2. **Réduire le corps.** L'avance est proportionnelle au corps : revenir de
+   5,4 à 4,5vw allongerait la durée de ~17 %. Mais le corps a été monté
+   exprès pour que la trame se lise ; c'est un arbitrage, pas un gain net.
+3. **Raccourcir le texte.** Idée de Patrick, et c'est la seule qui améliore
+   les deux à la fois. Hors périmètre technique.
+
+⚠️ **Répercussion mobile.** Sous `md`, la fenêtre est déjà resserrée à
+`top 75%` → `top 5%` **pour que l'animation ne démarre pas hors de vue** — le
+texte y fait dix lignes au lieu de quatre. Tout allongement doit passer par la
+prop `narrow` de `PixelCurtainReveal`, pas par les bornes globales, sinon on
+rouvre le défaut qu'on vient de corriger.
+
+### 2. Animation d'entrée du texte — à faire
+
+Demandée le 2026-09-07, non commencée. Spécification donnée par Patrick :
+
+- le texte **entre en scène**, une seule fois, et **ne revient jamais en
+  arrière** (pas de scrub bidirectionnel, contrairement au rideau) ;
+- il entre **en angle**, et l'angle doit être **celui du ruban de couleur** —
+  celui que `bandLength` / `bandThickness` / `tailTaper` produisent, ~5°.
+
+Deux questions à trancher avant de coder :
+
+- l'entrée porte-t-elle sur **le bloc entier** (le wrapper, canvas compris) ou
+  **ligne par ligne**, décalées le long de la diagonale ?
+- l'entrée précède-t-elle le rideau, ou les deux se chevauchent-ils ?
+
+⚠️ Contrainte technique : le texte est peint **sur le canvas**, pas par le DOM.
+Une entrée qui transforme le `<p>` seul ne déplacerait rien de visible. Il faut
+animer le **wrapper**, qui porte les deux — ou décaler le dessin dans
+`draw()`, ce qui coûterait un recalcul par frame et n'apporte rien.
+
+---
+
 ## ⚙️ Fonctionnel
 
 - **Réservations non envoyées** — `src/actions/reservation.ts` valide en Zod et retourne un message de succès, mais l'intégration Resend n'a jamais été branchée. Le formulaire ment à l'utilisateur.
