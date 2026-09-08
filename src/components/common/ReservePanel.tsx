@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
@@ -84,15 +84,34 @@ export default function ReservePanel() {
   const [arrivee, setArrivee] = useState("");
   const [depart, setDepart] = useState("");
   const [datesSeeded, setDatesSeeded] = useState(false);
-  // Adjusted during render rather than in an effect: React supports setting
-  // state while rendering the same component, it avoids the extra commit, and
-  // an effect would trip the cascading-render lint rule. The `datesSeeded`
-  // latch means a user who clears a field does not get it silently refilled.
-  if (typeof window !== "undefined" && !datesSeeded) {
+  // Semées APRÈS l'hydratation, dans un effet.
+  //
+  // ⚠️ Elles l'étaient auparavant pendant le rendu, derrière un
+  // `typeof window !== "undefined"`, pour économiser un commit. Ça produisait
+  // un vrai **mismatch d'hydratation** — le serveur rendait « — », le client
+  // « 5 nuits », et React signalait l'erreur en console (badge « 1 Issue » de
+  // Next en développement). Le marché était perdant : un mismatch fait
+  // RÉGÉNÉRER tout le sous-arbre côté client, ce qui coûte bien plus que le
+  // rendu supplémentaire qu'on évitait. C'est aussi le premier cas que le
+  // message d'erreur de React cite — une branche serveur/client.
+  //
+  // Le verrou `datesSeeded` reste : un utilisateur qui vide un champ ne doit
+  // pas le voir se remplir à nouveau tout seul.
+  //
+  // La règle `set-state-in-effect` est levée ici en connaissance de cause :
+  // elle vise les cascades de rendu, et autorise dans son propre texte la
+  // synchronisation avec une API de plateforme. C'en est une — la date du
+  // jour, qui n'existe que sur le client et qu'on ne peut par construction pas
+  // connaître au rendu serveur. Semer pendant le rendu, l'alternative, est ce
+  // qui causait le mismatch.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (datesSeeded) return;
     setDatesSeeded(true);
     setArrivee(isoDate(0));
     setDepart(isoDate(DEFAULT_STAY_NIGHTS));
-  }
+  }, [datesSeeded]);
+  /* eslint-enable react-hooks/set-state-in-effect */
   // useActionState (React 19) replaces three pieces of local state at once:
   //  - `formState` carries `{ ok, message, errors }` returned by the server
   //    action (was: `feedback` + `fieldErrors`).
