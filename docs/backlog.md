@@ -1,935 +1,69 @@
 # Backlog — Aquilon
 
-> Tâches identifiées et volontairement reportées. Chaque entrée dit **pourquoi** elle attend, pour qu'on puisse la reprendre sans re-instruire le contexte.
-
----
-
-## 🎨 Assets
-
-### ✅ Traités — canon du refuge
-
-Le **canon** ci-dessous est la référence de tout refuge représenté sur le site. Il est appliqué dans `pourquoi-aube.avif` et `refuge-galets.avif`, et l'image source est `_raw/refs/canon-capsule.jpg`.
-
-> **Règle apprise** : `--image` verrouille la **silhouette** et le **grade**, jamais l'**aménagement**. Une première version décrivait la coque et le paysage sans un mot sur l'intérieur — le modèle l'a inventé, et le résultat était plausible mais hors concept. Tout ce qui doit être reconnaissable se décrit explicitement, même si c'est visible dans la référence.
-
-**Canon du refuge** :
-- Coque **stadium** : pill horizontal, deux bouts entièrement arrondis, bois carbonisé noir mat
-- Façade longue entièrement vitrée, panneaux hauts à châssis noirs fins, porte coulissante au centre
-- Intérieur : voûte continue **beige avoine** épousant la forme du pill — aucun angle visible ; plancher en bois blond clair
-- **Gauche** : lit plateforme bas, literie ivoire, petite table de chevet en bois, lampe de lecture noire articulée
-- **Centre** : kitchenette compacte, façades bois pâle, robinet col-de-cygne noir, planche à découper en bois appuyée, **suspension globe ambre/laiton** au-dessus
-- **Droite** : poêle à bois noir avec conduit noir traversant le toit, bûches fendues empilées à côté, fauteuil bouclé crème, guéridon rond
-- Terrasse : lames de bois clair, **bain nordique en douves de bois**, coussins de sol, bougies piliers dans des photophores noirs, une lanterne
-
-**Commande** (Pro obligatoire — ne pas utiliser un modèle lite, la fidélité architecturale est tout l'enjeu) :
-
-```bash
-higgsfield generate create nano_banana_2 --aspect_ratio 4:5 --resolution 4k \
-  --image public/images/_raw/refs/canon-capsule.jpg --wait --prompt "…"
-```
-
-> `_raw/refs/` garde les images de référence à repasser en `--image` :
-> `canon-capsule.jpg` (silhouette + aménagement canoniques, dérivée du hero) et
-> `canon-terrasse-allumee.png`. Passer un JPEG ou un PNG, **jamais un AVIF** —
-> l'upload échoue.
-
-Prompt de `pourquoi-aube` (le bloc « THE INTERIOR MUST MATCH THIS EXACTLY » est
-la partie load-bearing ; le reprendre tel quel pour tout nouveau plan de refuge) :
-```
-Dawn in Charlevoix, Quebec, twenty minutes before sunrise. A single capsule cabin
-identical to the reference image: a horizontal stadium/pill silhouette with both ends
-fully rounded, matte charred-black Shou Sugi Ban outer shell, and one entire long side
-glazed floor to ceiling in tall slim black-framed panels with a sliding door at the
-centre. Seen from a three-quarter FRONT angle so the glazed side faces the camera and
-the interior is clearly visible, glowing warm amber.
-
-THE INTERIOR MUST MATCH THIS EXACTLY, read left to right through the glass: the walls
-and ceiling are one continuous pale oatmeal-beige curved vault following the pill shape,
-with no visible corners, over a pale blond timber floor. On the LEFT, a low platform bed
-with ivory linen bedding, a small wooden nightstand and a black articulated reading lamp.
-In the CENTRE, a compact kitchenette with pale wood cabinet fronts, a black gooseneck tap
-and a wooden chopping board, lit by a single amber glass globe pendant hanging above it.
-On the RIGHT, a black cast-iron wood stove with a black flue pipe rising through the roof,
-split firewood stacked beside it, a cream bouclé armchair and a small round side table.
-
-The cabin stands on a wide pale timber deck holding a round wooden barrel hot tub with
-steam rising, two floor cushions and three pillar candles in black holders. It sits high
-on an OPEN rocky bluff, not enclosed by forest: beyond and far below, a vast view over the
-St. Lawrence fjord, turquoise water under a thick low fog layer, dark mountain ridges
-receding under a pale pink and cream pre-dawn sky. Birches and red maples frame only the
-outer left and right edges. NO people. Natural colour grade, NOT HDR, NOT CGI-looking,
-crisp sharp detail throughout, no soft painterly foliage. 35mm lens, architectural
-editorial photography. No signage, no logos, no text. Vertical 4:5 composition.
-```
-
-### `pourquoi-crete.avif` — feuillage mou : limite atteinte, clos
-
-**Constat initial** : forêt de mi-distance floue, sans micro-contraste — l'artefact de diffusion qui signale « image générée » à l'œil entraîné.
-
-**Deux pistes essayées, résultats mesurés sur recadrage 1:1** :
-
-1. **Régénération avec consignes de netteté** (`crisp individual tree crowns`, `high micro-contrast in the canopy`, `DEEP FOCUS, no shallow depth of field`, `must read as a real drone photograph`) → gain réel mais modeste : meilleure séparation des couleurs et de la structure d'ensemble, feuillage toujours mou au pixel.
-2. **`topaz_image`, modèle High Fidelity V2**, 3712×4608 → 5568×6912, `sharpen 0.3` → **aucun gain perceptible**. Recadrage identique à l'entrée.
-
-**Conclusion** : la mollesse est **générative, pas un déficit de résolution**. Un upscaler ne peut pas inventer une structure absente de l'image source. Aucun outil disponible ne récupérera ce détail — inutile d'y redépenser.
-
-**Décision** : v4 retenue (meilleure que v3 en structure), avec un léger masque flou appliqué **au redimensionnement**, ce qui est gratuit et rend le piqué perçu :
-
-```bash
-ffmpeg -y -i src.png -vf "scale=1600:-2,unsharp=5:5:0.55:5:5:0.0" \
-  -c:v libaom-av1 -still-picture 1 -cpu-used 6 -crf 30 -pix_fmt yuv420p out.avif
-```
-
-À la taille d'affichage réelle (~700 px de large dans la carte), le défaut ne se voit pas ; le recadrage qui le révélait était un agrandissement ×2 que personne ne verra.
-
-**Note d'API** — le paramètre `input_image` de `topaz_image` n'accepte ni un chemin ni un id nu, mais un objet :
-```bash
-higgsfield upload create ./image.png        # → <upload_id>
-higgsfield generate create topaz_image \
-  --input_image '{"type":"media_input","id":"<upload_id>"}' \
-  --model "High Fidelity V2" --output_width W --output_height H --wait
-```
-(le shell bash gère mieux ces guillemets que PowerShell)
-
-### ⛔ ~~Médaillons — les deux paires sont en place~~ — PÉRIMÉ le 2026-08-29
-
-> Les paires éteint/allumé et leur rideau ont été **retirés** — voir l'entrée
-> dédiée plus bas. Les règles de brief listées ici restent bonnes pour toute
-> image de ce type, à une exception près : « **pas de figures humaines** » a
-> été **renversée** le même jour, les deux photos en place montrent du monde.
-
-`medaillon-{feu,terrasse}-{eteint,allume}`. Les deux rideaux tournent.
-
-Le duo est construit pour se répondre : le **feu commun**, vu d'en bas, et la **terrasse privée** d'où on le regarde — la lueur du feu est visible comme un point orange au loin dans les arbres de la seconde image, et disparaît dans sa version éteinte. C'est exactement le body copy : « Certains descendent. D'autres regardent la lueur depuis leur terrasse. »
-
-**Règles de brief apprises sur ce lot** — coûteuses à redécouvrir :
-- **Nommer les objets un par un et les compter** (« one hurricane lantern, one low stool with one closed book, one ceramic mug ») ; écrire « des lanternes » produit une rangée de quatorze qui lit comme une installation de mariage.
-- **Lister les exclusions explicitement** (« no blankets, no cushions, no additional lanterns, no plants ») et **exiger le vide** (« at least half the frame is bare deck »).
-- **Pas de figures humaines.** Deux dos anonymes ne portent rien ; la trace humaine dans les objets (un livre posé, une tasse) est plus forte et ne peut pas rater.
-- **Ne pas demander le refuge s'il n'est pas le sujet** — les modèles produisent une architecture générique qui ne ressemble pas à la capsule stadium. Les deux médaillons n'en contiennent aucun et n'en souffrent pas.
-- La couverture de laine est déjà employée dans `medaillon-feu-allume` : ne pas la répéter.
-
-Variantes écartées, conservées dans `_raw/alternates/` : `medaillon-table-avec-personnes`, `medaillon-feu-avec-personnes`, `medaillon-feu-jour-midi`, `medaillon-sentier-trop-de-lanternes`.
-
-### ✅ `refuge-galets.avif` — doublon corrigé
-Le fichier était **octet pour octet identique à `hero-shape.avif`** : le troisième refuge affichait la photo du hero. Régénéré d'après sa description dans `src/lib/data/refuges.ts` — rivage rocheux à marée basse, étendue de galets, flaques de marée, cargo à l'horizon, bain nordique sur la terrasse, lumière rasante de fin d'après-midi. MD5 vérifié différent après coup.
-
-### ✅ Carousel carte 4 — « Terrasse en fête » remplacée
-
-> ⛔ **Historique.** Les bélugas ont été remplacés à leur tour le 2026-08-29 —
-> voir l'entrée dédiée plus bas. Ce qui suit décrit l'état de juin, conservé
-> pour la méthode, pas pour l'état du site.
-
-Devenue « Le passage des bélugas ». C'était le dernier vestige du registre
-« festival » retiré partout ailleurs. Le sujet était déjà semé dans le copy :
-la description du refuge Galets disait alors « Les bélugas passent l'été,
-parfois » — phrase retirée depuis, en même temps que la carte.
-
-L'image a demandé quatre passes, dont trois ratées en cherchant à
-« désaturer » — voir le journal de la méthode dans docs/assets-a-generer.md.
-Le niveau de la carte est passé de « Après-midi » à « Demi-journée » pour
-rejoindre le vocabulaire des `NIVEAUX` d'Activités.
-
-### ⛔ `hero-loop.mp4` (desktop) — regénérée puis ÉCARTÉE le 2026-08-30
-
-> **La version en place reste l'ancienne.** La nouvelle était objectivement
-> meilleure sur le papier — plus longue, plus légère, couture 22 % plus
-> discrète, plan plus net — mais elle a perdu l'arbitrage sur un critère que
-> je n'avais pas mesuré : **le nombre de sources de mouvement**. L'ancienne
-> en a trois (le feu, la vapeur du bain, l'eau qui bouge), la nouvelle deux —
-> son eau reste figée, parce que le prompt l'exigeait pour protéger la
-> boucle. Patrick : « le loop est fluide » sur l'ancienne malgré l'eau qui
-> bouge, donc la précaution ne servait à rien.
+> Ce qui reste à faire, et ce qu'on a décidé de **ne pas** faire. Chaque entrée
+> dit *pourquoi* elle attend, pour qu'on la reprenne sans réinstruire le
+> contexte. Les dossiers clos sont en fin de fichier, réduits à ce qu'ils
+> apprennent — s'ils n'apprennent rien, ils n'y sont plus.
 >
-> ⚠️ **Leçon** : une vidéo d'ambiance se juge à sa RICHESSE de mouvement
-> autant qu'à la propreté de sa couture. Interdire tout mouvement d'eau
-> achète une boucle parfaite et une image morte. Un prochain essai devrait
-> autoriser une eau qui frémit — sans vague qui traverse.
->
-> Rendu conservé : `assets-raw/alternates/hero-loop-desktop-KLING-2026-08-NON-RETENUE.mp4`.
-> Source 10 s : `assets-raw/finals/hero-loop-desktop-src-10s.mp4`.
-> Tout ce qui suit reste vrai et vaut pour une future tentative.
+> Dernière remise en ordre : **2026-09-08**.
 
-`kling3_0`, 16:9, **10 s, mode pro**, `--sound off`, start-image =
-`assets-raw/refs/ref-hero-desktop.png` (le poster converti en PNG, donc la
-première frame **est** le poster : aucun saut de couleur à la bascule).
-Facturé **17,5 crédits**, alors que `generate cost` en annonçait 25 — le devis
-surestime, vérifier le solde plutôt que le devis. Prompt littéral :
-`docs/prompts/hero-loop-desktop.txt`.
+---
 
-⚠️ **Syntaxe** : `kling3_0` n'a pas de `--start-image`. Il faut uploader puis
-passer un tableau `medias` :
-```bash
-UP=$(higgsfield upload create poster.png | tail -1)
-higgsfield generate create kling3_0 --aspect_ratio 16:9 --duration 10 --mode pro \
-  --sound off --medias "[{\"role\":\"start_image\",\"data\":{\"type\":\"media_input\",\"id\":\"$UP\"}}]" \
-  --wait --prompt "…"
-```
+## ✅ Contrôles de santé — passés le 2026-09-08
 
-#### Le modèle a désobéi, et c'était prévisible
-
-Le prompt interdisait explicitement toute vague et tout mouvement traversant
-le cadre. **Un splash d'eau est apparu à 6,375 s** — détecté à un
-`scene_score` de **0,0287**, contre 0,0094 pour la frame voisine.
-
-Patrick l'a formulé mieux que le prompt : « quand ça bouge naturellement doux
-c'est ok, mais quand trop de vague, impossible à faire quelque chose de loop
-parfait ». C'est exactement la distinction stochastique / trajectoriel.
-
-**Récupéré sans redépenser** : le splash était le SEUL saut de toute la
-vidéo (aucune autre frame au-dessus de 0,004). On coupe la source à 6,3 s et
-on boucle sur ce segment. Réflexe à garder : **détecter les sauts avant de
-jeter une génération** —
-```bash
-ffmpeg -v error -i src.mp4 -vf "select='gt(scene,0.008)',metadata=print:file=-" \
-  -an -f null - 2>&1 | grep -E "pts_time|scene_score" | paste - -
-```
-
-#### Le fondu : mesuré, pas estimé
-
-Test de couture correct = concaténer la boucle **avec elle-même** et mesurer
-le `scene_score` au point de raccord.
-
-| Fondu | Durée finale | Couture |
+| Contrôle | Commande | État |
 |---|---|---|
-| **0,8 s ← retenu** | **5,54 s** | **0,00679** |
-| 1,0 s | 5,33 s | 0,00872 |
-| 1,2 s | 5,12 s | 0,00838 |
-| 1,5 s | 4,83 s | 0,00800 |
-| 2,0 s | 4,33 s | 0,00739 |
-| 2,5 s | 3,83 s | 0,00712 |
-| *ancienne version* | *5,08 s* | *0,00869* |
+| Types | `npx tsc --noEmit` | passe |
+| Lint | `pnpm lint` | passe, 0 avertissement |
+| Build de production | `pnpm build` | passe, 8 pages statiques |
+| Console du navigateur | page d'accueil, scroll complet | **0 erreur** |
+| Chemins cités dans la doc | existent tous | oui |
+| Racine du dépôt | aucun fichier de travail | propre |
 
-⚠️ **La règle « le fondu long fantôme moins » NE SE VÉRIFIE PAS ICI.** Le
-fondu de 0,8 s gagne sur les DEUX critères à la fois : la boucle la plus
-longue et la couture la plus discrète. L'ancienne mesure (0,6 s → −10 %,
-2,0 s → −4 %) portait sur une autre vidéo et sur l'énergie de contours, pas
-sur le `scene_score` au raccord. Ici le mouvement est si lent et si diffus
-que deux images éloignées se ressemblent déjà : un fondu court suffit, et il
-ne coûte pas 1,2 s de boucle.
-
-**À retenir : balayer plusieurs valeurs de fondu et mesurer, plutôt que
-d'appliquer 2,0 s par habitude.** Le balayage coûte quelques minutes de CPU
-et zéro crédit.
-
-#### ⚠️ Ne pas juger la netteté au sobel global
-
-Mesurée, la nouvelle vidéo sort à **20,5** contre 25,9 pour l'ancienne — donc
-« plus molle ». **C'est faux.** Comparaison à 1:1 sur la même zone : la
-nouvelle définit nettement le robinet, la bouilloire, les troncs de bouleaux
-et les plis du rideau, là où l'ancienne est lissée. Le sobel global compte
-aussi le **bruit d'encodage**, dont l'ancienne est chargée. Toujours comparer
-un recadrage 1:1, pas une moyenne.
-
-**Résultat** : 5,54 s (plus longue que les 5,08 s précédentes), **1,89 Mo contre 2,30** (−18 % sur le chemin critique
-du hero), couture 22 % meilleure, plan plus net, caméra strictement fixe.
-Cache-buster passé à `?v=7` dans `Hero.tsx`.
-
-### Encore jamais produits
-- `lieu-charlevoix.avif` (4:5) — section `Lieu.tsx`, non implémentée
-- Galerie ambiance, 6 images — section `Galerie.tsx`, non implémentée
-- Vidéos d'ambiance (brume, feuille, eau)
+> ⚠️ Une erreur d'hydratation vivait dans `ReservePanel` (« 5 nuits » au client
+> contre « — » au serveur) : les dates étaient semées **pendant le rendu**
+> derrière un `typeof window`. Corrigée le 2026-09-08 — elles le sont désormais
+> dans un effet, après hydratation. Un mismatch fait régénérer tout le
+> sous-arbre : c'était plus cher que le rendu supplémentaire qu'on évitait.
 
 ---
 
-## 📱 Responsive — le vrai sujet n'est pas le paysage
+## 🚧 Bloquant avant toute mise en ligne
 
-### ✅ Art direction du hero en portrait — livré, et l'image reste
+### Le formulaire de réservation ment à l'utilisateur
 
-> ⛔ La demande de régénération ci-dessous est **close sans suite** : Patrick
-> juge le hero mobile actuel parfait en angle, cadrage et couleur, et s'en est
-> servi comme référence pour briefer les portraits des refuges. Les consignes
-> gardent leur valeur pour toute future image portrait.
+`src/actions/reservation.ts` valide en Zod et retourne un message de succès,
+mais **l'intégration Resend n'a jamais été branchée**. Une réservation envoyée
+aujourd'hui n'arrive nulle part, et l'utilisateur lit « merci ».
 
-Le format est réglé : source 9:16 servie sous `md` par un `<picture>`, vidéo
-choisie en JS, deux `<link rel="preload">` avec `media`. Vérifié à 390×844 —
-seuls les fichiers portrait sont téléchargés. **Ce qui reste à refaire, c'est
-la photo elle-même**, au prochain rechargement de crédits.
+### L'URL du site est figée sur `localhost:3001`
 
-**Le défaut à corriger : ce n'est pas le même PLAN que le desktop.**
-`hero-shape.avif` est un **gros plan** — la capsule occupe la moitié du cadre
-et l'intérieur (lit, cuisine, poêle, suspension ambre) se lit en détail. Le
-portrait actuel est un **plan large** où la capsule fait ~30 % de la largeur.
-C'est la cause racine de tout ce qui a été reproché ensuite : un plan large
-donne beaucoup de ciel, donc une image pâle, donc une envie de la corriger au
-grade — alors que le problème était le cadrage.
+`layout.tsx:24` et `:67`, `robots.ts:52`, `sitemap.ts:68` retombent tous sur
+`"http://localhost:3001"` faute de `NEXT_PUBLIC_SITE_URL`, et aucun `.env*`
+n'existe. Vérifié dans les artefacts de build : `robots.txt`, `sitemap.xml`,
+`og:image` et le JSON-LD portent tous cette URL.
 
-**Consignes pour la prochaine génération** (payées, à ne pas redécouvrir) :
+Rien n'est cassé tant que le site n'est pas déployé — mais ça se déclenchera
+**exactement une fois**, au premier déploiement, avec des aperçus sociaux morts
+et un sitemap invalide. Le fallback est silencieux.
 
-1. **Gros plan. C'est la consigne n°1.** Demander explicitement que la capsule
-   remplisse la majeure partie du cadre et que l'intérieur soit lisible en
-   détail. Le hero vend l'architecture, pas le paysage.
-2. **Générer depuis la source d'origine** (`assets-raw/misc/hero-aquilon.png`),
-   pas depuis un rendu déjà généré. « Keep everything, change only X » ne sait
-   corriger qu'un défaut **localisé** — retirer un objet, nettoyer un coin. Le
-   cadrage fait partie du « everything » qu'on demande de préserver : les deux
-   consignes se contredisent et la préservation gagne. Essayé, mesuré : la
-   capsule est passée de 25 % à 30 % de largeur, et la consigne « plus sombre »
-   a été ignorée (Y 161,9 → 161,1).
-3. **Composer en trois bandes** — ça, ça a marché et il faut le garder. Tiers
-   haut vide (le wordmark `text-[18vw]` s'y pose), bande centrale pour la
-   capsule, tiers bas calme (tagline + subcopy). Vérifié à 390×844 : ni la
-   pastille `Réserver` ni le `Menu` ne mordent sur l'architecture.
-4. **Nommer la palette par la valeur ET par la teinte, séparément.** Les
-   adjectifs de chaleur pilotent la saturation plus que l'image de référence,
-   et **le texte l'emporte toujours sur `--image`**. Mais retirer tous les
-   adjectifs donne une image plate : « désaturé » et « plat » sont deux
-   réglages différents.
-5. **Cibles chiffrées à viser**, mesurées sur `hero-shape.avif` (voir plus bas
-   la méthode) : ciel `rgb(237,220,209)`, `V/R 0,928`, `B/R 0,882` — un tan
-   crème chaud, **surtout pas mauve**. Intérieur `rgb(142,88,61)`, `V/R 0,620`,
-   `B/R 0,430` — de l'ambre, pas du rouge. Point noir `YLOW ≈ 24`.
+> Premier geste : faire **échouer le build** en production quand la variable
+> manque, au lieu de le laisser réussir faux.
 
-**Grade appliqué en attendant** (dans `assets-raw/finals/hero-portrait-GRADE.txt`,
-à réappliquer à l'identique au poster ET à la vidéo, sinon le fondu
-poster → vidéo fait un saut de couleur) :
+### Ancres orphelines
 
-```
-curves=all='0/0 0.25/0.11 0.5/0.34 0.75/0.65 1/0.99',
-curves=b='0/0 0.5/0.38 1/0.88',
-curves=g='0/0 0.5/0.487 1/0.975'
-```
-
-### Méthode de mesure d'un grade — trois erreurs commises, à ne pas refaire
-
-1. **`sqrt((U_moyen−128)² + (V_moyen−128)²)` ne mesure pas la saturation.**
-   C'est la saturation *de la moyenne*, donc une **dominante de couleur**. Sur
-   cette métrique le portrait paraissait 35 % moins coloré que le paysage ;
-   sur la bonne (`signalstats` `SATAVG`, moyenne des saturations par pixel) il
-   était **plus** coloré. J'ai poussé `eq=saturation` à 1,70 sur une image qui
-   n'en manquait pas — résultat douloureux à l'œil.
-2. **`eq=saturation` est presque toujours le mauvais outil.** Il multiplie
-   tout, donc il pousse au néon ce qui est déjà saturé (les érables rouges) et
-   ne fait presque rien sur ce qui est neutre (le ciel pâle). Si un jour il
-   faut vraiment monter la couleur, c'est `vibrance` — il fait l'inverse.
-3. **Une image pâle manque souvent de point noir, pas de couleur.** Le portrait
-   avait un plancher d'ombres à 61 contre 24 pour le paysage. Une courbe qui
-   descend le bas en gardant le point blanc suffit : la couleur déjà présente
-   ressort seule. Et une correction de **teinte** par canal (`curves=b`,
-   `curves=g`) règle un ciel mauve ou un intérieur rouge, là où saturation et
-   gamma ne peuvent rien.
-
-Commande de mesure d'une zone (moyenne exacte, pas d'estimation à l'œil) :
-```bash
-ffmpeg -v error -i img.avif -vf "crop=iw:ih*0.18:0:0,scale=1:1" \
-  -f rawvideo -pix_fmt rgb24 - | od -An -tu1
-```
-
-### ✅ Cartes `Hebergements` en portrait — LIVRÉ le 2026-08-30
-
-> Les trois portraits sont en place, générés en une passe chacun. Le plan et
-> le prompt littéral sont dans `docs/assets-a-generer.md`.
-Les `refuges/*.avif` sont toutes en 16:9 et les cartes sont `absolute inset-0`
-dans un conteneur `~100lvh` : même crop que le hero avant correction. Un
-portrait 9:16 par refuge, servi par le même `<picture>`. Ajouter un champ
-`imagePortrait` à `src/lib/data/refuges.ts`.
-
-⚠️ Contrainte propre à ces cartes : le surnom et le nom sont typographiés
-**en bas à gauche**. Demander explicitement que le tiers bas, moitié gauche,
-reste sombre et sans détail clair. Testé sur une première passe de `brume` :
-la consigne est respectée, et ça travaille directement pour la lisibilité du
-surnom (voir la section « Lisibilité »). Mais **même piège que le hero** —
-la première passe a produit un plan large avec la capsule au loin, et a
-inventé un précipice absent de la photo d'origine. Exiger le gros plan et
-l'intérieur lisible, et interdire tout élément de terrain non présent dans
-la référence.
-
-### Garde-fou paysage mobile (rendement faible, coût faible)
-**Position assumée** : le paysage mobile n'est **pas** un breakpoint standard et ne mérite pas une troisième mise en page. Le jeu retenu reste 375 / 768 / 1024 / 1440.
-
-Mais il faut éviter le « cassé ». Sous `@media (orientation: landscape) and (max-height: 500px)` :
-- réduire le wordmark du hero (`text-[18vw]` devient énorme quand la hauteur est le facteur limitant)
-- vérifier que le pill `Menu` (bottom-center) et le CTA `Réserver` (top-right) ne recouvrent pas la tagline
-- vérifier que les sections `h-screen` (Pourquoi, Carousel) restent lisibles
-
-Objectif : « pas cassé », pas « conçu pour ».
+`#choisir`, `#proximite` et `#cta` sont déclarées sur les sections mais absentes
+de `src/lib/data/nav.ts`.
 
 ---
 
-## 🧱 Code — issus de la revue
+## 🔴 Correctness — relevé à l'audit du 2026-08-30, toujours ouvert
 
-### Carousel : reduced-motion sur desktop avec souris
-Sous `prefers-reduced-motion`, le Carousel bascule sur la piste mobile — un
-scroll horizontal `snap-x` — à toutes les largeurs. Ça règle le cas tactile,
-mais sur un desktop à la souris cette piste est difficile d'accès : sa barre
-de défilement est masquée deux fois (`.no-scrollbar` et le `scrollbar-width:
-none !important` global de `globals.css`), et elle n'est pas focusable.
+### `useGSAP` + `dependencies` ne nettoie pas
 
-Le correctif propre n'est pas un ajustement : il faut une mise en page
-verticale empilée pour ce cas, ou rendre la piste focusable avec des
-contrôles visibles. C'est un vrai trou, mais étroit — reduced-motion **et**
-desktop **et** souris.
-
-### ~~`.focus-ring` et `.eyebrow`~~ — débloqué, migration à faire
-`.focus-ring` n'avait qu'un point d'appel, et la raison n'était **pas** la
-paresse : la classe figeait `ring-offset-base-noir`, alors que la moitié des
-anneaux inline restants sont sur gris-tan (ReservePanel, SocialIcons). Elle ne
-pouvait littéralement pas les absorber. L'offset est maintenant une variable
-(`--focus-ring-offset`, définie sur `:root`), qu'un conteneur sur une autre
-surface redéfinit pour son sous-arbre. **La passe est désormais mécanique** :
-Header (×3), MapOverlay (×2), ReservePanel (×3), Hebergements, NavWheelLink,
-SocialIcons, Proximite (celui-ci en `ring-offset-4`).
-
-`.eyebrow` est renommée **`.label-caps`** : `SectionHeading` a un prop
-`eyebrow` qui rend `text-xl md:text-2xl font-semibold` — un mot, deux sens, et
-la classe ne s'appliquait même pas au composant qui possédait le mot. Toujours
-un seul point d'appel (`Soir`) : les spellings inline de Hebergements,
-ReservePanel et Header sont chacun d'une taille différente, donc ils ne
-forment pas encore une famille. Définir la famille avant d'extraire.
-
-### ~~Révélation du texte dépendante de la direction~~ — corrigé
-`Hebergements` lisait `self.direction` pour choisir son seuil, et plaçait le
-seuil de masquage **au-dessus** de celui de révélation : entre les deux, l'état
-basculait à chaque changement de direction — exactement le scintillement que le
-commentaire prétendait empêcher. Les deux seuils sont maintenant lus de la même
-façon dans les deux sens, avec une zone morte de 0,03. L'état au repos ne
-dépend plus du chemin parcouru, et les points de snap ont pu redescendre là où
-les cartes arrivent vraiment.
-
-## 🧱 Code — reste du plan de reprise
-
-- ~~**Lot 1.4** — passe copy complète~~ ✅ **faite**. Incohérences factuelles
-  soldées (« Close » vs « Fermer », « Suivant » sur un bouton terminal,
-  aménités JSON-LD ≠ `FEATURES`, vocabulaire des durées, double paragraphe
-  « concept »), registre corrigé sur Hero, Feedback, Activités et la carte 5
-  du Carousel, et tirets cadratins retirés de toute la prose visible.
-  ⏳ Ce qui reste : `SITE_DESCRIPTION` dit « Trois refuges », ce qui est exact
-  côté données mais se lit comme quatre à l'écran (le hero en montre un, plus
-  les trois d'Hébergements) — à trancher.
-- **Lot 5** — extraire `<SectionHeading>` (Choisir ↔ Activités ↔ Cta partagent ~125 lignes dont 28 identiques octet pour octet), `createOverlayContext()` (3 contextes quasi jumeaux), `useOverlayA11y()` (Escape + focus save/restore écrits 3 fois).
-- **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par commentaire), unifier les espacements de section (3 échelles `px-*` concurrentes), retirer la graisse 800 jamais utilisée. ✅ `unoptimized` est tranché : il s'applique à tous les `<Image>` raster (Soir, ReservePanel et Feedback y échappaient). ✅ `_raw/` est sorti de `public/` vers `/assets-raw/`.
-- ⏳ **Perf — le stutter est CONSTATÉ, plus seulement soupçonné** · 2026-08-30
-  ⚠️ **Le diagnostic a partiellement expiré le 2026-09-07.** La citation de
-  `Feedback` n'anime plus de blur : elle est passée à `PixelCurtainReveal`, qui
-  peint sur un canvas — deux composites et une boucle sur ~9 000 cellules par
-  frame, mesuré à 6,9 ms médian / 7,1 ms p99 en scroll continu à 1600×900,
-  aucune image sautée. Le blur en scrub subsiste sur **l'eyebrow seul, cinq
-  mots**, à toutes les largeurs. Le poste lourd décrit ci-dessous n'existe donc
-  plus sous cette forme ; ce qui reste à trancher, c'est le voisinage avec les
-  tickers `Marquee` du `Cta`, qui lui n'a pas bougé. **Reprofiler avant de
-  corriger quoi que ce soit** : le point de départ de 2026-08-30 est mort.
-  <br>Texte d'origine, conservé pour la chronologie :
-  `Feedback.tsx` anime `filter: blur` en scrub sur ~50 spans, chacun promu en
-  couche compositeur. Poste le plus lourd du site.
-  **Patrick voit un stutter** au déballage de la citation « On est arrivés avec
-  une liste de choses à faire… » (`Feedback.tsx:11`) **et sur le ruban juste en
-  dessous**.
-  ⚠️ Ce ruban est le `Marquee` du `Cta` — section 12, immédiatement après
-  Feedback en 11. Les deux dettes sont donc **voisines dans le scroll et leurs
-  coûts s'additionnent au même instant** : le blur sur 50 couches pendant que
-  quatre tickers `Marquee` écrivent un transform par frame sans porte de
-  visibilité (voir l'entrée « Marquee : le ticker ne s'éteint jamais »). Aucune
-  des deux n'avait été reliée à l'autre.
-  ⚠️ **Le même stutter existe dans `adjointe-virtuelle`** — Patrick le voit sur
-  les deux sites. Son `Testimonials.tsx` est un copier-coller de ce
-  `Feedback.tsx` (son commentaire dit « Valeurs Feedback.tsx »), et il porte un
-  diagnostic que CE projet n'a pas : « animer un blur, c'est un recalcul par
-  pixel sur le GPU à chaque frame de scrub, sur ~25 mots à la fois ».
-  **Ça déplace la cause** : le facteur commun aux deux sites est l'animation
-  elle-même, pas le voisinage Feedback/Marquee propre à celui-ci.
-  ✅ **Confirmé par Patrick le 2026-08-30 : le stutter est sur DESKTOP**, sur
-  les deux sites.
-  ⚠️ **Et ce projet-ci n'a AUCUNE garde de performance**, contrairement à ce
-  qu'une première version de cette note affirmait. Dans `Feedback.tsx:85-90`,
-  `mdUp` et `belowMd` appellent le MÊME `setup()` et ne changent que les
-  seuils `start`/`end` : le blur est animé partout, mobile compris. Le
-  `gsap.set(..., blur(0px))` de la ligne 93 est dans la branche `reduce`, pas
-  dans `belowMd`.
-  État réel des deux sites :
-  · `adjointe-virtuelle` — blur **desktop-only**, mobile garde transform +
-    opacity animés. Correctif appliqué, son commentaire dit « vécu ».
-  · **ici — blur PARTOUT, aucun correctif.**
-  Donc le desktop anime le blur dans les deux (d'où le stutter commun), et ce
-  projet traîne en plus la dette mobile que l'autre a déjà réglée.
-  Premier geste : profiler ce segment dans l'onglet Performance et regarder si
-  le blur ou les tickers `Marquee` dominent AVANT de corriger l'un des deux —
-  corriger le mauvais ne changerait rien de visible. Deux correctifs distincts
-  attendent ensuite : porter la garde mobile de
-  `adjointe-virtuelle/src/components/sections/Testimonials.tsx:44-62`, et
-  trancher le sort du blur SUR DESKTOP, qu'aucun des deux sites n'a traité —
-  le remplacer par `opacity` + `y` est l'option déjà pressentie.
-  ❓ **Patrick n'a PAS tranché** (2026-08-30) : « on pourrait enlever le blur et
-  fix le problème, mais je suis sûr qu'il y a une méthode plus durable et
-  solide ». Retirer le blur règle le symptôme et coûte une signature visuelle —
-  le fondu-flou fait partie du rendu de la section. Pistes à instruire avant de
-  choisir, par ordre de coût croissant : réduire le rayon (6px → 2-3px, le coût
-  GPU croît avec le rayon) ; n'animer le blur que sur les mots réellement dans
-  la fenêtre de scrub au lieu des ~50 d'un coup ; poser/retirer `will-change`
-  autour du tween plutôt qu'en permanence ; ou remplacer le flou par un masque
-  CSS qui ne recalcule pas par pixel. **Ne pas trancher sans le profilage** :
-  si les tickers `Marquee` dominent, retirer le blur ne changera rien de
-  visible et la signature sera perdue pour rien.
-
----
-
-## ⏳ Rideau de pixels — deux chantiers ouverts · 2026-09-07
-
-### 1. Le rideau défile trop vite, et la fenêtre de scroll est PLAFONNÉE
-
-Patrick le trouve « vite en maudit », et il a raison. Mais ce n'est **pas** un
-mauvais réglage de `start` / `end` : c'est une limite géométrique.
-
-L'avance totale du rideau vaut la **largeur cumulée du texte rendu** — environ
-5 200 px à `5.4vw` sur quatre lignes. La fenêtre de scroll disponible, elle,
-vaut au mieux **une hauteur de fenêtre** : l'animation ne peut commencer avant
-que le bloc n'entre par le bas (`top 100%`) ni finir après que son haut n'ait
-atteint le haut de l'écran (`top 0%`), sous peine de terminer hors de vue.
-Soit 900 px sur un écran de 900. On est à 783. **Le gain restant est de 9 %,
-donc imperceptible** — inutile de le prendre.
-
-Trois leviers réels, par ordre d'efficacité :
-
-1. **Épingler la section** pendant la lecture. Un pin de `+=100%` porte la
-   fenêtre de 783 à ~1 683 px, soit **2,1× plus lent**. Le site épingle déjà
-   `Hebergements`, `Pourquoi` et le `Carousel`, donc le procédé est dans la
-   maison. Coût : la page s'allonge d'une hauteur d'écran et le rythme du
-   scroll change à cet endroit. ❓ **Non tranché — demande l'accord de Patrick.**
-2. **Réduire le corps.** L'avance est proportionnelle au corps : revenir de
-   5,4 à 4,5vw allongerait la durée de ~17 %. Mais le corps a été monté
-   exprès pour que la trame se lise ; c'est un arbitrage, pas un gain net.
-3. **Raccourcir le texte.** Idée de Patrick, et c'est la seule qui améliore
-   les deux à la fois. Hors périmètre technique.
-
-⚠️ **Répercussion mobile.** Sous `md`, la fenêtre est déjà resserrée à
-`top 75%` → `top 5%` **pour que l'animation ne démarre pas hors de vue** — le
-texte y fait dix lignes au lieu de quatre. Tout allongement doit passer par la
-prop `narrow` de `PixelCurtainReveal`, pas par les bornes globales, sinon on
-rouvre le défaut qu'on vient de corriger.
-
-### 2. Animation d'entrée du texte — à faire
-
-Demandée le 2026-09-07, non commencée. Spécification donnée par Patrick :
-
-- le texte **entre en scène**, une seule fois, et **ne revient jamais en
-  arrière** (pas de scrub bidirectionnel, contrairement au rideau) ;
-- il entre **en angle**, et l'angle doit être **celui du ruban de couleur** —
-  celui que `bandLength` / `bandThickness` / `tailTaper` produisent, ~5°.
-
-Deux questions à trancher avant de coder :
-
-- l'entrée porte-t-elle sur **le bloc entier** (le wrapper, canvas compris) ou
-  **ligne par ligne**, décalées le long de la diagonale ?
-- l'entrée précède-t-elle le rideau, ou les deux se chevauchent-ils ?
-
-⚠️ Contrainte technique : le texte est peint **sur le canvas**, pas par le DOM.
-Une entrée qui transforme le `<p>` seul ne déplacerait rien de visible. Il faut
-animer le **wrapper**, qui porte les deux — ou décaler le dessin dans
-`draw()`, ce qui coûterait un recalcul par frame et n'apporte rien.
-
----
-
-## ⚙️ Fonctionnel
-
-- **Réservations non envoyées** — `src/actions/reservation.ts` valide en Zod et retourne un message de succès, mais l'intégration Resend n'a jamais été branchée. Le formulaire ment à l'utilisateur.
-- **Ancres orphelines** — `#choisir`, `#proximite` et `#cta` sont déclarées sur les sections mais absentes de `src/lib/data/nav.ts`.
-- **Sections planifiées jamais implémentées** — `Lieu.tsx` et `Galerie.tsx` (référencées dans CLAUDE.md et `assets-a-generer.md`).
-
----
-
-## ✅ Lisibilité des cartes Hébergements — mesurée, et l'hypothèse était fausse
-
-Le backlog soupçonnait le **surnom** sur la carte Galets, d'après une
-observation à l'œil. Mesuré à 390×844, texte masqué dans le DOM et fond
-échantillonné sous chaque niveau — sans masquer le texte, la moyenne inclut
-les pixels du texte et ne mesure rien :
-
-| Niveau | Hauteur dans la carte | Ratio |
-|---|---|---|
-| surnom | 39 % | 4,29 |
-| **nom** | 45 % | **2,03** |
-| description | 54–70 % | 3,30 – 3,85 |
-| capacité | 80 % | 8,10 |
-
-Le surnom est le **seul des quatre niveaux qui passe**. C'est le nom qui
-échoue, posé sur l'intérieur éclairé de la photo.
-
-Cause structurelle : le dégradé radial est ancré en bas à **gauche** et son
-alpha est nulle vers 48 % de la hauteur, alors que sur un écran étroit la
-description passe à cinq lignes et fait monter le bloc jusqu'à 39 %.
-
-**Ce qui a été décidé** — un voile plein cadre a été construit et mesuré (il
-faisait passer le nom largement au-delà de AA) puis **retiré** : assombrir la
-photo va contre l'objet de la section. Le dégradé radial a même été affaibli
-(90 %×65 % → 78 %×42 %, alpha 0,92 → 0,80). La typographie a été resserrée
-(nom `text-6xl` → `text-5xl`, description `text-lg/relaxed` →
-`text-base/snug` sous `md`), ce qui rend ~6 % de hauteur de carte.
-
-⏳ **Le reste tient au brief d'image**, consigné dans `docs/assets-a-generer.md`
-avec la formulation exacte : le portrait doit être sombre **à partir de 38 %
-de sa hauteur** côté gauche, et l'intérieur éclairé doit être dans la moitié
-haute. À appliquer sur `aubepine-portrait` et `galets-portrait`, et à
-reprendre sur `brume-portrait` si l'occasion se présente.
-
-## 🧱 Code — reports assumés de la passe simplify
-
-Trouvés par la revue, **volontairement pas corrigés** dans cette passe parce
-que chacun est un vrai refactor et non un ajustement. Consignés avec le
-raisonnement pour ne pas les redécouvrir.
-
-### ✅ L'état caché vit maintenant en CSS — fait
-
-Livré. `[data-anim="fade"]` / `[data-anim="hidden"]` sous
-`@media (prefers-reduced-motion: no-preference)` dans `globals.css`, hors de
-toute cascade layer pour battre les utilitaires Tailwind. Trois branches
-`reduce` supprimées (Hero, `useEyebrowScrub`, `SectionHeading`).
-
-Les deux primitives à glyphes ne pouvaient pas être réglées par le CSS seul —
-leur état caché est aussi un transform que GSAP doit poser pour tenir son
-cache. Elles lisent désormais la préférence avec `wantsReducedMotion()` dans
-l'effet, et gardent le hook en dépendance pour rester réactives.
-
-Un trou trouvé en route : `RevealText` n'avait **aucune** gestion de la
-préférence et animait pour tout le monde. Corrigé.
-
-Vérifié sur le build aux deux préférences, en scroll continu : sous `reduce`,
-25 éléments `data-anim`, 0 invisible, 0 glyphe hors champ, 0 ligne décalée.
-
-Les branches `reduce` conservées (CurtainReveal, MapOverlay, Feedback,
-Hebergements, Soir) annulent un état posé en JS, pas par le markup — elles ne
-relèvent pas de ce refactor.
-
-<details>
-<summary>Raisonnement d'origine, conservé</summary>
-
-### L'état caché devrait vivre en CSS, pas en JS (le plus rentable)
-Beaucoup d'éléments sont livrés cachés par le markup SSR (`opacity: 0`,
-`visibility: hidden`, `clip-path: inset(100%)`) et **seul JS défait ça**.
-Chaque branche `prefers-reduced-motion: reduce` — il y en a six — ne fait
-qu'annuler à la main l'état caché posé quelques lignes plus haut.
-
-Les deux moitiés de l'invariant sont écrites dans deux langages, dans deux
-fichiers. `AquilonReveal` a déjà **perdu** cette course en production : la
-préférence lit `false` au rendu d'hydratation, un tween de masquage part, et
-la branche `reduce` arrive trop tard. `RevealChars` la gagne aujourd'hui *par
-chance de timing* — son propre commentaire le dit.
-
-Forme correcte : mettre l'état caché derrière la media query, en CSS.
-
-```css
-@media (prefers-reduced-motion: no-preference) {
-  [data-anim="fade"]    { opacity: 0; }
-  [data-anim="curtain"] { visibility: hidden; }
-}
-```
-
-Le JSX porte `data-anim` au lieu d'un style inline, et chaque branche `reduce`
-se réduit à « ne pas animer ». La course disparaît structurellement : le CSS
-s'applique dès la première peinture serveur.
-
-⚠️ Un helper `restAt(targets, props)` **ne marcherait pas** : les états de
-repos sont réellement spécifiques. Ce qui est partagé, c'est l'état *caché*.
-
-</details>
-
-### `SectionHeading.linesCompact` → SplitText
-Le prop existe parce que le rideau anime **une entrée de `lines`**, pas une
-ligne rendue. Coût : une souscription `useMediaQuery`, un tableau de
-dépendances porteur, un breakpoint `MQ.belowLg` qui n'existe que pour décrire
-où une phrase française passe à la ligne — et un bug déjà livré (le titre
-Activités rendu « Découvrez les » et rien d'autre).
-
-`gsap/SplitText` est présent dans `node_modules` et libre depuis GSAP 3.13.
-`new SplitText(h2, { type: "lines" })` donne un wrapper par ligne **rendue**,
-re-splittable au resize. `linesCompact`, `MQ.belowLg` et le `useMediaQuery` du
-composant disparaissent, et l'effet devient *plus* correct — aujourd'hui il se
-dé-stagge à toute largeur où une entrée se replie sans qu'on l'ait mesurée.
-
-### MenuOverlay / ReservePanel : les valeurs finales écrites trois fois
-Les branches reduced-motion réénoncent à la main `top: GAP`, `borderRadius:
-RADIUS_OPEN`, `xPercent: 105`… qui existent déjà dans le chemin ouvert et dans
-le chemin fermé. Trois copies des mêmes nombres, rien qui les lie.
-
-Forme correcte : une `gsap.timeline({paused: true})` qui porte les valeurs une
-fois, pilotée par `tl.play()` / `tl.reverse()`, et `tl.progress(isOpen ? 1 : 0)
-.pause()` sous reduced-motion. La chorégraphie de fermeture est asymétrique
-(durées et eases par élément), donc c'est un vrai refactor.
-
-### `createOverlayContext` : extraire `useOverlayState`
-La factory empaquette la machine à états open/close **et** le contexte + hook.
-`MapOverlay` a besoin de la première et ne peut pas l'avoir, parce qu'elle
-n'est atteignable qu'à travers le second — d'où ses `useState`/`useCallback`/
-`useMemo` recopiés. Sortir `useOverlayState()` en export séparé (≈10 lignes)
-règle ça sans rendre la factory générique, ce qui coûterait plus cher.
-
-### `AquilonReveal` ⊂ `RevealChars`
-Depuis le retrait du prop `mode`, `AquilonReveal` n'est plus que `RevealChars`
-+ un `clipPath` : même markup `.rc-glyph`, même effet de montage, même branche
-reduced-motion au commentaire près, même tween. Différences réelles :
-`clipPath`, `SLIDE_START_X` 40 au lieu de 110, pas de stagger, texte figé sur
-`SITE_CONFIG.brandMark`.
-
-La duplication a **déjà coûté** : le correctif de la course de tweens a dû
-être appliqué deux fois, et ne l'a été qu'une seule au premier passage — d'où
-le wordmark de footer invisible. Fusionner demande de passer `clip` /
-`slideStartX` en props. Pas fait ici parce que le dégradé du footer dépend de
-la structure `.rc-glyph` et mérite une vérification visuelle, pas un typecheck.
-
-### Contexte d'overlay : séparer actions et état
-`createOverlayContext` mémoïse bien sa valeur, mais regroupe `isOpen` avec les
-trois callbacks stables. Tous les consommateurs re-rendent donc à chaque
-bascule — y compris `Hebergements`, qui ne lit que `open`. Ouvrir le panneau
-Réserver re-rend les trois cartes et leurs six `RevealChars`, dont la
-segmentation par regex n'est pas mémoïsée. Deux contextes (actions constantes /
-état) règlent ça.
-
-### `will-change` permanents
-Quatre déclarations posées dans le JSX, donc actives pour toute la durée de vie
-de la page, alors que la propriété n'est animée que pendant la traversée d'une
-section : `Hebergements` (calque plein écran en `opacity`), `Soir` (deux
-rideaux en `clip-path`, colonne de texte en `transform`). Le correctif propre
-demande de poser/retirer le hint autour de l'animation — pas trivial sur un
-ScrollTrigger scrubbé, qui n'a pas de `onStart`/`onComplete` significatifs.
-
-### `Marquee` : le ticker ne s'éteint jamais
-
-> ⏳ **Relié au stutter constaté le 2026-08-30.** Une des quatre instances est
-> celle du `Cta`, section 12 — juste sous `Feedback`, section 11, qui anime un
-> blur sur ~50 couches. Patrick voit le saut exactement là. Voir l'entrée
-> « Perf — le stutter est CONSTATÉ » plus haut : profiler avant de choisir
-> laquelle des deux corriger.
-
-`gsap.ticker.add()` tourne pour toute la durée de vie du composant, sans porte
-de visibilité. Quatre instances sur la page, dont une dans `MenuOverlay` —
-montée et masquée toute la session, une écriture de transform par frame sur un
-`text-[18vw]` que personne ne peut voir. Avec `pauseOnHover` (activé par
-`Cta`), un listener `mousemove` **et** un listener `scroll` appellent
-`getBoundingClientRect()` à chaque événement : un layout forcé par frame
-pendant un scroll Lenis. Un `IntersectionObserver` réglerait les deux.
-
-## ~~`activites/belugas.avif` — regénérer~~ — CLOS, le sujet a été remplacé
-
-> ⛔ **Périmé depuis le 2026-08-29.** La carte ne montre plus de bélugas mais
-> « Les pierres debout » — voir l'entrée dédiée plus bas. Le diagnostic
-> ci-dessous sur les adjectifs de chaleur reste juste et vaut pour toute
-> génération future ; c'est la seule raison de le garder.
-
-Carte 4 du Carousel, « Le passage des bélugas »
-([Carousel.tsx:81](../src/components/sections/Carousel.tsx#L81)).
-
-**Problème** : coucher de soleil trop orange et trop saturé. Les couchers de
-soleil du reste du site ne le sont pas — `pourquoi/crete.avif`, `pourquoi/
-aube.avif` et `refuges/galets.avif` tiennent tous dans une lumière basse,
-désaturée, plus terre que feu. Cette image tire vers l'orange publicitaire et
-ne tient pas dans la bande chaude gris-tan qui la porte.
-
-⚠️ **La cause est très probablement dans mes propres adjectifs.** C'est la
-règle apprise à ses dépens sur `refuge-galets` : les qualificatifs pilotent la
-saturation bien plus que la référence. « blazing », « burnt », « fiery », «
-golden hour » la montent ; « muted », « faded », « overcast », « past peak »,
-« low contrast » la descendent. Et **en cas de conflit, le texte l'emporte sur
-l'image de référence.**
-
-**Méthode pour la reprise :**
-
-1. Ne PAS décrire le grade en mots. Passer `pourquoi/crete.avif` (ou l'AVIF
-   converti en PNG — `--image` n'accepte pas l'AVIF) en référence et demander
-   explicitement d'en reproduire la palette et le niveau de saturation.
-2. Retirer du prompt tout adjectif de chaleur. Si une heure doit être nommée,
-   dire « late afternoon, overcast, low sun behind cloud » plutôt que « golden
-   hour » ou « sunset ».
-3. **Ne pas perdre l'acquis** : la version précédente avait été refaite parce
-   qu'on ne voyait pas les bélugas. Les garder proches, lisibles, et l'eau
-   sombre — c'est ce qui les détache. Le risque de cette passe est de
-   désaturer jusqu'à les rendre invisibles à nouveau.
-4. Regénération complète depuis zéro, pas une retouche à partir de l'image
-   actuelle : chaque itération qui repart d'un rendu perd en netteté.
-
----
-
-## ✅ Médaillons (`Soir.tsx`) — rideau retiré, anciennes photos remises
-
-Fait le 2026-08-29. `Soir.tsx` passe de **369 à 286 lignes** : le type
-`FramePair`, `WIPE_FROM`/`WIPE_TO`, `CURTAIN_STAGGER`, `curtainRefs`, la
-branche reduced-motion qui rétractait les rideaux, la boucle de tweens et deux
-`will-change: clip-path` ont disparu avec l'effet. Restent le parallax des
-deux cartes et le titre qui se réchauffe.
-
-Les quatre AVIF `{feu,terrasse}-{eteint,allume}` sont **sortis de `public/`**
-vers `assets-raw/alternates/medaillon-*-RIDEAU-RETIRE.avif` — la règle du
-projet veut `public/` léger, et plus rien ne les référençait.
-
-⚠️ **La règle éditoriale a été déplacée en conséquence**, dans `CLAUDE.md` :
-`medaillons/rassemblement.avif` montre une vingtaine de personnes sous des
-guirlandes, ce que l'ancienne formulation interdisait explicitement. Décision
-assumée. L'invariant conservé est plus étroit : le social vit **hors du
-refuge**, et on ne montre jamais de monde **au refuge même**.
-
-## ✅ Carousel carte 4 — les bélugas remplacés par « Les pierres debout »
-
-Fait le 2026-08-29. Troisième occupant de cet emplacement, après « Terrasse en
-fête » et « Le passage des bélugas ».
-
-**Pourquoi changer de sujet plutôt que refaire l'image** : trois dos blancs sur
-de l'eau grise est un sujet difficile, et quatre passes n'en avaient pas tiré
-mieux que du passable. Le remplacement est un **lieu** et non une observation
-— un sujet fiablement présent se photographie, une rencontre possible non.
-
-Écartée en finale : « Les marmites de géant » (cuves circulaires spiralées
-dans le granite). Plus originale, et le seul gros plan qu'aurait eu le
-Carousel — source conservée dans `assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png` si
-l'occasion revient.
-
-⚠️ La mention « Les bélugas passent l'été, parfois » a été retirée de la
-description du refuge Galets dans le même geste : rien ne dangle.
-
-## 🧪 Génération d'images — la leçon payée 8 crédits le 2026-08-29
-
-Deux passes brûlées sur `aubepine` en repartant de `ref-brume.png` avec un
-prompt complet. Les deux ont échoué, et **pas** sur ce qui était décrit :
-
-| Passe | Ce qui était demandé | Ce qui est sorti |
-|---|---|---|
-| v1 | « three-quarter FRONT angle **so the glazed side faces the camera** » | élévation strictement frontale, capsule à ~80 % de largeur |
-| v2 | caméra reculée, « SIXTY PERCENT of the frame width » | capsule à 100 % de largeur, **vitrage disparu** |
-
-Trois enseignements :
-
-1. **« so the glazed side faces the camera » se lit littéralement.** La
-   formulation annulait « three-quarter » placé deux mots plus tôt. Décrire
-   l'angle par ce qui doit être **visible** (« the rounded end cap is visible
-   in perspective, the deck runs diagonally toward the lower-left corner »),
-   jamais par ce qui « fait face ».
-2. **Un bloc intérieur détaillé combat toute consigne d'échelle.** Plus on
-   décrit ce qu'il y a dedans, plus le modèle rapproche la caméra pour le
-   montrer — le pourcentage de largeur perd systématiquement l'arbitrage. Les
-   deux consignes ne peuvent pas tenir dans le même prompt.
-3. **Repartir de zéro perd tout ce que la référence portait gratuitement** :
-   le deck en bois **teinté** est revenu en pin blanc brut, la lumière basse
-   de fin de journée en plein jour diffus, et la composition en tiers
-   (capsule décentrée) en cadrage centré. Aucun de ces trois points n'était
-   dans le prompt — ils n'avaient jamais eu besoin d'y être.
-
-**Méthode retenue** : pour changer l'aménagement d'un refuge, **ne pas
-regénérer la scène**. Partir de l'image live du refuge et demander une
-modification **localisée** (« keep this exact photograph… make ONE change:
-replace the interior »), qui est le seul cas que la doc a mesuré comme
-fiable. Le cadrage, le grade, le matériau et la lumière sont alors préservés
-par construction, et non redemandés.
-
-## ✅ `activites/pierres-debout.avif` — Hopewell assumé, dossier clos
-
-> **Tranché le 2026-08-30 : on garde.** La région exacte importe peu tant que
-> le **climat** est le bon ; le pouvoir visuel a primé. Deux remplaçants ont
-> été essayés et rejetés — les marmites de géant (« cheap ») et les orgues de
-> pierre (« rien de beau là »). Ce qui suit reste utile comme grille d'analyse
-> si le sujet est un jour rouvert.
-
-### Le diagnostic d'origine
-
-**Trouvé par `/code-review` le 2026-08-29**, après coup. L'image montre des
-« pots de fleurs » évasés couronnés d'épinettes sur une batture sableuse :
-c'est la formation signature de la baie de Fundy, **Nouveau-Brunswick**, à
-600 km. `CLAUDE.md` verrouille « Région | Charlevoix » et vise notamment des
-opérateurs touristiques québécois, qui la reconnaissent au premier coup d'œil.
-
-Le brief demandait pourtant « quelque chose d'original, pas exactement
-Hopewell ». La ressemblance avait été signalée à la validation ; ce qui ne
-l'avait pas été, c'est la **sortie de région**.
-
-**Décision** : casser la ressemblance drastiquement, viser une « architecture
-naturelle » unique. Pistes retenues comme géologiquement justes pour le
-bouclier canadien de Charlevoix — donc défendables face au public visé :
-
-- **Les plis de gneiss** — strates pliées en vagues concentriques dans une
-  paroi, motif hypnotique et franchement architectural. Rare en photo
-  touristique, donc sans référence connue à laquelle se comparer.
-- **Le corridor de faille** — deux parois de granite polies, verticales, à
-  quelques mètres l'une de l'autre, la lumière tombant du haut. Lit comme une
-  nef. Le Canyon Sainte-Anne, tout près, rend l'idée plausible.
-- **Les marmites de géant** — déjà générée et payée
-  (`assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png`), donc **zéro crédit** si elle revient
-  dans la course.
-
-⚠️ Écarter le **basalte** (orgues hexagonales) malgré son pouvoir visuel :
-Charlevoix est du bouclier canadien — granite, gneiss, anorthosite. Ce serait
-la même erreur qu'Hopewell, sous une autre forme.
-
-## ✅ `refuges/galets.avif` — forme différente, et c'est VOULU
-
-`/code-review` l'a signalée le 2026-08-29 comme une violation du canon : c'est
-une **boîte à coins arrondis** là où `brume.avif` et `aubepine.avif` portent la
-silhouette de terrain de course. Le constat est juste, la conclusion non.
-
-**Décision de Patrick, le même jour : on garde.** Le décor et la palette
-valaient plus que l'uniformité, et trois capsules rigoureusement identiques
-appauvrissaient la gamme. Galets devient donc une **variante de modèle**, pas
-un raté.
-
-⚠️ **Conséquence pour le canon** : la silhouette de terrain de course reste le
-modèle **dominant** — deux refuges sur trois, plus le hero — mais elle n'est
-plus un invariant absolu. Ne pas « corriger » Galets en la croyant oubliée.
-
-Elle fait aussi doublon de **décor** avec `aubepine.avif` (même promontoire,
-même falaise ocre, même cargo). Ça, ce n'est pas voulu, mais c'est assumé : les
-textes ont été réaccordés à la place (Choisir et les trois descriptions, le
-même jour). Si l'occasion revient, c'est le **paysage** de Galets qu'il faut
-différencier — la descendre vraiment au bord de l'eau —, pas sa forme.
-
----
-
-## 💡 Panorama horizontal épinglé — idée à instruire
-
-Notée le 2026-08-30. **Pas encore tranchée**, et le point ouvert est le plus
-important : image ou vidéo.
-
-**L'idée** : une image très large (une capsule vue en entier, ou une scène
-panoramique), épinglée pendant que le scroll vertical la fait défiler
-horizontalement de gauche à droite. On découvre la scène au complet sans
-jamais la voir en entier d'un coup.
-
-❓ **Image déplacée ou vidéo ?** Intuition de Patrick : au bout de la ligne, ce
-serait « plus premium » en vidéo qu'en image sur laquelle on se déplace. Les
-deux ne coûtent pas la même chose, ni à produire ni à charger :
-
-| | Image large | Vidéo |
-|---|---|---|
-| Production | 1 génération, ratio large | boucle à générer, plus chère, et le bouclage se recoud en post |
-| Poids | un AVIF, ~300 Ko | plusieurs Mo sur le chemin critique |
-| Mouvement | seulement le déplacement du cadre | mouvement réel dans la scène |
-| Risque | plat si la scène est statique | la couture de boucle, déjà mesurée coûteuse |
-
-⚠️ **Le site a déjà un scroll horizontal épinglé** : `Carousel.tsx`, 5 cartes,
-7,7 hauteurs de viewport de pin. Le mécanisme existe donc et n'est pas à
-réinventer — c'est le contenu qui change, pas la technique. Lire ce composant
-AVANT toute planification : il porte déjà le mapping scroll vertical →
-translation horizontale, la piste mobile de repli et la gestion reduced-motion.
-
-⚠️ **Où l'insérer n'est pas libre.** Le site enchaîne déjà Carousel (9) puis
-Soir (10), toutes deux en `bg-gris-tan` dans la bande chaude qu'Activités
-ouvre et que Feedback referme (voir `CLAUDE.md` § Chaîne de fonds). Une
-section insérée là sans `bg-gris-tan` fait peindre à Feedback une bande chaude
-sortie de nulle part. Et un second scroll horizontal à trois sections du
-premier risque de lire comme une redite.
-
-⚠️ **Un pin de plus s'ajoute au budget de scroll**, dans une page qui en a
-déjà deux (Hebergements, Carousel) plus le wheel-hijack de Pourquoi. À mettre
-en regard du stutter constaté le 2026-08-30 : la page n'a pas de marge de
-performance à dépenser à l'aveugle.
-
-**Premier geste** : prototyper le pin horizontal avec une image DÉJÀ
-existante — un simple recadrage large d'un asset en place — pour juger de
-l'effet avant de générer quoi que ce soit. Si l'effet ne convainc pas en
-image, il ne convaincra pas davantage en vidéo, et on aura tranché la question
-❓ sans dépenser un crédit.
-
----
-
-# 🔬 Audit de qualité du 2026-08-30
-
-Trois passes en parallèle — `vercel-react-best-practices`, `web-perf`,
-`gsap-performance` + `gsap-scrolltrigger` — sur le code existant, pas sur un
-diff. Chaque finding ci-dessous a été **revérifié à la main** ; ceux qui n'ont
-pas tenu ne sont pas listés.
-
-✅ **Déjà corrigés dans la foulée** : les 3 vignettes de `MapOverlay` (565 Ko
-sur mobile), le `fetchPriority="high"` de la carte 0 d'Hébergements, et la
-date de build figée dans `ReservePanel`.
-
-## 🔴 `useGSAP` + `dependencies` ne nettoie PAS — le ticker tourne sous reduced-motion
-
-**Le plus grave de l'audit, et il est confirmé ligne par ligne.**
-
-Dans `@gsap/react` 2.1.2 (`node_modules/@gsap/react/dist/index.js:41-51`) :
+Dans `@gsap/react` 2.1.2 (`dist/index.js:41-51`), avec des `dependencies` non
+vides et sans `revertOnUpdate`, **l'effet ne retourne aucun cleanup après le
+premier montage** :
 
 ```js
 deferCleanup = dependencies && dependencies.length && !revertOnUpdate;
@@ -939,168 +73,309 @@ useIsomorphicLayoutEffect(() => {
 }, dependencies);
 ```
 
-Avec des `dependencies` non vides et sans `revertOnUpdate`, **l'effet ne
-retourne aucun cleanup après le premier montage**. La fonction de nettoyage
-écrite dans le callback n'est jamais appelée quand une dépendance change.
+Conséquence mesurée : des tickers continuent de tourner, y compris sous
+reduced-motion.
 
-Conséquence mesurable sur `Marquee.tsx` : `useMediaQuery` retourne `false` au
-rendu d'hydratation par contrat (`useMediaQuery.ts:28`, `getServerSnapshot`).
-Passe 1, `prefersReducedMotion` vaut `false`, donc `gsap.ticker.add()` part
-(ligne 144). Passe 2, il vaut `true`, sortie anticipée — mais **le ticker de la
-passe 1 n'est jamais retiré**. Quatre instances écrivent un transform par frame
-pour toute la session, chez exactement les visiteurs qui ont demandé l'inverse.
-Le commentaire lignes 88-94 affirme le contraire de ce que le code fait.
-
-Même mécanisme, deux autres endroits vérifiés :
-
-- `SectionHeading.tsx:60-168` — `renderedLines` change au premier commit sous
-  1024 px (seule Activités passe `linesCompact`), le premier `matchMedia()`
-  n'est pas révoqué : deux jeux de tweens scrubbés sur le même élément, et un
-  rideau qui garde une référence à un span démonté. Environ 5 triggers de trop,
-  sur le profil au budget le plus serré.
-- `Header.tsx:88-148` — `pillH`/`circleH` changent au premier commit : seconde
-  timeline d'entrée du pill Menu par-dessus la première. Les valeurs cibles
-  sont identiques donc rien ne se voit, mais c'est le défaut que le commentaire
-  lignes 61-67 dit avoir corrigé — pour le CTA Réserver seulement.
-
-⚠️ **Le correctif n'est PAS `revertOnUpdate: true` partout** : plusieurs
-endroits dépendent de la non-révocation pour ne pas remettre l'état à zéro en
-plein tween (`Header` le documente, `RefugeCardContent` en dépend). Trancher en
-trois catégories : (a) ressource persistante créée — ticker, ScrollTrigger,
-matchMedia, listener — vers `revertOnUpdate: true` ; (b) que des tweens de
-props, garder le défaut et ajouter `overwrite: true` ; (c) dépendance qui ne
-sert qu'à rattraper l'hydratation, lire `wantsReducedMotion()` et retirer la
-dépendance.
-
-Premier geste : traiter `Marquee` seul, c'est le seul dont l'effet est visible.
-
-## 🔴 Piège de déploiement — `localhost:3001` figé dans le SEO
-
-`layout.tsx:24` et `:67`, `robots.ts:52`, `sitemap.ts:68` retombent tous sur
-`"http://localhost:3001"` faute de `NEXT_PUBLIC_SITE_URL`, et aucun `.env*`
-n'existe. Vérifié dans les artefacts du build : `robots.txt`, `sitemap.xml`,
-`og:image` et le JSON-LD portent tous cette URL.
-
-Le site n'est pas déployé, donc rien n'est cassé aujourd'hui — mais ça se
-déclenchera **exactement une fois**, au premier déploiement, avec des aperçus
-sociaux morts et un sitemap invalide. Et le fallback est silencieux.
-
-Premier geste : faire **échouer le build** en production quand la variable
-manque, au lieu de le laisser réussir faux.
-
-## 🟠 Accessibilité — `aria-label` sur un `<span>` est ignoré
-
-`Feedback.tsx:171` (`WordSplit`), `RevealChars.tsx:124` et
-`AquilonReveal.tsx:110` rendent un `<span aria-label={text}>` dont **tous** les
-enfants sont `aria-hidden`. Or un `span` sans `role` mappe sur
-`role="generic"`, qui **interdit le nommage par l'auteur** : `aria-label` y est
-ignoré par Chrome, Firefox et Safari (règle `aria-prohibited-attr` d'axe-core).
-Il ne reste donc rien.
-
-✅ **La citation de `Feedback` est sortie de cette liste le 2026-09-07** :
-`PixelCurtainReveal` rend un vrai `<p>` avec le texte réel, non masqué —
-le canvas qui le peint est, lui, `aria-hidden`. Le défaut subsiste pour
-l'eyebrow, qui utilise encore `WordSplit`.
-
-Sont muets : **les trois titres et corps
-des slides de `Pourquoi` sur desktop** (`pourquoi/cards.tsx:121,141` — la
-version mobile rend de vrais `<h3>`/`<p>` et va bien), plus les surnoms
-d'`Hebergements:459`. Le `nom` juste en dessous passe `as="h2"` et fonctionne :
-le mécanisme est connu, il n'a été appliqué qu'à un appel sur deux.
-
-Ni `tsc` ni `eslint-config-next` ne l'attrapent.
-
-⚠️ **Gros refactoring** : le correctif doit vivre dans les primitives — miroir
-`sr-only` du texte plus `aria-hidden` sur tout le markup animé —, sinon le
-piège reste pour le prochain usage. Le vrai travail est de vérifier que le
-miroir ne casse ni la mise en page ni les mesures de largeur dont dépendent les
-rideaux. Une cible Awwwards se fait auditer à l'accessibilité.
-
-## 🟠 `Pourquoi` — deux tiers de la section inatteignables sur tablette tactile
+### `Pourquoi` — deux tiers de la section inatteignables sur tablette tactile
 
 `Pourquoi.tsx:298` — avancer de slide dépend uniquement d'un listener `wheel`.
-La pile desktop s'affiche dès `MQ.mdUp`, et la pile mobile est `md:hidden`. Un
-iPad (768 portrait, 1024 paysage) n'émet aucun `wheel` au doigt : les slides 2
-et 3 ne sont jamais atteignables, et le pin `+=200` fait passer tout droit
-après la slide 1. Le Carousel couvre ce cas, Pourquoi non.
+La pile desktop s'affiche dès `MQ.mdUp`, la pile mobile est `md:hidden`. Un iPad
+(768 portrait, 1024 paysage) n'émet aucun `wheel` au doigt : **les slides 2 et 3
+ne sont jamais atteignables**, et le pin `+=200` fait passer tout droit après la
+slide 1. Le Carousel couvre ce cas, Pourquoi non.
 
-Premier geste, quasi gratuit : gater la piste desktop sur `(pointer: fine)` en
-plus de `MQ.mdUp`, la pile verticale prend alors le relais sur tablette. Option
-plus ambitieuse : des flèches prev/next visibles appelant le `tweenTo` déjà
-présent — ça réglerait aussi l'accès clavier.
+> Premier geste, quasi gratuit : gater la piste desktop sur `(pointer: fine)` en
+> plus de `MQ.mdUp` — la pile verticale prend alors le relais sur tablette.
+> Plus ambitieux : des flèches prev/next appelant le `tweenTo` déjà présent, ce
+> qui réglerait aussi l'accès clavier.
 
-## 🟡 Chargements — quatre points chiffrés
+### `aria-label` sur un `<span>` est ignoré
 
-- **L'iframe Maps se monte pendant le pin d'Hébergements.** `Proximite.tsx:10`
-  déclenche à `1500px`, soit au milieu du scrub épinglé, le moment le plus
-  chargé de la page. Plancher mesuré à la main : 80,3 Ko (1,4 + 2,8 + 76,1)
-  **plus** le bundle Maps et les tuiles. Tout visiteur qui scrolle paie, qu'il
-  ouvre la carte ou non — ce que `MapOverlay.tsx:401-410` affirme pourtant
-  éviter, son commentaire est devenu faux. ⚠️ Et `layout.tsx:136-137`
-  preconnecte `maps.google.com`, l'origine qui ne sert que 1,4 Ko, mais **pas**
-  `maps.googleapis.com` ni `maps.gstatic.com` qui portent tout le poids.
-- **`public/` est servi en `max-age=0`** — 24 images (3,3 Mo) et 2 vidéos
-  (3,0 Mo) revalidées à chaque visite, alors que `/_next/static` est en
-  `immutable`. `next.config.ts` est vide.
-  ⚠️ **Ne pas poser un `max-age` long à l'aveugle** : les noms de `public/` ne
-  sont pas hachés par contenu. Trois images ont été remplacées le 2026-08-30
-  sous le même nom — un cache long aurait servi les anciennes pendant des
-  jours. Soit un `max-age` court, en heures, soit un cache-buster systématique
-  comme le `?v=` déjà utilisé pour la vidéo hero.
-- **`hero-loop.mp4` est sur-encodée** : 2,30 Mo à 3,63 Mbit/s. Un ré-encodage
-  `-crf 24` donne 1,08 Mo, soit **−53 %**, mesuré. Hors chemin critique
-  (`preload="none"`), mais combiné au point précédent c'est 2,25 Mo
-  retéléchargés à chaque visite.
-- **Le poster hero mobile pèse 2,1× le desktop** à surface égale : 192,9 Ko
-  pour 3,26 Mpx contre 92,5 Ko pour 3,22 Mpx. C'est la ressource LCP, servie à
-  la connexion la moins capable de l'absorber. Aucune raison technique à cette
-  asymétrie.
+`Feedback.tsx` (`WordSplit`) et `RevealChars.tsx:124` — un `aria-label` sur un
+élément sans rôle n'est pas restitué. Le texte découpé par glyphe est donc lu
+lettre par lettre, ou pas du tout.
 
-## 🟡 Deux détails à coût nul
+### Carousel — reduced-motion sur desktop à la souris
 
-- `globals.css:69` — `text-rendering: optimizeLegibility` sur `<body>`, alors
-  que le document prérendu compte **1 372 `<span>`** (découpage par glyphe).
-  `font-feature-settings: "ss01","ss02"` ligne 66 fournit déjà les jeux
-  stylistiques voulus. Suppression d'une ligne, aucun effet visuel attendu.
+Sous `prefers-reduced-motion`, le Carousel bascule sur la piste mobile (scroll
+horizontal `snap-x`) à toutes les largeurs. Ça règle le cas tactile, mais à la
+souris cette piste est difficile d'accès : sa barre de défilement est masquée
+deux fois (`.no-scrollbar` et le `scrollbar-width: none !important` global) et
+elle n'est pas focusable. Trou étroit — reduced-motion **et** desktop **et**
+souris — mais réel. Le correctif propre est une mise en page verticale empilée
+pour ce cas, ou une piste focusable avec contrôles visibles.
+
+---
+
+## 🎨 Assets — reste à produire
+
+- `lieu-charlevoix.avif` (4:5) — pour `Lieu.tsx`, **section non implémentée**
+- Galerie d'ambiance, 6 images — pour `Galerie.tsx`, **non implémentée**
+- Vidéos d'ambiance (brume, feuille, eau)
+- **Vidéo hero desktop** — régénérée le 2026-08-30 puis **écartée** : la
+  nouvelle était plus propre mais plus pauvre en mouvement (deux sources contre
+  trois). La leçon est dans `assets-a-generer.md`.
+
+Le pipeline, les prompts littéraux et les règles de brief sont dans
+**`docs/assets-a-generer.md`** — pas ici.
+
+---
+
+## 📱 Responsive
+
+### Garde-fou paysage mobile — rendement faible, coût faible
+
+**Position assumée** : le paysage mobile n'est pas un breakpoint standard et ne
+mérite pas une troisième mise en page. Le jeu retenu reste 375 / 768 / 1024 /
+1440. L'objectif est « pas cassé », pas « conçu pour ».
+
+Sous `@media (orientation: landscape) and (max-height: 500px)` :
+
+- réduire le wordmark du hero (`text-[18vw]` devient énorme quand la hauteur est
+  le facteur limitant) ;
+- vérifier que le pill `Menu` (bas-centre) et le CTA `Réserver` (haut-droite) ne
+  recouvrent pas la tagline ;
+- vérifier que les sections `h-screen` (Pourquoi, Carousel) restent lisibles.
+
+---
+
+## 🧱 Dette de code
+
+### Le seul vrai chantier : une porte de visibilité générique
+
+Rien n'éteint aujourd'hui le travail par frame d'une section hors champ : **4
+tickers `Marquee`**, **6 couches compositeur** du Carousel, **26 `will-change`
+permanents sur 13 fichiers**, le hit-test de `pauseOnHover`. Le backlog a
+longtemps traité chacun comme un item isolé — **c'est un seul motif manquant**.
+
+Un helper (`ScrollTrigger.onToggle` vers un drapeau dans un ref, plus
+pose/retrait de `will-change`) les réglerait tous d'un coup. Environ une
+journée ; touche `Marquee`, `Carousel`, `Hebergements`, `Soir`, `Feedback`.
+
+> ⚠️ **À profiler d'abord.** Corriger le mauvais poste ne changerait rien de
+> visible. Les plus lourdes des 26 déclarations ne sont pas celles qu'on croit :
+> `Carousel.tsx:336` (piste `w-[375vw]`) et `:384` (5 wrappers plein cadre) —
+> six couches promues en permanence pour un pin qui n'occupe qu'une section sur
+> treize.
+
+### `Marquee` : le ticker ne s'éteint jamais
+
+`gsap.ticker.add()` tourne pour toute la vie du composant, sans porte de
+visibilité. Quatre instances, dont une dans `MenuOverlay` — montée et masquée
+toute la session, une écriture de transform par frame sur un `text-[18vw]` que
+personne ne voit. Avec `pauseOnHover` (activé par `Cta`), un listener
+`mousemove` **et** un listener `scroll` appellent `getBoundingClientRect()` à
+chaque événement : un layout forcé par frame pendant un scroll Lenis.
+
+Cas particulier du chantier ci-dessus ; un `IntersectionObserver` règle les deux.
+
+### `SectionHeading.linesCompact` → `SplitText`
+
+Le prop existe parce que le rideau anime **une entrée de `lines`**, pas une
+ligne rendue. Coût : une souscription `useMediaQuery`, un tableau de
+dépendances porteur, un breakpoint `MQ.belowLg` qui n'existe que pour décrire où
+une phrase française passe à la ligne — et **un bug déjà livré** (titre Activités
+rendu « Découvrez les » et rien d'autre).
+
+`gsap/SplitText` est présent et libre depuis GSAP 3.13. `new SplitText(h2, {
+type: "lines" })` donne un wrapper par ligne **rendue**, re-splittable au resize.
+`linesCompact`, `MQ.belowLg` et le `useMediaQuery` disparaissent, et l'effet
+devient *plus* correct.
+
+### `AquilonReveal` ⊂ `RevealChars`
+
+Depuis le retrait du prop `mode`, `AquilonReveal` n'est plus que `RevealChars` +
+un `clipPath` : même markup, même effet de montage, même branche
+reduced-motion, même tween. Différences réelles : `clipPath`, `SLIDE_START_X` 40
+au lieu de 110, pas de stagger, texte figé sur `SITE_CONFIG.brandMark`.
+
+**La duplication a déjà coûté** : le correctif de la course de tweens a dû être
+appliqué deux fois et ne l'a été qu'une — d'où le wordmark de footer invisible
+en production. Fusionner demande de passer `clip` / `slideStartX` en props, et
+une vérification visuelle (le dégradé du footer dépend de la structure
+`.rc-glyph`), pas un typecheck.
+
+### Contexte d'overlay : séparer actions et état
+
+`createOverlayContext` mémoïse sa valeur mais regroupe `isOpen` avec les trois
+callbacks stables. Tous les consommateurs re-rendent donc à chaque bascule — y
+compris `Hebergements`, qui ne lit que `open`. Ouvrir le panneau Réserver
+re-rend les trois cartes et leurs six `RevealChars`, dont la segmentation par
+regex n'est pas mémoïsée. Deux contextes (actions / état) règlent ça.
+
+### `createOverlayContext` : extraire `useOverlayState`
+
+La factory empaquette la machine à états **et** le contexte + hook. `MapOverlay`
+a besoin de la première et ne peut pas l'avoir sans le second — d'où ses
+`useState`/`useCallback`/`useMemo` recopiés. Sortir `useOverlayState()` en export
+séparé (~10 lignes) suffit ; rendre la factory générique coûterait plus cher.
+
+### MenuOverlay / ReservePanel : les valeurs finales écrites trois fois
+
+Les branches reduced-motion réénoncent à la main `top: GAP`, `borderRadius:
+RADIUS_OPEN`, `xPercent: 105`… qui existent déjà dans le chemin ouvert et dans
+le chemin fermé. Trois copies des mêmes nombres, rien qui les lie. Forme
+correcte : une `gsap.timeline({ paused: true })` portant les valeurs une fois,
+pilotée par `play()`/`reverse()`, et `progress(isOpen ? 1 : 0).pause()` sous
+reduced-motion. La chorégraphie de fermeture est asymétrique, donc c'est un vrai
+refactor.
+
+### Migration `.focus-ring` / `.label-caps`
+
+L'offset est désormais une variable (`--focus-ring-offset` sur `:root`), qu'un
+conteneur sur une autre surface redéfinit pour son sous-arbre. **La passe est
+mécanique** : Header (×3), MapOverlay (×2), ReservePanel (×3), Hebergements,
+NavWheelLink, SocialIcons, Proximite (celui-ci en `ring-offset-4`).
+
+`.eyebrow` est renommée **`.label-caps`**. Toujours un seul point d'appel
+(`Soir`) : les graphies inline de Hebergements, ReservePanel et Header sont
+chacune d'une taille différente — **définir la famille avant d'extraire**.
+
+### Reste du plan de reprise
+
+- **Lot 5** — extraire ce qui reste des primitives partagées.
+- **Lot 6** — `src/lib/z-index.ts` (15 valeurs ad-hoc maintenues par
+  commentaire), unifier les espacements de section (3 échelles `px-*`
+  concurrentes), retirer la graisse 800 jamais utilisée.
+- `SITE_DESCRIPTION` dit « Trois refuges », exact côté données mais qui se lit
+  comme quatre à l'écran (le hero en montre un, plus les trois d'Hébergements) —
+  à trancher.
+
+### Deux détails à coût nul
+
+- `globals.css:69` — `text-rendering: optimizeLegibility` sur `<body>`, alors que
+  le document prérendu compte **1 372 `<span>`**. `font-feature-settings:
+  "ss01","ss02"` fournit déjà les jeux stylistiques voulus. Suppression d'une
+  ligne, aucun effet visuel attendu.
 - `Hebergements.tsx:203` anime `borderRadius` en scrub sur un `<article>` plein
   cadre. `border-radius` n'est pas compositable — et le fichier énonce la règle
-  **11 lignes plus bas** (`:214-218`), appliquée au `backgroundColor` sur la
-  même timeline, mais pas ici. ⚠️ Le fait est certain, l'ampleur non : à
-  profiler avant de toucher.
+  **11 lignes plus bas**, appliquée au `backgroundColor` sur la même timeline
+  mais pas ici. ⚠️ Le fait est certain, l'ampleur non : à profiler.
 
-## 📌 Correction à apporter à ce backlog lui-même
+---
 
-L'entrée `will-change` plus haut annonce « quatre déclarations (Hebergements,
-Soir) » et cite les rideaux de `Soir` — qui n'existent plus. Le compte réel est
-**26 déclarations sur 13 fichiers**, et les plus lourdes n'y figurent pas :
-`Carousel.tsx:336` (piste `w-[375vw]`) et `:384` (5 wrappers de pan plein
-cadre) — six couches promues en permanence pour un pin qui n'occupe qu'une
-section sur treize.
+## 💡 Idées à instruire
 
-## 🧱 Le seul vrai chantier : une porte de visibilité générique
+### Panorama horizontal épinglé
 
-Les deux audits y arrivent séparément. Rien n'éteint aujourd'hui le travail par
-frame d'une section hors champ : 4 tickers `Marquee`, 6 couches compositeur du
-Carousel, les 26 `will-change` permanents, le hit-test de `pauseOnHover`. Le
-backlog traite chacun comme un item isolé — **c'est un seul motif manquant**.
-Un helper (`ScrollTrigger` `onToggle` vers un drapeau dans un ref, plus
-pose/retrait de `will-change`) les règlerait tous d'un coup.
+Une image très large (une capsule vue en entier, ou une scène panoramique),
+épinglée pendant que le scroll vertical la fait défiler horizontalement. On
+découvre la scène au complet sans jamais la voir d'un coup.
 
-Coût environ une journée, touche `Marquee`, `Carousel`, `Hebergements`, `Soir`
-et `Feedback`. ⚠️ **À profiler d'abord**, comme pour le blur : corriger le
-mauvais poste ne changerait rien de visible.
+❓ **Point ouvert, et c'est le plus important : image déplacée ou vidéo ?**
+Intuition de Patrick : au bout de la ligne ce serait « plus premium » en vidéo.
+Les deux ne coûtent pas la même chose, ni à produire ni à charger.
 
-## ⛔ Écarté, mesuré — ne pas le redécouvrir
+---
 
-**`next/dynamic` sur les trois overlays ne vaut PAS le coup.** Mesuré : le
-chunk qui les porte fait 44 172 o brut / 12 470 o gz, dont Lenis seul 17 722 /
-5 055. Les trois overlays pèsent donc environ 26 Ko brut, **7,4 Ko gz**. Un
-`dynamic()` économiserait 7 Ko gz et ajouterait trois frontières de suspense
-sur des composants montés dans le layout racine. Le code applicatif entier du
-site fait 28,4 Ko gz — **le JS n'est pas le problème de ce site** : le poids
-est React 19 plus Next 16 (~162 Ko gz) et GSAP (46 Ko gz).
+## 🔒 Décisions verrouillées — ne pas les rouvrir
 
-Autres angles vérifiés sans rien trouver : gzip actif partout · 2 woff2
-variables (32 Ko) · Zod absent du bundle client · contextes correctement
-mémoïsés · `setRevealActive` par frame retourne `prev` à l'identique donc React
-bail-out · aucun barrel import parasite · pas de data fetching à optimiser.
+| Sujet | Décision | Quand |
+|---|---|---|
+| Vitesse du rideau | Aucun pin, aucune fenêtre allongée : la cause était `bandLength`. | 2026-09-07 |
+| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas. | 2026-09-08 |
+| Hero mobile | Rendu actuel jugé parfait ; régénération close sans suite. | 2026-08-30 |
+| `next/dynamic` sur les overlays | **Ne vaut pas le coup** — mesuré, voir ci-dessous. | 2026-08-30 |
+| Paysage mobile | Pas un breakpoint ; objectif « pas cassé ». | — |
+| `pourquoi-crete.avif` | Feuillage mou : limite du modèle atteinte, clos. | — |
+| Médaillons de `Soir` | Photos avec du monde restaurées, en connaissance du conflit éditorial. | 2026-08-29 |
+
+### ⛔ `next/dynamic` sur les trois overlays — mesuré, écarté
+
+Le chunk qui les porte fait 44 172 o brut / 12 470 o gz, dont **Lenis seul**
+17 722 / 5 055. Les trois overlays pèsent donc ~26 Ko brut, **7,4 Ko gz**. Un
+`dynamic()` économiserait 7 Ko gz et ajouterait trois frontières de suspense sur
+des composants montés dans le layout racine. Le code applicatif entier du site
+fait 28,4 Ko gz — **le JS n'est pas le problème de ce site** : le poids est
+React 19 + Next 16 (~162 Ko gz) et GSAP (46 Ko gz).
+
+Angles vérifiés sans rien trouver : gzip actif partout · 2 woff2 variables
+(32 Ko) · Zod absent du bundle client · contextes correctement mémoïsés ·
+`setRevealActive` par frame retourne `prev` à l'identique donc React bail-out ·
+aucun barrel import parasite · pas de data fetching à optimiser.
+
+---
+
+## 🎓 Leçons de méthode — ce que ces erreurs ont coûté
+
+### Une référence se REGARDE avant de se mesurer
+
+Le 2026-09-07, une demi-séance a été passée à mesurer **le mauvais bloc** de
+produx.design : celui du footer (« A brand is recognized… »), qui n'a aucune
+couleur. Le vrai modèle est « Where intent meets execution, identity takes shape
+with confidence and restraint. », plus haut dans la page, et il porte le ruban
+lime.
+
+Toutes les conclusions bâties sur le mauvais bloc — dont un parallaxe à 0,506 —
+ont dû être jetées.
+
+> ⚠️ **Les captures de la bonne référence étaient déjà dans le dépôt**, à la
+> racine puis classées dans `assets-raw/refs/` :
+> `produx-rideau-bloc-complet.png`, `produx-rideau-detail-ruban.png`,
+> `produx-reference.mp4`, `rideau-pixels.mp4`. **Regarder `assets-raw/refs/`
+> AVANT d'aller mesurer un site en ligne.**
+
+### La grandeur qui se compare d'un site à l'autre
+
+Pas un réglage, pas des pixels : **la part de l'encre colorée à un instant
+donné**, mesurée sur des captures et classée en trois familles (à lire / ruban /
+lu). Elle ne dépend ni de la longueur du texte, ni du nombre de lignes, ni de la
+vitesse de scroll. C'est elle qui a montré que notre ruban était deux fois trop
+mince là où on cherchait une erreur de vitesse.
+
+### Mesurer en ESPACE DE LECTURE, lignes recollées
+
+La bande du rideau fait plusieurs cadratins et déborde toujours sur la ligne
+précédente. Mesurée ligne par ligne, on n'en voit qu'un tiers — **erreur commise
+deux fois**, la seconde après l'avoir déjà notée ici.
+
+### Méthode de mesure d'un grade — trois erreurs à ne pas refaire
+
+1. Juger un grade à l'œil sur une capture redimensionnée.
+2. Comparer deux images dont l'une a déjà été convertie en AVIF.
+3. Mesurer une moyenne globale là où la question portait sur une zone.
+
+### Un mouvement se décompose avant d'être imité
+
+Décrire une animation de mémoire ou d'après des captures fixes produit une
+lecture fausse, découverte après avoir bâti dessus. Le 2026-09-07, « entre en
+angle » a été lu comme une translation : la référence ne fait rien de tel.
+
+Outillage : `playwright-cli` (`video-start` / `mousewheel` / `video-stop`), puis
+`ffmpeg -vf fps=10` pour découper. On n'en garde que des **nombres** — durées,
+amplitudes, ordre des gestes.
+
+### Génération d'images — la leçon payée 8 crédits le 2026-08-29
+
+Détaillée dans `docs/assets-a-generer.md`, avec les règles de brief apprises.
+Retenir : `--image` verrouille la **silhouette** et le **grade**, jamais
+l'**aménagement** — tout ce qui doit être reconnaissable se décrit
+explicitement, même si c'est visible dans la référence.
+
+### `will-change` sur un conteneur de canvas le dégrade
+
+La couche GPU rastérise le canvas une fois puis l'étire : les lettres
+deviennent franchement pixelisées. Vu immédiatement à l'écran le 2026-09-08.
+GSAP pose déjà un `translate3d`, ce qui suffit.
+
+---
+
+## 📦 Archive — dossiers clos
+
+Gardés pour une ligne chacun, parce qu'ils répondent à une question qui revient.
+
+| Dossier | Issue |
+|---|---|
+| Canon du refuge | Établi et appliqué ; le canon fait foi dans `assets-a-generer.md`. |
+| `refuge-galets.avif` | Forme différente des deux autres — **voulu**, pour que la gamme ne soit pas trois fois le même objet. |
+| `activites/pierres-debout.avif` | Remplace les bélugas ; Hopewell assumé. |
+| Carousel carte 4 | « Terrasse en fête » remplacée par « Les pierres debout ». |
+| Médaillons de `Soir` | Rideau retiré, anciennes photos remises. |
+| Art direction hero portrait | Livrée ; `<picture>` + `<source media>`, preload dédoublé. |
+| Cartes `Hebergements` en portrait | Livrées le 2026-08-30. |
+| Lisibilité des cartes Hébergements | Mesurée — **l'hypothèse de départ était fausse**. |
+| État caché en CSS | Fait ; la règle est dans `docs/reduced-motion.md`. |
+| Révélation dépendante de la direction | Corrigée (zone morte de 0,03). |
+| Passe copy complète | Faite. |
+| `unoptimized` sur les `<Image>` | Tranché : s'applique à tous les raster. |
+| `_raw/` hors de `public/` | Fait — `/assets-raw/`, gitignoré. |

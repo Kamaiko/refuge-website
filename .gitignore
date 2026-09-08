@@ -46,6 +46,7 @@ public/videos/hero-loop-[A-Z].mp4
 
 # Playwright dev artifacts (root-level screenshots only, leading slash = repo root)
 /.playwright-mcp/
+/.playwright-cli/
 /*.jpeg
 /*.png
 
