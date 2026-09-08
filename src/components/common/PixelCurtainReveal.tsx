@@ -106,12 +106,34 @@ const T = {
   /** **LONGUEUR DE LA BANDE** de couleur, en cadratins (multiples du corps).
    *  C'est LE réglage qui décide si l'effet lit comme une vague ou comme un
    *  scanner : une bande courte traverse chaque mot en un éclair, une bande
-   *  longue en tient plusieurs à la fois. Mesuré sur la référence : ~12. */
-  bandLength: 14.5,
+   *  longue en tient plusieurs à la fois.
+   *
+   *  ⚠️ **Ne se compare pas en cadratins d'un site à l'autre** — la valeur ne
+   *  veut rien dire hors de son texte. La grandeur qui se compare est **la
+   *  part de l'encre colorée à un instant donné**, mesurée sur des captures et
+   *  classée en trois familles (à lire / ruban / lu) : elle ne dépend ni de la
+   *  longueur du texte, ni du nombre de lignes, ni de la vitesse de scroll.
+   *  Relevé le 2026-09-07 sur le bon bloc de produx.design — celui de « Where
+   *  intent meets identity… », et non celui du footer, qui n'a aucune couleur
+   *  et avait d'abord été mesuré par erreur :
+   *
+   *      produx          9,4 → 14,2 %   (moyenne 11,4 %)
+   *      nous, à 14,5    5,8 →  8,1 %   (moyenne  6,9 %)  ← deux fois trop mince
+   *      nous, à 24      9,3 → 11,9 %   (moyenne 11,1 %)  ← calé
+   *
+   *  ⚠️ **C'est ici que se corrige « le rideau va trop vite »**, pas dans la
+   *  fenêtre de scroll. Mesuré : le rideau était DÉJÀ deux fois plus lent que
+   *  la référence sur l'ensemble (6,3 contre 14,3 % de texte révélé par 100 px
+   *  de scroll) et paraissait pourtant brusque — ce qu'on perçoit est la
+   *  vitesse du ruban SUR CHAQUE MOT, et une bande deux fois plus courte le
+   *  traverse deux fois plus vite. Allonger la fenêtre étale l'ensemble sans
+   *  élargir la vague. */
+  bandLength: 24,
 
   /** **ÉPAISSEUR DE LA BANDE**, en fraction de la hauteur de lettre. 1 = la
-   *  couleur remplit toute la lettre ; 0,38 = un ruban qui n'en occupe qu'un
-   *  bon tiers.
+   *  couleur remplit toute la lettre ; 0,22 = une LIGNE mince qui la traverse.
+   *  Descendu de 0,38 à 0,22 le 2026-09-08 : « la ligne lime un peu plus
+   *  mince », demande de Patrick, et le mot juste est bien LIGNE, pas masse.
    *
    *  ⚠️ L'ANGLE des bords se DÉDUIT de ces deux valeurs, il ne se règle pas
    *  directement : la montée vaut `bandLength / (1 + bandThickness)`, donc
@@ -120,12 +142,12 @@ const T = {
    *  Une bande à 45° serait forcément courte — donc redonnerait l'effet
    *  scanner. Les deux demandes se contredisent, et c'est l'étalement qui
    *  l'emporte chez eux. */
-  bandThickness: 0.38,
+  bandThickness: 0.22,
 
   /** **EFFILAGE DE LA QUEUE** : de combien le bord de fuite grimpe plus vite
-   *  que le bord d'attaque. 0 = ruban à épaisseur constante ; 0,22 = un coin
-   *  qui part à pleine épaisseur contre le gris et se referme presque à rien
-   *  au bout de sa course.
+   *  que le bord d'attaque. 0 = ruban à épaisseur constante ; au-dessus, un
+   *  coin qui part à pleine épaisseur contre le gris et se referme au fil de
+   *  sa course.
    *
    *  ⚠️ Sans ça, le ruban garde la même épaisseur du début à la fin, et loin
    *  derrière le front il reste de la couleur au milieu des lettres au lieu
@@ -134,16 +156,24 @@ const T = {
    *  entre le front et la queue ; à épaisseur constante on n'obtenait que
    *  0,27 → 0,43, le ruban stagnant dans une bande médiane.
    *
-   *  Épaisseur au bout de la course = `bandThickness + 1 − 1/(1 − tailTaper)`.
-   *  À 0,22 elle tombe de 38 % à ~10 % de la hauteur de lettre. */
-  tailTaper: 0.15,
+   *  ⚠️ **0,3 est son plafond utile, et ce n'est PAS le levier pour monter la
+   *  couleur** — celui-là est `montee`, plus bas. Mesuré le 2026-09-08 :
+   *  porté à 0,38, `tailTaper` fait TOMBER la hauteur moyenne de la couleur
+   *  (0,44 → 0,35), parce qu'il supprime les cellules hautes du bout de course
+   *  au lieu de les peupler. Avec les valeurs actuelles, l'épaisseur au bout
+   *  de la course — `bandThickness + 1 − 1/(1 − tailTaper)` — est déjà
+   *  négative : le ruban se referme entièrement avant la fin, et c'est voulu. */
+  tailTaper: 0.3,
 
   // Note de réglage — les deux valeurs ci-dessus se contrarient : refermer
   // vite le ruban (tailTaper haut) le fait bien monter, mais vide la queue de
-  // ses pixels. À 0,22 il ne restait qu'une cinquantaine de pixels à la queue
-  // contre 400 à 0,15, pour une hauteur atteinte quasi identique (0,63 contre
-  // 0,72). C'est pour ça que la valeur est basse : la densité de la queue coûte
-  // moins cher que sa hauteur.
+  // ses pixels. Re-mesuré le 2026-09-08, et c'est pire que « ça ne monte plus
+  // beaucoup » : porté de 0,30 à 0,38, la hauteur moyenne de la couleur
+  // TOMBE (0,44 → 0,35), parce qu'on supprime les cellules hautes du bout de
+  // course au lieu de les peupler. 0,30 est le plafond utile.
+  //
+  // ⚠️ Pour condenser la couleur vers le haut, le levier n'est PAS ici : c'est
+  // `montee`, plus bas. Celui-là monte la couleur sans vider la queue.
 
   /** **AVANCE** : sur quelle distance, DEVANT la bande, les premiers pixels
    *  apparaissent déjà (en cadratins). C'est ce qui fait que la trame précède
@@ -152,13 +182,16 @@ const T = {
    *  ⚠️ C'est aussi le flou du bord entre le gris et la couleur. Trop grand,
    *  des cellules restent grises loin SOUS le niveau atteint par le rideau —
    *  du gris qui « traîne en bas » au lieu de rester groupé en haut. */
-  leadFade: 1.5,
+  leadFade: 0.8,
 
   /** **TRAÎNE** : sur quelle distance, DERRIÈRE la bande, les derniers pixels
-   *  s'éteignent un à un (en cadratins). Une longue traîne disperse les
-   *  pixels au lieu de les concentrer, c'est le second remède à l'effet de
-   *  balayage avec la longueur de bande. */
-  trailFade: 6,
+   *  s'éteignent un à un (en cadratins).
+   *
+   *  ⚠️ C'est le réglage de la DISPERSION, avec `leadFade` : une longue traîne
+   *  sème les pixels loin derrière le ruban au lieu de les tenir groupés.
+   *  Ramenée de 6 à 3 le 2026-09-08 (« un peu moins dispersé ») — mesuré, le
+   *  ruban est passé de 546 à ~390 colonnes actives sur la même course. */
+  trailFade: 3,
 
   /** **GRAIN** : désordre ajouté au tramage. 0 = tramage nu, 1 = franchement
    *  bruité. C'est le seul réglage qui répond à « ça fait encore une grille »
@@ -169,9 +202,81 @@ const T = {
    *  qu'on corrige, pas là-bas. */
   grain: 0.4,
 
+  /** **COURBE DE MONTÉE** des deux niveaux dans la lettre. 1 = montée
+   *  régulière, la couleur traverse la lettre à vitesse constante et sa
+   *  hauteur moyenne ne peut alors PAS dépasser ~0,5 — c'est une limite du
+   *  modèle, pas un réglage manqué. Au-dessus de 1, les niveaux grimpent vite
+   *  puis ralentissent : la couleur atteint le haut tôt et y séjourne, ce qui
+   *  la condense vers le haut des lettres.
+   *
+   *  ⚠️ C'est le SEUL levier qui monte la couleur sans vider la queue —
+   *  `tailTaper`, malgré son nom, fait l'inverse au-delà de 0,3 (voir sa
+   *  note). Mesuré le 2026-09-08 : 0,44 → 0,50 de hauteur moyenne, queue à
+   *  0,67. */
+  montee: 2.6,
+
   /** Décalage horizontal du front, par colonne (× pixel). Minuscule : il
    *  empêche seulement les colonnes voisines de basculer à l'unisson. */
   jitterX: 0.35,
+} as const;
+
+/* ── Entrée en scène ───────────────────────────────────────────────────── */
+/** **LES LIGNES MONTENT ET SE REDRESSENT.** Chaque ligne arrive de sous sa
+ *  place, légèrement inclinée vers la droite, et se redresse en se posant.
+ *  Elles partent l'une après l'autre, dans l'ordre de lecture, une seule fois.
+ *
+ *  ⚠️ **Le mouvement se joue DANS LE CANVAS, jamais dans le DOM**, et c'est la
+ *  contrainte qui commande tout le reste. Le texte visible est peint sur le
+ *  canvas : animer les mots du `<p>` ne déplacerait rien de ce qu'on voit. On
+ *  découpe donc le rendu en BANDES — une par ligne, préparées à la mesure — et
+ *  on les pose une à une avec leur propre montée et leur propre inclinaison.
+ *  La mise en page, elle, ne bouge pas d'un pixel.
+ *
+ *  ⚠️ Trois pistes ont été essayées puis jetées les 2026-09-07/08, chacune
+ *  pour une raison qu'il ne faut pas redécouvrir :
+ *
+ *  - un MASQUE PAR MOT, le geste de `RevealText` dans `adjointe-virtuelle`,
+ *    que Patrick citait en modèle. **Incompatible avec cette citation** :
+ *    envelopper chaque mot dans un `inline-block` fait passer le paragraphe de
+ *    353 à **1322 px** de haut, parce que la boîte de la fonte (115 px)
+ *    déborde d'une ligne serrée à 88 px et que l'inline-block la fait compter
+ *    dans le flux. Seul « tout en inline » préserve la page ;
+ *  - un GLISSEMENT du bloc entier (translation + fondu) : correct, mais banal ;
+ *  - une APPARITION PAR LA TRAME (les pixels se densifient jusqu'à former les
+ *    lettres) : jolie, mais redondante — le rideau dit déjà « pixels », et
+ *    l'entrée le répétait au lieu d'ajouter un geste. */
+const E = {
+  /** **MONTÉE** de chaque ligne, en cadratins : d'où elle part sous sa place. */
+  monte: 0.42,
+
+  /** **INCLINAISON** de départ, en degrés, côté droit vers le bas. Elle se
+   *  résorbe pendant la montée, si bien que la ligne se **redresse** en se
+   *  posant.
+   *
+   *  ⚠️ Reste petite pour une raison mesurable : la rotation se fait autour du
+   *  centre de la ligne, donc à 1,5° sur un bloc de 1300 px les extrémités
+   *  montent et descendent déjà de 17 px. Au-delà, les lignes voisines se
+   *  croisent avant d'être posées. */
+  tilt: 1.5,
+
+  /** **DURÉE** d'une ligne, en secondes. */
+  duration: 0.9,
+
+  /** **DURÉE TOTALE DE LA CASCADE** — le temps entre le départ de la première
+   *  ligne et celui de la dernière. Exprimée en TOTAL, pas en écart entre deux
+   *  lignes : le même texte fait quatre lignes sur un grand écran et DIX sur un
+   *  téléphone, et un écart fixe y produirait une cascade deux fois et demie
+   *  plus longue. */
+  cascade: 0.42,
+
+  /** Une arrivée qui se pose : décélération franche, sans rebond. */
+  ease: "expo.out",
+
+  /** **COURSE DU RIDEAU** après l'entrée, en pixels de scroll. Ne sert que
+   *  lorsque l'entrée est active : le rideau part alors d où l on se trouve,
+   *  et non d une position du bloc. Au-delà d environ 900, sa fin se joue sur
+   *  un texte déjà sorti par le haut. */
+  course: 620,
 } as const;
 
 /** *Interleaved gradient noise* — le seuil de tramage. Ne se répète pas, ne
@@ -255,6 +360,22 @@ type Scene = {
   /** Signature de la mise en page : si elle n'a pas bougé, re-mesurer ne
    *  produirait que la même scène au prix de huit rastérisations. */
   sig: string;
+  /** Une BANDE par ligne de texte, préparée seulement si l'entrée est
+   *  demandée : l'encre de cette ligne, teintée dans la couleur du texte pas
+   *  encore lu, dans un canvas à sa seule hauteur.
+   *
+   *  ⚠️ Découpées par LIGNE LOGIQUE, jamais par tranche horizontale. Les
+   *  boîtes de deux lignes voisines se chevauchent à cet interligne (115 px
+   *  d'encre pour 88 px de ligne) : un découpage géométrique couperait les
+   *  jambages. Ici chaque bande est peinte depuis la rastérisation de SA
+   *  ligne, donc un « g » qui descend sur la ligne suivante reste avec la
+   *  sienne et voyage avec elle. */
+  bandes: { cv: HTMLCanvasElement; top: number }[];
+  /** Le cadratin en pixels DEVICE. Mesuré une fois ici plutôt que relu par un
+   *  `getComputedStyle` ailleurs : la relecture force un recalcul de style, et
+   *  redéduire le `dpr` depuis `canvas.width / clientWidth` donnait un second
+   *  chemin qui ne coïncidait avec le premier que par construction. */
+  em: number;
   /** Tout ce qu'il faut relâcher — les backing stores de canvas vivent hors
    *  du tas JS, le GC n'a presque aucune pression pour les récupérer. */
   owned: HTMLCanvasElement[];
@@ -400,6 +521,8 @@ export default function PixelCurtainReveal({
   start = "top 95%",
   end = "top 8%",
   narrow,
+  entrance = false,
+  entranceStart = "top 90%",
 }: {
   children: string;
   className?: string;
@@ -428,6 +551,10 @@ export default function PixelCurtainReveal({
    *  Passée en un objet plutôt qu'en trois props, pour que la requête et les
    *  bornes qu'elle commande ne puissent pas se désynchroniser. */
   narrow?: { query: string; start: string; end: string };
+  /** Fait **arriver le bloc en scène** une fois, sans retour. */
+  entrance?: boolean;
+  /** Où l'entrée se déclenche. */
+  entranceStart?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -470,6 +597,23 @@ export default function PixelCurtainReveal({
 
           let scene: Scene | null = null;
           const state = { p: 0 };
+          /** Vrai seulement PENDANT le vol des lignes : le canvas peint alors
+           *  les bandes en mouvement, pas le rideau.
+           *
+           *  ⚠️ Faux au montage, et c'est essentiel. Posé vrai d'avance, tout
+           *  `render()` d ici au déclenchement peignait un canvas VIDE tout en
+           *  rendant le `<p>` transparent : la citation disparaissait, et son
+           *  état caché vivait dans les pixels d un canvas — l'endroit le moins
+           *  inspectable qui soit, et précisément ce que l'avertissement en
+           *  tête de fichier interdit. */
+          let entreeEnCours = false;
+          /** Passe à vrai quand les lignes se sont posées, et ne redescend
+           *  jamais : sert à ne pas reconstruire les bandes à chaque mesure
+           *  ultérieure, ni à rejouer l'entrée. */
+          let entreeFaite = !entrance;
+          /** Position de chaque ligne pendant l'entrée — montée, inclinaison,
+           *  opacité. Rempli au démarrage, vidé à la fin. */
+          let vols: { y: number; rot: number; a: number }[] = [];
 
           /** Le texte redevient visible dès que le canvas ne peint plus. */
           const showDomText = () => {
@@ -617,6 +761,7 @@ export default function PixelCurtainReveal({
             solo.width = wDev;
             solo.height = hDev;
             const soloCx = solo.getContext("2d");
+            const bandes: { cv: HTMLCanvasElement; top: number }[] = [];
             const reducer = makeReducer(wDev, hDev, cols, rows);
             if (!inkCx || !soloCx || !reducer) return null;
 
@@ -656,6 +801,32 @@ export default function PixelCurtainReveal({
                 idx.map((k) => scales[k]),
               );
               inkCx.drawImage(solo, 0, 0);
+
+              // La bande de cette ligne, pour l'entrée en scène. On la prend
+              // ICI parce que `solo` ne contient QUE cette ligne — c'est la
+              // seule fois où elle est isolée.
+              if (entrance && !entreeFaite) {
+                // Marge fine : `r.top`/`r.bot` sont déjà la boîte inline
+                // complète de la fonte, ascendante et descendante comprises.
+                // Elle ne couvre donc que le débordement des glyphes.
+                const marge = Math.ceil(fsCss * dpr * 0.06);
+                const y0 = Math.max(0, Math.floor(r.top * dpr) + padDev - marge);
+                const y1 = Math.min(hDev, Math.ceil(r.bot * dpr) + padDev + marge);
+                const bande = document.createElement("canvas");
+                bande.width = wDev;
+                bande.height = Math.max(1, y1 - y0);
+                const bcx = bande.getContext("2d");
+                if (bcx) {
+                  bcx.drawImage(solo, 0, -y0);
+                  // Teinte : l'encre est blanche, on la repeint dans la
+                  // couleur du texte pas encore lu — l état où le rideau
+                  // prendra la ligne au moment de la poser.
+                  bcx.globalCompositeOperation = "source-in";
+                  bcx.fillStyle = pendingCss;
+                  bcx.fillRect(0, 0, bande.width, bande.height);
+                  bandes.push({ cv: bande, top: y0 });
+                }
+              }
 
               const g = reducer.reduce(solo);
               for (let k = 0; k < owner.length; k++) {
@@ -710,11 +881,22 @@ export default function PixelCurtainReveal({
                   lineAdv[li] +
                   ((c + 0.5) * cell - lineLeft[li]) +
                   noiseAt(li * 7 + c, r * 13 + 5) * jitter;
-                const lead = rise * (hy + (th - 0.5) * softLead);
+                // `hm` : la hauteur passée à la courbe de montée. C'est elle
+                // qui décide où la couleur SÉJOURNE dans la lettre.
+                // ⚠️ Le signe se préserve à la main. `hy` passe SOUS zéro pour
+                // les cellules qui descendent plus bas que la boîte de leur
+                // ligne — un jambage de « g », l'anticrénelage du bas — et
+                // `Math.pow(négatif, 2.6)` rend **NaN**, ce qui contaminerait
+                // les deux seuils de la cellule et ferait mentir les
+                // comparaisons de `draw()` : la cellule se peindrait dans un
+                // état arbitraire, en bas des lettres, là où ça se voit.
+                const hm =
+                  hy < 0 ? -Math.pow(-hy, T.montee) : Math.pow(hy, T.montee);
+                const lead = rise * (hm + (th - 0.5) * softLead);
                 // Le bord de fuite grimpe PLUS VITE que le bord d'attaque —
                 // d'où `riseTrail < rise`. C'est ce seul écart qui donne au
                 // ruban sa forme de coin.
-                const trail = lag + riseTrail * (hy + (th - 0.5) * softTrail);
+                const trail = lag + riseTrail * (hm + (th - 0.5) * softTrail);
                 cellOff[n] = k;
                 cellAdv[n] = adv;
                 leadCut[n] = lead;
@@ -770,7 +952,9 @@ export default function PixelCurtainReveal({
               a0: startA - marge,
               span: endA - startA + 2 * marge,
               sig,
-              owned: [ink, maskCv],
+              bandes,
+              em,
+              owned: [ink, maskCv, ...bandes.map((b) => b.cv)],
             };
           };
 
@@ -811,13 +995,66 @@ export default function PixelCurtainReveal({
             ctx.globalCompositeOperation = "source-over";
           };
 
+          /** Ferme l'entrée : les lignes sont posées, le rideau prend la main.
+           *
+           *  ⚠️ Les bandes sont **relâchées ici**, pas au démontage. Elles pèsent
+           *  ~2,5 Mo pièce hors du tas JS — quatre lignes sur un grand écran,
+           *  dix sur un téléphone — et `releaseScene()` n'interviendrait qu au
+           *  remplacement de la scène, qui n'arrive pas si personne ne
+           *  redimensionne. Les garder, c'est retenir plus que toute la scène
+           *  pour une animation d une seconde et demie. */
+          const terminerEntree = () => {
+            entreeEnCours = false;
+            entreeFaite = true;
+            vols = [];
+            if (scene) {
+              for (const b of scene.bandes) {
+                b.cv.width = 0;
+                b.cv.height = 0;
+              }
+              scene.bandes = [];
+            }
+            demarrerRideau();
+            render();
+          };
+
+          /** Les lignes en vol : chacune est peinte depuis SA bande, montée de
+           *  `y` et inclinée de `rot` autour de son propre centre. Rien n est
+           *  recomposé — les bandes sont prêtes depuis la mesure, on ne fait que
+           *  les poser. */
+          const dessinerVol = (s: Scene) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const cx0 = canvas.width / 2;
+            for (let i = 0; i < s.bandes.length; i++) {
+              const b = s.bandes[i];
+              const v = vols[i];
+              if (!v || v.a <= 0.001) continue;
+              // Posée : plus rien à transformer, on blitte tel quel. Avec un
+              // ease sortant, la moitié des frames tombent ici — autant
+              // d'éviter le rééchantillonnage d une rotation sous-pixel.
+              if (v.a > 0.999 && Math.abs(v.rot) < 1e-4 && Math.abs(v.y) < 0.5) {
+                ctx.drawImage(b.cv, 0, b.top);
+                continue;
+              }
+              const cy0 = b.top + b.cv.height / 2;
+              ctx.save();
+              ctx.globalAlpha = v.a;
+              ctx.translate(cx0, cy0 + v.y);
+              ctx.rotate(v.rot);
+              ctx.translate(-cx0, -cy0);
+              ctx.drawImage(b.cv, 0, b.top);
+              ctx.restore();
+            }
+          };
+
           /** Toute peinture passe par ici : si elle échoue, le texte du DOM
            *  reprend la main plutôt que de laisser un canvas vide sur un
            *  paragraphe transparent. */
           const render = () => {
             if (!scene) return;
             try {
-              draw(scene, scene.a0 + state.p * scene.span);
+              if (entreeEnCours) dessinerVol(scene);
+              else draw(scene, scene.a0 + state.p * scene.span);
               hideDomText();
             } catch {
               showDomText();
@@ -837,10 +1074,22 @@ export default function PixelCurtainReveal({
             }
             if (next !== scene) releaseScene(scene);
             scene = next;
+            // ⚠️ Une re-mesure PENDANT le vol reconstruit les bandes, mais les
+            // objets que le tween anime, eux, visent l'ancien tableau : les
+            // lignes resteraient figées jusqu'à la fin. Plutôt que de
+            // resynchroniser deux états, on pose les lignes tout de suite —
+            // un redimensionnement en pleine entrée est un cas de bord, et le
+            // texte doit en sortir lisible, pas à moitié animé.
+            if (entreeEnCours) {
+              gsap.killTweensOf(vols);
+              terminerEntree();
+              return;
+            }
             render();
           };
 
           remeasure();
+
           // Les métriques de la fonte web arrivent après le premier rendu : la
           // césure change, donc la hauteur du bloc — et donc les positions de
           // TOUS les triggers situés en dessous. `refreshWhenIdle` les recale
@@ -852,16 +1101,69 @@ export default function PixelCurtainReveal({
             })
             .catch(() => showDomText());
 
-          const tl = gsap.timeline({
-            scrollTrigger: {
-              trigger: wrap,
-              start: win.start,
-              end: win.end,
-              scrub: 0.55,
-            },
-            onUpdate: render,
-          });
-          tl.to(state, { p: 1, ease: "none", duration: 1 });
+          /** Le rideau. Créé tout de suite s il n y a pas d entrée, et sinon
+           *  seulement quand les lignes se sont posées — sa fenêtre part alors
+           *  de la position qu occupe le bloc à cet instant.
+           *
+           *  ⚠️ Sans ce report, un scroll ordinaire consomme TOUTE la course du
+           *  rideau pendant que l'entrée se joue : le canvas reprenait la main
+           *  sur un texte déjà révélé à 100 %, mesuré. */
+          let tl: gsap.core.Timeline | null = null;
+          const demarrerRideau = () => {
+            if (tl) return;
+            const ici = Math.round(wrap.getBoundingClientRect().top);
+            tl = gsap.timeline({
+              scrollTrigger: {
+                trigger: wrap,
+                start: entrance ? `top ${ici}px` : win.start,
+                end: entrance ? `top ${ici - E.course}px` : win.end,
+                scrub: 0.55,
+              },
+              onUpdate: render,
+            });
+            tl.to(state, { p: 1, ease: "none", duration: 1 });
+          };
+          if (!entrance) demarrerRideau();
+
+          // ── Entrée en scène : les lignes montent et se redressent ──────
+          // Chaque ligne arrive de sous sa place, légèrement inclinée vers la
+          // droite, et se redresse en se posant. Elles partent l une après
+          // l'autre, dans l ordre de lecture.
+          //
+          // ⚠️ Le mouvement se joue DANS LE CANVAS, jamais dans le DOM. Un
+          // masque par mot a été essayé — le geste de RevealText dans
+          // adjointe-virtuelle — et fait passer le paragraphe de 353 à 1322 px
+          // de haut : la boîte de la fonte (115 px) déborde d une ligne serrée
+          // à 88 px, et l inline-block la fait compter dans le flux. Ici la
+          // mise en page ne bouge pas d un pixel.
+          const premiere = scene as Scene | null;
+          if (entrance && premiere) {
+            vols = premiere.bandes.map(() => ({
+              y: E.monte * premiere.em,
+              rot: (E.tilt * Math.PI) / 180,
+              a: 0,
+            }));
+            gsap.to(vols, {
+              y: 0,
+              rot: 0,
+              a: 1,
+              duration: E.duration,
+              ease: E.ease,
+              stagger: { amount: E.cascade },
+              // Le canvas ne prend la main qu'au démarrage réel, pas au
+              // montage : d'ici là c'est le rideau qui peint, à zéro.
+              onStart: () => {
+                entreeEnCours = true;
+              },
+              onUpdate: render,
+              onComplete: terminerEntree,
+              scrollTrigger: {
+                trigger: wrap,
+                start: entranceStart,
+                once: true,
+              },
+            });
+          }
 
           let raf = 0;
           const ro = new ResizeObserver(() => {
@@ -906,6 +1208,8 @@ export default function PixelCurtainReveal({
         narrow?.query,
         narrow?.start,
         narrow?.end,
+        entrance,
+        entranceStart,
       ],
     },
   );

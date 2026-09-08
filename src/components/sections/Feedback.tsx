@@ -165,7 +165,13 @@ export default function Feedback() {
             alors que 42 px du bloc seulement sont entrés à l'écran, et
             l'essentiel se joue avant qu'on ait de quoi le regarder. À
             `top 75%`, ~210 px sont visibles au départ, soit quatre lignes. */}
+        {/* ⚠️ `entrance` fait MONTER LES LIGNES une à une : chacune arrive de
+            sous sa place, un peu inclinée vers la droite, et se redresse en se
+            posant. Le rideau ne démarre qu'ensuite. Le mouvement est peint
+            DANS le canvas — aucune animation par mot n'est possible ici, elle
+            ferait exploser la hauteur du paragraphe (353 → 1322 px, mesuré). */}
         <PixelCurtainReveal
+          entrance
           pendingToken="--color-gris-secondaire"
           accentToken="--color-lime-eclat"
           start="top 95%"
