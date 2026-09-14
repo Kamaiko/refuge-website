@@ -14,7 +14,12 @@ import BrandMark from "@/components/common/BrandMark";
  *  that container: 9:16, composed in three bands so the wordmark (top) and the
  *  tagline (bottom) never land on the cabin. */
 const MEDIA = {
-  landscape: { poster: "/images/hero-shape.avif", video: "/videos/hero-loop.mp4?v=8" },
+  landscape: {
+    poster: "/images/hero-shape.avif",
+    video: "/videos/hero-loop.mp4?v=8",
+    /** 2160 px, ~3,5 Mo au lieu de ~6 : assez jusqu'à un écran 1920 à DPR 1. */
+    videoCompact: "/videos/hero-loop-2160.mp4?v=1",
+  },
   portrait: {
     poster: "/images/hero-shape-portrait.avif",
     video: "/videos/hero-loop-portrait.mp4",
@@ -77,8 +82,15 @@ export default function Hero() {
     // wrong file after an orientation change. `preload="none"` means the
     // element has no src until this effect runs anyway, and `.load()` below
     // is already explicit.
+    // Deux largeurs en paysage, choisies sur les pixels physiques qu'affiche le
+    // hero : largeur × DPR × le zoom 1,1 du parallaxe. 2160 px couvrent un écran
+    // 1920 à DPR 1 ; au-delà, 2880. Mesuré le 2026-09-14 : 3,5 Mo au lieu de 6
+    // pour la majorité des écrans de bureau.
+    const pixels = window.innerWidth * window.devicePixelRatio * 1.1;
     video.src = window.matchMedia(MQ.mdUp).matches
-      ? MEDIA.landscape.video
+      ? pixels <= 2160
+        ? MEDIA.landscape.videoCompact
+        : MEDIA.landscape.video
       : MEDIA.portrait.video;
 
     // `HAVE_FUTURE_DATA` (3) means enough is buffered to play forward.
