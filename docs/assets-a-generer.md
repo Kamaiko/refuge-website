@@ -403,8 +403,20 @@ Puis, pour toute variante candidate : **A/B dans le navigateur** sur
 | Cas du 2026-09-14 | Mesure | Verdict |
 |---|---|---|
 | vidéo hero 1928 px | porte 1 | étirée ×1,44 → upscale 4K |
-| `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K |
+| `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K. Upscale fidèle `bytedance_image_upscale` 4K essayé (2 crédits) : **56 %**, structure 0,90 après flou, premier plan redessiné → écarté |
 | `activites/veillee.avif` | 55 % | faux positif : scène de nuit |
+
+> ⚠️ **Un upscale fidèle ne crée pas le détail qu'une image n'a jamais eu.** Il
+> agrandit ce qui existe : sur Brume, 6 points de gagnés, au prix d'un premier
+> plan redessiné — écart de luminance de 7 à 9 dans les tuiles du bas, sous 1
+> dans le ciel. Il sert quand les pixels MANQUENT (porte 1, la vidéo), pas quand
+> le rendu est MOU (porte 4) : ce cas-là relève d'une régénération ou d'un
+> upscale génératif, qui touchent tous deux à l'architecture.
+>
+> Coûts : `generate cost` ne chiffre pas Topaz (« use POST /jobs/topaz-image/cost ») ;
+> `nano_banana_2` 4k avec `--image` = 4 crédits. L'envoi d'une image locale
+> peut rester bloqué dans `generate cost` : passer par `higgsfield upload create`
+> d'abord, avec un `timeout`, puis donner l'identifiant.
 
 ---
 
