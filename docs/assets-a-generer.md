@@ -313,6 +313,66 @@ ffmpeg -y -i in.mp4 -filter_complex \
   intervalle arbitraire. Une couture à 0,974 est mauvaise si les images
   voisines sont à 0,996, et normale si elles sont à 0,972.
 
+#### 🎬 Vidéo : une source IA plafonne à 1928 px — upscaler l'original, ne pas regénérer
+
+Constat du 2026-09-14 sur `hero-loop.mp4` desktop, jugée floue alors que son
+poster était net.
+
+**La cause n'était pas le zoom au scroll.** `kling3_0` en `pro` 16:9 sort
+**1928×1072** — les six jobs de l'historique, sans exception. Sur un écran 2560
+à DPR 1, le conteneur du hero fait 2528 px : `object-cover` étire la vidéo
+×1,31, et le zoom `1.1` porte ça à **×1,44** (le zoom n'en est que ~26 %). Le
+poster, 2400 px dans le même conteneur, n'était étiré que ×1,16 — et le fondu
+poster → vidéo rendait la perte visible.
+
+**Règle** : la largeur source doit dépasser `largeur du conteneur × zoom` en
+pixels physiques — ici 2528 × 1,1 = **2781 px**. Regénérer ne l'atteint qu'à
+prix fort (`kling3_0 --mode 4k` 30 crédits, `seedance_2_0` 4k 110) et retire
+le mouvement au sort.
+
+**Ce qui a marché** : `bytedance_video_upscale` sur la **sortie native** du job
+d'origine, passée par son id — aucun ré-upload :
+
+```bash
+higgsfield generate create bytedance_video_upscale --video <id du job kling> \
+  --resolution 4k --model_version pro --preset aigc --fps 24 --wait
+```
+
+Sortie 3882×2160, même mouvement, même grade. Boucle recousue avec la recette
+ci-dessus, livrée en **2880 px**, crf 19, balises `bt709` : 5,8 Mo. Le poster
+est l'**image 0 de cette boucle** (source n=48 pour X=2,0), **sans `unsharp`** —
+un poster plus net que sa vidéo recrée le saut au fondu.
+
+Mesuré sur la zone visible à 2528×1268 (détail = résidu d'un aller-retour à
+75 % ; poster d'avant : 0,485, vidéo d'avant : 0,32–0,34) :
+
+| Passe | Facturé (7,04 s) | Détail à l'écran | Fidélité au natif | Stabilité, texture immobile |
+|---|---|---|---|---|
+| `standard` | 0,56 | 0,52–0,58 | 0,958 | 0,9992 (= natif) |
+| **`pro`** — retenue | 5,63 | 0,98–1,13 | 0,922 | 0,9983 |
+
+⚠️ **Les pièges payés sur ce chantier** :
+
+- **`generate cost` sous-estime les vidéos** : il chiffre 5 s par défaut. Coût
+  réel = estimation × durée / 5 (0,4 → 0,56 ; 4 → 5,63).
+- **La sortie native d'un job reste téléchargeable des mois plus tard** :
+  `higgsfield generate list --video --json` donne son `result_url`. Les copies
+  de `assets-raw/finals/` étaient déjà ré-encodées deux fois.
+- **Les jobs d'upscale n'apparaissent dans AUCUNE liste** — ni
+  `generate list`, ni l'API (`type` n'y accepte que `image` et `video`). Si
+  `--wait` tombe (un 503 l'a fait), le job continue et il est facturé : **ne
+  pas relancer**. Récupérer l'id par un lien de partage de l'interface web :
+  `higgsfield.ai/s/<code>` redirige vers `/share/<id du job>`, puis
+  `higgsfield generate get <id du job>`.
+- **Un seuil de fidélité à 0,97 est incompatible avec tout gain de détail** :
+  le poster validé est lui-même à 0,9625 du natif. Contrôler plutôt la
+  **structure** (SSIM après flou σ=2, ≥ ~0,98), l'**absence d'invention**
+  (recadrages 1:1, forme pour forme) et la **stabilité** (SSIM d'images
+  consécutives sur une texture immobile).
+- **Trancher dans le navigateur, pas sur une planche** : le choix `standard` →
+  `pro` s'est fait sur `localhost`, en A/B, contre la recommandation tirée des
+  mesures.
+
 ---
 
 ---
@@ -695,9 +755,9 @@ déjà une, à écraser).
 > est clos sans suite — le rendu mobile actuel est jugé bon et a servi de
 > référence pour briefer les trois portraits.
 
-- **`hero-loop.mp4` desktop** — une regénération Kling a été écartée le
-  2026-08-30 : plus propre mais moins vivante que celle en place. Voir
-  `docs/backlog.md` pour la source, le prompt et la leçon.
+> ✅ **Soldé le 2026-09-14** : `hero-loop.mp4` desktop — **upscalée, pas
+> regénérée**. Voir « une source IA plafonne à 1928 px » plus haut.
+
 - `lieu-charlevoix.avif` (4:5) — section `Lieu.tsx`, non implémentée
 - Galerie ambiance, 6 images — section `Galerie.tsx`, non implémentée
 - Mini-loops d'ambiance (brume, feuille, eau)
@@ -717,6 +777,8 @@ aucune — c'est exactement son terrain.
 - `misc/` — `hero-aquilon.png`, la source du hero paysage
 - `_INDEX.md` — table source ↔ asset live
 
-⚠️ **Aucune source n'existe** pour `refuges/brume.avif`, `refuges/aubepine.avif`
-ni pour la vidéo desktop d'origine : ces trois-là ne sont pas régénérables à
-l'identique.
+⚠️ **Aucune source n'existe** pour `refuges/brume.avif` ni
+`refuges/aubepine.avif` : ces deux-là ne sont pas régénérables à l'identique.
+La vidéo desktop d'origine, longtemps crue perdue, a été retrouvée dans
+l'historique Higgsfield le 2026-09-14 :
+`assets-raw/finals/hero-loop-desktop-native-2026-05.mp4`.

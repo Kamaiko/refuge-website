@@ -76,10 +76,10 @@ export const metadata: Metadata = {
     // Hero AVIF as the placeholder OG image. Swap for a 1200×630 PNG/JPG
     // when the final brand asset lands — AVIF is supported by LinkedIn /
     // Slack / iMessage but Twitter/X falls back to a generic preview.
-    // Dimensions must match the real file (2400×1340) — social platforms use
+    // Dimensions must match the real file (2400×1336) — social platforms use
     // them to reserve the card's space before the image downloads, so a wrong
     // ratio makes the preview jump.
-    images: [{ url: "/images/hero-shape.avif", width: 2400, height: 1340, alt: SITE_TITLE }],
+    images: [{ url: "/images/hero-shape.avif", width: 2400, height: 1336, alt: SITE_TITLE }],
   },
   twitter: {
     card: "summary_large_image",

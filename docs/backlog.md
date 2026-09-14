@@ -112,9 +112,12 @@ pour ce cas, ou une piste focusable avec contrôles visibles.
 - `lieu-charlevoix.avif` (4:5) — pour `Lieu.tsx`, **section non implémentée**
 - Galerie d'ambiance, 6 images — pour `Galerie.tsx`, **non implémentée**
 - Vidéos d'ambiance (brume, feuille, eau)
-- **Vidéo hero desktop** — régénérée le 2026-08-30 puis **écartée** : la
-  nouvelle était plus propre mais plus pauvre en mouvement (deux sources contre
-  trois). La leçon est dans `assets-a-generer.md`.
+- **Vidéo hero portrait — encodée en crf 24**, sous le plancher de 19 que fixe
+  `assets-a-generer.md` : 1,52 Mbps contre 8,3 pour sa source native, SSIM
+  0,947. Correction gratuite, jamais faite : recoudre la boucle depuis
+  `assets-raw/finals/hero-loop-portrait-src.mp4` en crf 19, avec le grade de
+  `hero-portrait-GRADE.txt`. Relevé le 2026-09-13 et laissé hors du chantier
+  desktop, sur décision de Patrick — personne ne s'en est plaint au téléphone.
 
 Le pipeline, les prompts littéraux et les règles de brief sont dans
 **`docs/assets-a-generer.md`** — pas ici.
@@ -373,6 +376,7 @@ Gardés pour une ligne chacun, parce qu'ils répondent à une question qui revie
 | Médaillons de `Soir` | Rideau retiré, anciennes photos remises. |
 | Art direction hero portrait | Livrée ; `<picture>` + `<source media>`, preload dédoublé. |
 | Cartes `Hebergements` en portrait | Livrées le 2026-08-30. |
+| Vidéo hero desktop floue | Soldée le 2026-09-14 : **upscalée** depuis la sortie native (`bytedance_video_upscale` pro), pas regénérée. Leçon dans `assets-a-generer.md`. |
 | Lisibilité des cartes Hébergements | Mesurée — **l'hypothèse de départ était fausse**. |
 | État caché en CSS | Fait ; la règle est dans `docs/reduced-motion.md`. |
 | Révélation dépendante de la direction | Corrigée (zone morte de 0,03). |

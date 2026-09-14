@@ -14,7 +14,7 @@ import BrandMark from "@/components/common/BrandMark";
  *  that container: 9:16, composed in three bands so the wordmark (top) and the
  *  tagline (bottom) never land on the cabin. */
 const MEDIA = {
-  landscape: { poster: "/images/hero-shape.avif", video: "/videos/hero-loop.mp4?v=6" },
+  landscape: { poster: "/images/hero-shape.avif", video: "/videos/hero-loop.mp4?v=8" },
   portrait: {
     poster: "/images/hero-shape-portrait.avif",
     video: "/videos/hero-loop-portrait.mp4",
@@ -195,7 +195,7 @@ export default function Hero() {
           </picture>
           {/* Video layered above the poster but invisible at mount —
               `preload="none"` + no `autoplay` means the browser doesn't
-              touch the 4 MB MP4 on the critical path. The effect above
+              touch the ~6 MB MP4 on the critical path. The effect above
               swaps `videoReady → true` once the `canplay` event fires,
               fading the video over the poster. */}
           <video
