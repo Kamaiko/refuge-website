@@ -124,6 +124,36 @@ Le pipeline, les prompts littéraux et les règles de brief sont dans
 
 ---
 
+## ⚡ Performance — à mesurer en production
+
+L'audit Lighthouse que cite `CLAUDE.md` n'a jamais été fait. Deux signaux
+relevés le 2026-09-14, **en dev**, à traiter avec lui.
+
+### Vidéo hero : 6 Mo pour tous les écrans de bureau
+
+`hero-loop.mp4` est livrée en 2880 px, la largeur qu'exige un écran 2560 à
+DPR 1 avec le zoom 1,1. Un écran 1920×1080 — le plus courant — n'en demande
+que ~2080 px et télécharge pourtant les 6 Mo. Une variante ~2160 px (≈ 3,5 Mo,
+0 crédit, tirée de `assets-raw/finals/hero-loop-desktop-4k-upscale-pro.mp4`),
+choisie dans `Hero.tsx` selon `innerWidth × devicePixelRatio`, réglerait ça.
+
+Pas urgent : la vidéo part **après** `load`, derrière le poster (LCP à 300 ms
+en dev, chemin critique ≈ 0,5 Mo). C'est de la bande passante — celle du
+visiteur et celle de l'hébergeur —, pas du temps d'affichage.
+
+### CLS à 3,4 — non confirmé, la méthode l'exagère
+
+Cumul brut des `layout-shift` sur un scroll scripté de toute la page (bureau
+3,4 ; mobile 1,5). Trois biais connus : un cumul au lieu des fenêtres de
+session de Web Vitals, un scroll programmatique, le mode dev. Impossible de
+dire si le problème est réel sans une mesure propre. Aucun lien avec la vidéo :
+le hero est en `absolute`.
+
+> Premier geste : `pnpm build && pnpm start`, puis Lighthouse, et le CLS de
+> Web Vitals sur un vrai scroll à la molette.
+
+---
+
 ## 📱 Responsive
 
 ### Garde-fou paysage mobile — rendement faible, coût faible
