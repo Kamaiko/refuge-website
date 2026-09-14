@@ -373,6 +373,39 @@ Mesuré sur la zone visible à 2528×1268 (détail = résidu d'un aller-retour �
   `pro` s'est fait sur `localhost`, en A/B, contre la recommandation tirée des
   mesures.
 
+#### ✅ Contrôle qualité avant intégration — le barème
+
+**Pas de seuil absolu de détail.** Une brume, un ciel ou une scène de nuit ont
+légitimement peu de haute fréquence : mesuré le 2026-09-14, `veillee.avif` — le
+feu de minuit, de nuit — sort à 55 % de ses voisines sans rien avoir de
+défectueux. Quatre portes, dans cet ordre :
+
+1. **Pixels** — la source dépasse ce que l'écran affiche : largeur du conteneur
+   × DPR × zoom. Référence : écran 2560 à DPR 1. Hero et cartes plein cadre :
+   ≥ 2781 px. Une vidéo IA brute (1928 px) ne passe pas.
+2. **Master** — la sortie native, jamais ré-encodée, archivée dans
+   `assets-raw/finals/`. On livre en RÉDUISANT le master, jamais l'inverse.
+3. **Encodage** — vidéo H.264 `crf ≤ 19` ; AVIF `crf 30`, 2400 px en paysage ;
+   jamais d'`unsharp` sur un poster dont la vidéo n'en a pas.
+4. **Détail relatif** — l'image contre ses voisines de SECTION :
+   ```bash
+   node docs/outils/detail-fin.mjs public/images/refuges/brume.avif \
+     public/images/refuges/aubepine.avif public/images/refuges/galets.avif
+   ```
+   Le chiffre est le 90e percentile des tuiles — la zone la plus nette, ciel et
+   brume ignorés. Sous **60 %** de la médiane des autres : alerte (code de
+   sortie 2). **Une alerte se regarde** en recadrages 1:1 ; elle ne déclenche
+   pas un upscale.
+
+Puis, pour toute variante candidate : **A/B dans le navigateur** sur
+`localhost`, pas une planche.
+
+| Cas du 2026-09-14 | Mesure | Verdict |
+|---|---|---|
+| vidéo hero 1928 px | porte 1 | étirée ×1,44 → upscale 4K |
+| `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K |
+| `activites/veillee.avif` | 55 % | faux positif : scène de nuit |
+
 ---
 
 ---

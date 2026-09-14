@@ -160,7 +160,7 @@ est l'invariant, et elle seule.
 | `usePrefersReducedMotion` | Dans `hooks/useMediaQuery.ts`. Pour **changer de layout**, pas pour animer — les paramètres d'animation passent par `gsap.matchMedia()`. |
 | `wantsReducedMotion()` | Dans `lib/motion.ts`. Lecture ponctuelle dans un handler ou un effet de montage, sans souscription. |
 | `RevealText` / `RevealChars` / `CurtainReveal` / `AquilonReveal` | Primitives de reveal. `RevealText` expose `start`, ce qui permet de découper un titre en plusieurs temps sans la modifier. |
-| `PixelCurtainReveal` | Rideau de pixels scrubbé, relevé à la mesure sur produx.design. **Peint le texte sur un canvas** au lieu de l'animer dans le DOM, le `<p>` restant en place pour la mise en page et l'accessibilité. Ses réglages portent des noms de ce qu'on voit — longueur et épaisseur de bande, avance, traîne, grain — et l'angle s'en déduit, il ne se règle pas. La prop `entrance` ajoute une **entrée en scène** : les lignes montent une à une, légèrement inclinées, et se redressent en se posant ; le rideau ne part qu'ensuite. ⚠️ L'entrée suit le **scroll** (`E.entreeCourse`, 200 px), pas l'horloge, et le rideau part exactement où elle finit : jouée en temps (1,33 s), elle le faisait partir d'autant plus haut qu'on scrollait vite — hors écran à 1000 px/s, mesuré. Le mouvement est peint **dans le canvas** (le rendu est découpé en bandes, une par ligne). ⚠️ Aucune animation par MOT n'est possible ici : envelopper chaque mot d'un masque fait passer le paragraphe de 353 à 1322 px de haut (la boîte de la fonte déborde de l'interligne à 1,02). Un seul appelant : la citation de Feedback. |
+| `PixelCurtainReveal` | Rideau de pixels scrubbé, relevé à la mesure sur produx.design. **Peint le texte sur un canvas** au lieu de l'animer dans le DOM, le `<p>` restant en place pour la mise en page et l'accessibilité. Ses réglages portent des noms de ce qu'on voit — longueur et épaisseur de bande, avance, traîne, grain — et l'angle s'en déduit, il ne se règle pas. La prop `entrance` ajoute une **entrée en scène** : les lignes montent une à une, légèrement inclinées, et se redressent en se posant ; le rideau ne part qu'ensuite. ⚠️ L'entrée suit le **scroll** (`E.entreeCourse`, 200 px), pas l'horloge, et le rideau part exactement où elle finit : jouée en temps (1,33 s), elle le faisait partir d'autant plus haut qu'on scrollait vite — hors écran à 1000 px/s, mesuré. Elle part dès que le bloc **entre dans l'écran**, le rideau est **créé au montage**, et aucun `scrub` en secondes ne s'ajoute à Lenis : ce double amorti retardait la couleur d'environ une seconde, et d'autant plus qu'on scrollait vite. Le mouvement est peint **dans le canvas** (le rendu est découpé en bandes, une par ligne). ⚠️ Aucune animation par MOT n'est possible ici : envelopper chaque mot d'un masque fait passer le paragraphe de 353 à 1322 px de haut (la boîte de la fonte déborde de l'interligne à 1,02). Un seul appelant : la citation de Feedback. |
 | `Marquee`, `BgGradient`, `SlideIndicators`, `NavWheelLink`, `SmoothScroll`, `CustomCursor` | Inchangées. |
 
 **Découpage** : `Pourquoi.tsx` ne garde que sa logique de scroll ; ses cartes
@@ -205,6 +205,13 @@ Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
 **`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
 **`docs/backlog.md`**.
 
+**Barème qualité avant d'intégrer un asset** — quatre portes : pixels
+suffisants pour l'écran, master jamais ré-encodé, planchers d'encodage, détail
+fin **relatif** aux voisines de section (`node docs/outils/detail-fin.mjs …`,
+alerte sous 60 %) ; puis A/B dans le navigateur. ⚠️ **Pas de seuil absolu** :
+une brume ou une scène de nuit ont légitimement peu de détail. Détail et cas
+mesurés : `docs/assets-a-generer.md`, « Contrôle qualité avant intégration ».
+
 ⏳ **Reste** : voir `docs/backlog.md` — `lieu-charlevoix`, galerie, envoi réel
 des réservations (Resend jamais branché), audit Lighthouse.
 
@@ -215,7 +222,7 @@ référence pour briefer les portraits des refuges.
 ✅ Soldé le 2026-09-14 : la vidéo hero desktop floue. ⚠️ **Une vidéo IA sort à
 1928 px** et le hero l'étirait ×1,44 sur un écran 2560 — le zoom au scroll n'y
 comptait que pour ~26 %. Elle a été **upscalée depuis sa sortie native**, pas
-regénérée : même mouvement, livrée en 2880 px, poster tiré de son image 0. Toute
+regénérée : même mouvement, livrée en 2880 px — et en 2160 px pour les écrans jusqu'à 1920, choisie dans `Hero.tsx` —, poster tiré de son image 0. Toute
 future vidéo plein cadre doit dépasser `largeur du conteneur × zoom` en pixels
 physiques ; méthode et pièges dans `docs/assets-a-generer.md`.
 

@@ -126,22 +126,12 @@ Le pipeline, les prompts littéraux et les règles de brief sont dans
 
 ## ⚡ Performance — à mesurer en production
 
-L'audit Lighthouse que cite `CLAUDE.md` n'a jamais été fait. Deux signaux
-relevés le 2026-09-14, **en dev**, à traiter avec lui.
+Lighthouse relevé par Patrick le 2026-09-14 : **100 / 93 / 100 / 100**
+(Performance, Accessibilité, Bonnes pratiques, SEO ; mode mobile ou bureau non
+noté). Le 93 est l'**accessibilité** — les `aria-label` ignorés plus haut en
+sont une cause connue. La performance au chargement n'est pas un sujet.
 
-### Vidéo hero : 6 Mo pour tous les écrans de bureau
-
-`hero-loop.mp4` est livrée en 2880 px, la largeur qu'exige un écran 2560 à
-DPR 1 avec le zoom 1,1. Un écran 1920×1080 — le plus courant — n'en demande
-que ~2080 px et télécharge pourtant les 6 Mo. Une variante ~2160 px (≈ 3,5 Mo,
-0 crédit, tirée de `assets-raw/finals/hero-loop-desktop-4k-upscale-pro.mp4`),
-choisie dans `Hero.tsx` selon `innerWidth × devicePixelRatio`, réglerait ça.
-
-Pas urgent : la vidéo part **après** `load`, derrière le poster (LCP à 300 ms
-en dev, chemin critique ≈ 0,5 Mo). C'est de la bande passante — celle du
-visiteur et celle de l'hébergeur —, pas du temps d'affichage.
-
-### CLS à 3,4 — non confirmé, la méthode l'exagère
+### CLS à 3,4 au scroll — non confirmé, la méthode l'exagère
 
 Cumul brut des `layout-shift` sur un scroll scripté de toute la page (bureau
 3,4 ; mobile 1,5). Trois biais connus : un cumul au lieu des fenêtres de
@@ -149,8 +139,9 @@ session de Web Vitals, un scroll programmatique, le mode dev. Impossible de
 dire si le problème est réel sans une mesure propre. Aucun lien avec la vidéo :
 le hero est en `absolute`.
 
-> Premier geste : `pnpm build && pnpm start`, puis Lighthouse, et le CLS de
-> Web Vitals sur un vrai scroll à la molette.
+> Lighthouse ne mesure que le chargement : son 100 ne dit rien du scroll.
+> Premier geste : `pnpm build && pnpm start`, puis le CLS de Web Vitals sur un
+> vrai scroll à la molette.
 
 ---
 
@@ -306,7 +297,7 @@ Les deux ne coûtent pas la même chose, ni à produire ni à charger.
 | Sujet | Décision | Quand |
 |---|---|---|
 | Vitesse du rideau | Aucun pin, aucune fenêtre allongée : la cause était `bandLength`. | 2026-09-07 |
-| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas — **sur 200 px de scroll, jamais en temps** ; le rideau part où elle finit. | 2026-09-08, revue le 2026-09-14 |
+| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas — **sur 200 px de scroll dès l'entrée dans l'écran, jamais en temps** ; rideau créé au montage, parti où elle finit, **sans amorti ajouté à Lenis**. | 2026-09-08, revue le 2026-09-14 |
 | Hero mobile | Rendu actuel jugé parfait ; régénération close sans suite. | 2026-08-30 |
 | `next/dynamic` sur les overlays | **Ne vaut pas le coup** — mesuré, voir ci-dessous. | 2026-08-30 |
 | Paysage mobile | Pas un breakpoint ; objectif « pas cassé ». | — |
@@ -414,6 +405,22 @@ reste un décalage au départ : deux lissages de 0,55 s en série.
 > nouvelle vidéo, même scroll scripté) a donné un départ identique à 4 px près.
 > Mesurer l'A/B AVANT de défaire ce qui vient d'être livré.
 
+**Deuxième passe, le même jour** — Patrick : « elle prend environ une seconde à
+se débloquer ». Sa capture montrait la citation grise de 4,9 à 5,7 s, puis une
+bascule en UNE image. Trois causes empilées, mesurées une à une :
+
+| Cause | Effet mesuré | Correctif |
+|---|---|---|
+| Entrée déclenchée à 90 % de la hauteur | 278 ms sans rien après l'entrée dans l'écran | `top bottom` : 14 ms |
+| Rideau créé à la FIN de l'entrée | parti de 0, rattrapait le scroll d'un bond | créé au montage |
+| `scrub: 0.55` par-dessus Lenis | couleur à 64 % au lieu de 84 % à 500 px/s, 43 % à 1000 | `scrub: true` : 83,5 % aux deux vitesses |
+
+> ⚠️ Un temps mort mesuré EN MOUVEMENT n'est pas forcément dans la géométrie.
+> La courbe STATIQUE — scroll posé, attente, pixels comptés en pleine
+> résolution — a montré que la couleur démarrait pile à la fin de l'entrée : le
+> retard était un amorti, pas un trou. Faire cette courbe avant de toucher aux
+> fenêtres.
+
 ---
 
 ## 📦 Archive — dossiers clos
@@ -430,6 +437,7 @@ Gardés pour une ligne chacun, parce qu'ils répondent à une question qui revie
 | Art direction hero portrait | Livrée ; `<picture>` + `<source media>`, preload dédoublé. |
 | Cartes `Hebergements` en portrait | Livrées le 2026-08-30. |
 | Vidéo hero desktop floue | Soldée le 2026-09-14 : **upscalée** depuis la sortie native (`bytedance_video_upscale` pro), pas regénérée. Leçon dans `assets-a-generer.md`. |
+| Vidéo hero : 6 Mo pour tous les écrans | Deux largeurs le 2026-09-14 — 2160 px (3,5 Mo) tant que largeur × DPR × 1,1 ≤ 2160, 2880 au-delà ; choix dans `Hero.tsx`. |
 | Lisibilité des cartes Hébergements | Mesurée — **l'hypothèse de départ était fausse**. |
 | État caché en CSS | Fait ; la règle est dans `docs/reduced-motion.md`. |
 | Révélation dépendante de la direction | Corrigée (zone morte de 0,03). |
