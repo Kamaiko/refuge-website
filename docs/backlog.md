@@ -119,7 +119,7 @@ pour ce cas, ou une piste focusable avec contrôles visibles.
   `hero-portrait-GRADE.txt`. Relevé le 2026-09-13 et laissé hors du chantier
   desktop, sur décision de Patrick — personne ne s'en est plaint au téléphone.
 - **`refuges/brume.avif` — à refaire au canon.** Deux fois moins de détail que
-  ses voisines (barème : 50 %) et aucun master 4K. Deux essais écartés le
+  ses voisines (détail relatif : 50 %) et aucun master 4K. Deux essais écartés le
   2026-09-14 : upscale fidèle (56 %, premier plan redessiné) et régénération
   `--image` (80 %, mais coque texturée — hors Bloc A). Palette mesurée : Brume
   n'est **pas** plus « coucher de soleil » que les deux autres — la moins orange

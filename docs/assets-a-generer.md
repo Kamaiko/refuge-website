@@ -373,44 +373,24 @@ Mesuré sur la zone visible à 2528×1268 (détail = résidu d'un aller-retour �
   `pro` s'est fait sur `localhost`, en A/B, contre la recommandation tirée des
   mesures.
 
-#### ✅ Contrôle qualité avant intégration — le barème
+#### Qualité des assets — ce que le 2026-09-14 a appris
 
-**Pas de seuil absolu de détail.** Une brume, un ciel ou une scène de nuit ont
-légitimement peu de haute fréquence : mesuré le 2026-09-14, `veillee.avif` — le
-feu de minuit, de nuit — sort à 55 % de ses voisines sans rien avoir de
-défectueux. Quatre portes, dans cet ordre :
-
-1. **Pixels** — la source dépasse ce que l'écran affiche : largeur du conteneur
-   × DPR × zoom. Référence : écran 2560 à DPR 1. Hero et cartes plein cadre :
-   ≥ 2781 px. Une vidéo IA brute (1928 px) ne passe pas.
-2. **Master** — la sortie native, jamais ré-encodée, archivée dans
-   `assets-raw/finals/`. On livre en RÉDUISANT le master, jamais l'inverse.
-3. **Encodage** — vidéo H.264 `crf ≤ 19` ; AVIF `crf 30`, 2400 px en paysage ;
-   jamais d'`unsharp` sur un poster dont la vidéo n'en a pas.
-4. **Détail relatif** — l'image contre ses voisines de SECTION :
-   ```bash
-   node docs/outils/detail-fin.mjs public/images/refuges/brume.avif \
-     public/images/refuges/aubepine.avif public/images/refuges/galets.avif
-   ```
-   Le chiffre est le 90e percentile des tuiles — la zone la plus nette, ciel et
-   brume ignorés. Sous **60 %** de la médiane des autres : alerte (code de
-   sortie 2). **Une alerte se regarde** en recadrages 1:1 ; elle ne déclenche
-   pas un upscale.
-
-Puis, pour toute variante candidate : **A/B dans le navigateur** sur
-`localhost`, pas une planche.
+Un visuel se juge contre ses **voisines de section**, jamais contre un seuil
+absolu : une brume ou une nuit ont légitimement peu de détail. Mesure utilisée :
+le 90e percentile, par tuiles, du résidu d'un aller-retour à 75 % — la zone la
+plus nette de l'image, ciel et brume ignorés.
 
 | Cas du 2026-09-14 | Mesure | Verdict |
 |---|---|---|
-| vidéo hero 1928 px | porte 1 | étirée ×1,44 → upscale 4K |
+| vidéo hero 1928 px | pixels insuffisants | étirée ×1,44 → upscale 4K de la sortie native |
 | `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K. Upscale fidèle `bytedance_image_upscale` 4K essayé (2 crédits) : **56 %**, structure 0,90 après flou, premier plan redessiné → écarté. Régénération `nano_banana_2` 4K avec `--image` (4 crédits) : **80 %**, grandes masses conservées (0,975), mais **la coque a pris une texture** — hors Bloc A — et le gain a paru marginal à Patrick → écartée à l'A/B |
-| `activites/veillee.avif` | 55 % | faux positif : scène de nuit |
+| `activites/veillee.avif` | 55 % | faux positif : scène de nuit — un seuil absolu l'aurait condamnée |
 
 > ⚠️ **Un upscale fidèle ne crée pas le détail qu'une image n'a jamais eu.** Il
 > agrandit ce qui existe : sur Brume, 6 points de gagnés, au prix d'un premier
 > plan redessiné — écart de luminance de 7 à 9 dans les tuiles du bas, sous 1
-> dans le ciel. Il sert quand les pixels MANQUENT (porte 1, la vidéo), pas quand
-> le rendu est MOU (porte 4) : ce cas-là relève d'une régénération ou d'un
+> dans le ciel. Il sert quand les pixels MANQUENT (la vidéo), pas quand
+> le rendu est MOU (Brume) : ce cas-là relève d'une régénération ou d'un
 > upscale génératif, qui touchent tous deux à l'architecture.
 >
 > Coûts : `generate cost` ne chiffre pas Topaz (« use POST /jobs/topaz-image/cost ») ;
@@ -623,7 +603,7 @@ higgsfield generate create nano_banana_2 --aspect_ratio 16:9 --resolution 4k \
 | `A3.txt` | `refuges/aubepine.avif` | Canon + clairière au bord d'un ruisseau. ⚠️ Le rendu retenu montre en fait un **cap sur l'estuaire** : Patrick a choisi parmi plusieurs sorties, celle-ci ne vient pas de ce décor. Le prompt est conservé parce que c'est lui qui a produit la bonne **forme**. |
 | `act-pierres.txt` | `activites/pierres-debout.avif` | ⚠️ Produit du Hopewell Rocks reconnaissable. À ne PAS réutiliser tel quel. |
 | `act-marmites.txt` | `assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png` | Marmites glaciaires. Non retenue, mais générée et payée — disponible sans coût. |
-| `brume-regen-4k.txt` | `assets-raw/alternates/refuge-brume-4k-regen-2026-09-COQUE-TEXTUREE-NON-RETENUE.png` | « Keep this exact photograph » + une seule consigne GLOBALE (détail net), `--image` = `ref-brume.png`. 80 % au barème, cadrage tenu — mais une consigne globale re-rend TOUTE l'image, coque comprise : elle a perdu sa peau lisse. Non retenue le 2026-09-14. |
+| `brume-regen-4k.txt` | `assets-raw/alternates/refuge-brume-4k-regen-2026-09-COQUE-TEXTUREE-NON-RETENUE.png` | « Keep this exact photograph » + une seule consigne GLOBALE (détail net), `--image` = `ref-brume.png`. 80 % de détail relatif, cadrage tenu — mais une consigne globale re-rend TOUTE l'image, coque comprise : elle a perdu sa peau lisse. Non retenue le 2026-09-14. |
 
 ⚠️ **L'appariement prompt → image finale est approximatif** pour les deux
 refuges. Patrick a récupéré ses images directement dans l'interface Higgsfield

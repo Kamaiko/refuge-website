@@ -203,10 +203,6 @@ Le pipeline, les prompts littéraux et les règles de brief apprises sont dans
 **`docs/assets-a-generer.md`** ; ce qui reste à produire est dans
 **`docs/backlog.md`**.
 
-**Avant d'intégrer un asset** : le barème de `docs/assets-a-generer.md`
-(« Contrôle qualité avant intégration »), outillé par `docs/outils/detail-fin.mjs`.
-⚠️ Pas de seuil de détail absolu : une brume ou une nuit en ont légitimement peu.
-
 ⏳ **Reste** : voir `docs/backlog.md` — `lieu-charlevoix`, galerie, Brume à
 refaire, envoi réel des réservations (Resend jamais branché), CLS au scroll.
 
@@ -215,9 +211,8 @@ portrait est close sans suite — le rendu actuel est jugé bon et a servi de
 référence pour briefer les portraits des refuges.
 
 ✅ Soldé le 2026-09-14 : la vidéo hero desktop floue, **upscalée depuis sa
-sortie native** et livrée en deux largeurs (`Hero.tsx`). ⚠️ Une vidéo plein
-cadre doit dépasser `largeur du conteneur × DPR × zoom` en pixels physiques —
-une vidéo IA brute (1928 px) n'y suffit pas. Méthode : `docs/assets-a-generer.md`.
+sortie native** et livrée en deux largeurs (`Hero.tsx`). La règle vit dans
+`C:\Nexus\Projects\CLAUDE.md`, les cas mesurés dans `docs/assets-a-generer.md`.
 
 ## Note sur le nom de marque
 
