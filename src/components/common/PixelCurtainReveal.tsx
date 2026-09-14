@@ -264,8 +264,8 @@ const E = {
    *  course de scroll. */
   duration: 0.9,
 
-  /** **DURÉE TOTALE DE LA CASCADE** — le temps entre le départ de la première
-   *  ligne et celui de la dernière. Exprimée en TOTAL, pas en écart entre deux
+  /** **DURÉE TOTALE DE LA CASCADE** — l'écart entre le départ de la première
+   *  ligne et celui de la dernière, en proportion de la course d'entrée. Exprimée en TOTAL, pas en écart entre deux
    *  lignes : le même texte fait quatre lignes sur un grand écran et DIX sur un
    *  téléphone, et un écart fixe y produirait une cascade deux fois et demie
    *  plus longue. */
@@ -285,9 +285,9 @@ const E = {
    *  et −11 % à 1000 px/s, c'est-à-dire un rideau joué hors écran. */
   entreeCourse: 200,
 
-  /** **LISSAGE** de l'entrée, en secondes : le rôle du `scrub` du rideau
-   *  (0,55), pour que la montée ne saute pas d'un cran de molette à l'autre
-   *  et garde son air de se poser. */
+  /** **LISSAGE**, en secondes : le `scrub` de l'entrée ET du rideau. Une seule
+   *  valeur, pour que les deux aient le même amorti et que la montée ne saute
+   *  pas d'un cran de molette à l'autre. */
   lissage: 0.55,
 
   /** **COURSE DU RIDEAU** après l'entrée, en pixels de scroll. Ne sert que
@@ -633,9 +633,6 @@ export default function PixelCurtainReveal({
           /** Position de chaque ligne pendant l'entrée — montée, inclinaison,
            *  opacité. Rempli au démarrage, vidé à la fin. */
           let vols: { y: number; rot: number; a: number }[] = [];
-          /** Le tween des lignes, en pause : c'est le scroll qui pousse sa
-           *  progression, jamais l'horloge. */
-          let vol: gsap.core.Tween | null = null;
           /** Le déclencheur de l'entrée. Le rideau lit sa fin pour partir
            *  exactement là. */
           let entreeST: ScrollTrigger | null = null;
@@ -1107,7 +1104,6 @@ export default function PixelCurtainReveal({
             // texte doit en sortir lisible, pas à moitié animé.
             if (entreeEnCours) {
               gsap.killTweensOf(vols);
-              if (vol) gsap.killTweensOf(vol);
               terminerEntree();
               return;
             }
@@ -1140,13 +1136,13 @@ export default function PixelCurtainReveal({
           let tl: gsap.core.Timeline | null = null;
           const demarrerRideau = () => {
             if (tl) return;
-            const st = entrance ? entreeST : null;
+            const st = entreeST;
             tl = gsap.timeline({
               scrollTrigger: {
                 trigger: wrap,
                 start: st ? () => st.end : win.start,
                 end: st ? () => st.end + E.course : win.end,
-                scrub: 0.55,
+                scrub: E.lissage,
               },
               onUpdate: render,
             });
@@ -1183,33 +1179,29 @@ export default function PixelCurtainReveal({
               onUpdate: render,
               onComplete: terminerEntree,
             });
-            vol = lignes;
-            // Le scroll pousse la progression, et seulement vers l'avant : une
-            // entrée ne se rejoue pas à l'envers, pas plus qu'avant, où elle
-            // était `once`. Le lissage fait le travail d'un `scrub`.
-            let atteint = 0;
-            const pousser = (p: number) => {
-              if (entreeFaite || p <= atteint) return;
-              atteint = p;
-              // Le canvas ne prend la main qu'au premier pixel de course, pas
-              // au montage : d'ici là c'est le rideau qui peint, à zéro.
-              entreeEnCours = true;
-              gsap.to(lignes, {
-                progress: p,
-                duration: E.lissage,
-                ease: "power3.out",
-                overwrite: true,
-              });
-            };
-            entreeST = ScrollTrigger.create({
-              trigger: wrap,
-              start: entranceStart,
-              end: `+=${E.entreeCourse}`,
-              onUpdate: (self) => pousser(self.progress),
-            });
-            // Page rechargée plus bas : la course est déjà franchie, et
-            // `onUpdate` ne se déclenche pas sans mouvement.
-            if (entreeST.progress > 0) pousser(entreeST.progress);
+            // La course de scroll, lissée par le même `scrub` que le rideau. Elle
+            // ne pousse les lignes que vers l'avant — une entrée ne se rejoue pas
+            // à l'envers, pas plus qu'avant, où elle était `once` : la progression
+            // de `lignes` est donc toujours le maximum déjà atteint.
+            const course = { p: 0 };
+            entreeST =
+              gsap.to(course, {
+                p: 1,
+                ease: "none",
+                onUpdate: () => {
+                  if (entreeFaite || course.p <= lignes.progress()) return;
+                  // Le canvas ne prend la main qu'au premier pixel de course, pas
+                  // au montage : d'ici là c'est le rideau qui peint, à zéro.
+                  entreeEnCours = true;
+                  lignes.progress(course.p);
+                },
+                scrollTrigger: {
+                  trigger: wrap,
+                  start: entranceStart,
+                  end: `+=${E.entreeCourse}`,
+                  scrub: E.lissage,
+                },
+              }).scrollTrigger ?? null;
           }
 
           let raf = 0;
@@ -1231,8 +1223,6 @@ export default function PixelCurtainReveal({
           return () => {
             cancelAnimationFrame(raf);
             ro.disconnect();
-            entreeST?.kill();
-            if (vol) gsap.killTweensOf(vol);
             canvas.removeEventListener("contextlost", onLost);
             canvas.removeEventListener("contextrestored", remeasure);
             showDomText();
