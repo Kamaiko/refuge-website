@@ -403,7 +403,7 @@ Puis, pour toute variante candidate : **A/B dans le navigateur** sur
 | Cas du 2026-09-14 | Mesure | Verdict |
 |---|---|---|
 | vidéo hero 1928 px | porte 1 | étirée ×1,44 → upscale 4K |
-| `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K. Upscale fidèle `bytedance_image_upscale` 4K essayé (2 crédits) : **56 %**, structure 0,90 après flou, premier plan redessiné → écarté |
+| `refuges/brume.avif` | 50 % | vrai défaut : molle jusque sur le refuge, et aucun master 4K. Upscale fidèle `bytedance_image_upscale` 4K essayé (2 crédits) : **56 %**, structure 0,90 après flou, premier plan redessiné → écarté. Régénération `nano_banana_2` 4K avec `--image` (4 crédits) : **80 %**, grandes masses conservées (0,975), mais **la coque a pris une texture** — hors Bloc A — et le gain a paru marginal à Patrick → écartée à l'A/B |
 | `activites/veillee.avif` | 55 % | faux positif : scène de nuit |
 
 > ⚠️ **Un upscale fidèle ne crée pas le détail qu'une image n'a jamais eu.** Il
@@ -623,6 +623,7 @@ higgsfield generate create nano_banana_2 --aspect_ratio 16:9 --resolution 4k \
 | `A3.txt` | `refuges/aubepine.avif` | Canon + clairière au bord d'un ruisseau. ⚠️ Le rendu retenu montre en fait un **cap sur l'estuaire** : Patrick a choisi parmi plusieurs sorties, celle-ci ne vient pas de ce décor. Le prompt est conservé parce que c'est lui qui a produit la bonne **forme**. |
 | `act-pierres.txt` | `activites/pierres-debout.avif` | ⚠️ Produit du Hopewell Rocks reconnaissable. À ne PAS réutiliser tel quel. |
 | `act-marmites.txt` | `assets-raw/alternates/activite-marmites-geant-NON-RETENUE.png` | Marmites glaciaires. Non retenue, mais générée et payée — disponible sans coût. |
+| `brume-regen-4k.txt` | `assets-raw/alternates/refuge-brume-4k-regen-2026-09-COQUE-TEXTUREE-NON-RETENUE.png` | « Keep this exact photograph » + une seule consigne GLOBALE (détail net), `--image` = `ref-brume.png`. 80 % au barème, cadrage tenu — mais une consigne globale re-rend TOUTE l'image, coque comprise : elle a perdu sa peau lisse. Non retenue le 2026-09-14. |
 
 ⚠️ **L'appariement prompt → image finale est approximatif** pour les deux
 refuges. Patrick a récupéré ses images directement dans l'interface Higgsfield

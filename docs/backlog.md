@@ -5,19 +5,19 @@
 > contexte. Les dossiers clos sont en fin de fichier, réduits à ce qu'ils
 > apprennent — s'ils n'apprennent rien, ils n'y sont plus.
 >
-> Dernière remise en ordre : **2026-09-08**.
+> Dernière remise en ordre : **2026-09-14**.
 
 ---
 
-## ✅ Contrôles de santé — passés le 2026-09-08
+## ✅ Contrôles de santé — passés le 2026-09-14
 
 | Contrôle | Commande | État |
 |---|---|---|
 | Types | `npx tsc --noEmit` | passe |
 | Lint | `pnpm lint` | passe, 0 avertissement |
 | Build de production | `pnpm build` | passe, 8 pages statiques |
-| Console du navigateur | page d'accueil, scroll complet | **0 erreur** |
-| Chemins cités dans la doc | existent tous | oui |
+| Console du navigateur | production locale (`next start`), page d'accueil, scroll complet | **0 erreur, 0 avertissement** |
+| Chemins cités dans la doc | existent tous | oui — hors trois mentions voulues : accolades, ancien `_raw/`, `z-index.ts` à créer |
 | Racine du dépôt | aucun fichier de travail | propre |
 
 > ⚠️ Une erreur d'hydratation vivait dans `ReservePanel` (« 5 nuits » au client
@@ -118,12 +118,18 @@ pour ce cas, ou une piste focusable avec contrôles visibles.
   `assets-raw/finals/hero-loop-portrait-src.mp4` en crf 19, avec le grade de
   `hero-portrait-GRADE.txt`. Relevé le 2026-09-13 et laissé hors du chantier
   desktop, sur décision de Patrick — personne ne s'en est plaint au téléphone.
-- **`refuges/brume.avif` — deux fois moins de détail que ses voisines**
-  (barème : 50 %), et aucun master 4K. L'upscale fidèle ne suffit pas : 56 %,
-  premier plan redessiné, écarté le 2026-09-14 (2 crédits). Restent une
-  régénération Nano Banana 4K depuis `assets-raw/refs/ref-brume.png` (4 crédits)
-  ou un upscale génératif Topaz (coût non chiffrable par le CLI) — décision de
-  Patrick en attente.
+- **`refuges/brume.avif` — à refaire au canon.** Deux fois moins de détail que
+  ses voisines (barème : 50 %) et aucun master 4K. Deux essais écartés le
+  2026-09-14 : upscale fidèle (56 %, premier plan redessiné) et régénération
+  `--image` (80 %, mais coque texturée — hors Bloc A). Palette mesurée : Brume
+  n'est **pas** plus « coucher de soleil » que les deux autres — la moins orange
+  (17 % contre 34 %), le ciel le plus proche du canon —, mais plus pâle
+  (saturation 0,36 contre 0,41) et plus molle.
+  > Recommandé : régénérer depuis les blocs A + B + C **sans `--image`**, décor
+  > lac et brume gardé, et la laisser en tête de pile — la déplacer ne règle ni
+  > le détail ni la texture.
+- `assets-raw/_INDEX.md` est resté au lot de juin (chemins `_raw/`, anciens
+  noms) : à refaire, ou à supprimer au profit de `assets-a-generer.md`.
 
 Le pipeline, les prompts littéraux et les règles de brief sont dans
 **`docs/assets-a-generer.md`** — pas ici.
