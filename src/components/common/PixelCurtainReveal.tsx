@@ -285,10 +285,14 @@ const E = {
    *  et −11 % à 1000 px/s, c'est-à-dire un rideau joué hors écran. */
   entreeCourse: 200,
 
-  /** **LISSAGE**, en secondes : le `scrub` de l'entrée ET du rideau. Une seule
-   *  valeur, pour que les deux aient le même amorti et que la montée ne saute
-   *  pas d'un cran de molette à l'autre. */
-  lissage: 0.55,
+  /** **LISSAGE** — le `scrub` de l'entrée ET du rideau : `true`, c'est-à-dire
+   *  AUCUN amorti ajouté. Lenis lisse déjà le scroll ; un `scrub` en secondes
+   *  par-dessus fait un double amorti qui laisse la couleur en retard sur le
+   *  bloc, d'autant plus qu'on scrolle vite. Mesuré le 2026-09-14 — couleur,
+   *  à 500 puis 1000 px/s : 83,5 / 83,5 % de la hauteur sans amorti, 74,8 /
+   *  65,7 % à 0,25 s, 63,8 / 43 % à 0,55 s. C'était « l'unlock » d'environ
+   *  une seconde relevé par Patrick. */
+  lissage: true,
 
   /** **COURSE DU RIDEAU** après l'entrée, en pixels de scroll. Ne sert que
    *  lorsque l'entrée est active. Au-delà d'environ 900, sa fin se joue sur
@@ -539,7 +543,7 @@ export default function PixelCurtainReveal({
   end = "top 8%",
   narrow,
   entrance = false,
-  entranceStart = "top 90%",
+  entranceStart = "top bottom",
 }: {
   children: string;
   className?: string;
@@ -572,7 +576,7 @@ export default function PixelCurtainReveal({
    *  `E.entreeCourse` pixels de scroll, jamais en temps ; le rideau part
    *  ensuite exactement où l'entrée finit. */
   entrance?: boolean;
-  /** Où l'entrée se déclenche. */
+  /** Où l'entrée se déclenche — par défaut dès que le bloc entre dans l'écran. */
   entranceStart?: string;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -1036,7 +1040,6 @@ export default function PixelCurtainReveal({
               }
               scene.bandes = [];
             }
-            demarrerRideau();
             render();
           };
 
@@ -1123,16 +1126,22 @@ export default function PixelCurtainReveal({
             })
             .catch(() => showDomText());
 
-          /** Le rideau. Créé tout de suite s'il n'y a pas d'entrée, et sinon
-           *  quand les lignes se sont posées — sa fenêtre part alors de la FIN
-           *  de celle de l'entrée : une position de scroll, jamais un instant.
+          /** Le rideau. Créé AU MONTAGE, avec ou sans entrée. Avec l'entrée, sa
+           *  fenêtre part de la FIN de celle de l'entrée : une position de scroll,
+           *  jamais un instant. Les deux fenêtres se suivent sans se chevaucher, si
+           *  bien que le rideau ne peut pas être consommé pendant l'entrée — le
+           *  piège d'origine, où le canvas reprenait la main sur un texte déjà
+           *  révélé à 100 %.
            *
-           *  ⚠️ Il partait de la position du bloc à la fin d'une entrée jouée EN
-           *  TEMPS : plus on scrollait vite, plus il partait haut, jusqu'à se
-           *  jouer hors écran (voir `E.entreeCourse`). Les deux fenêtres se
-           *  suivent sans se chevaucher, si bien que le rideau ne peut toujours
-           *  pas être consommé pendant l'entrée — le piège d'origine, où le
-           *  canvas reprenait la main sur un texte déjà révélé à 100 %. */
+           *  ⚠️ Deux erreurs mesurées, dans cet ordre, le 2026-09-14 :
+           *  1. il partait de la position du bloc à la fin d'une entrée jouée EN
+           *     TEMPS — plus on scrollait vite, plus il partait haut, jusqu'à se
+           *     jouer hors écran (voir `E.entreeCourse`) ;
+           *  2. une fois l'entrée passée au scroll, il n'était encore CRÉÉ qu'à sa
+           *     fin, c'est-à-dire au dernier pixel de l'amorti : lignes posées et
+           *     immobiles pendant ~700 ms, puis un rideau parti de 0 qui
+           *     rattrapait le scroll d'un bond. Vu sur une capture de Patrick —
+           *     citation grise de 4,9 à 5,7 s, bascule en une image à 5,8 s. */
           let tl: gsap.core.Timeline | null = null;
           const demarrerRideau = () => {
             if (tl) return;
@@ -1179,7 +1188,7 @@ export default function PixelCurtainReveal({
               onUpdate: render,
               onComplete: terminerEntree,
             });
-            // La course de scroll, lissée par le même `scrub` que le rideau. Elle
+            // La course de scroll, au même `scrub` que le rideau. Elle
             // ne pousse les lignes que vers l'avant — une entrée ne se rejoue pas
             // à l'envers, pas plus qu'avant, où elle était `once` : la progression
             // de `lignes` est donc toujours le maximum déjà atteint.
@@ -1202,6 +1211,7 @@ export default function PixelCurtainReveal({
                   scrub: E.lissage,
                 },
               }).scrollTrigger ?? null;
+            demarrerRideau();
           }
 
           let raf = 0;
