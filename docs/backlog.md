@@ -276,7 +276,7 @@ Les deux ne coûtent pas la même chose, ni à produire ni à charger.
 | Sujet | Décision | Quand |
 |---|---|---|
 | Vitesse du rideau | Aucun pin, aucune fenêtre allongée : la cause était `bandLength`. | 2026-09-07 |
-| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas. | 2026-09-08 |
+| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas — **sur 200 px de scroll, jamais en temps** ; le rideau part où elle finit. | 2026-09-08, revue le 2026-09-14 |
 | Hero mobile | Rendu actuel jugé parfait ; régénération close sans suite. | 2026-08-30 |
 | `next/dynamic` sur les overlays | **Ne vaut pas le coup** — mesuré, voir ci-dessous. | 2026-08-30 |
 | Paysage mobile | Pas un breakpoint ; objectif « pas cassé ». | — |
@@ -360,6 +360,29 @@ explicitement, même si c'est visible dans la référence.
 La couche GPU rastérise le canvas une fois puis l'étire : les lettres
 deviennent franchement pixelisées. Vu immédiatement à l'écran le 2026-09-08.
 GSAP pose déjà un `translate3d`, ce qui suffit.
+
+### Une animation EN TEMPS ne précède pas un déclencheur AU SCROLL
+
+Le 2026-09-14, le rideau de la citation « partait trop tard ». L'entrée en
+scène se jouait en 1,33 s de temps réel, et le rideau démarrait de la position
+du bloc à sa fin : pendant ces 1,33 s la page continuait d'avancer, donc le
+départ dépendait de la vitesse de scroll. Mesuré en boîte noire (pixels du
+canvas), à 2560×1300 :
+
+| Vitesse | Couleur apparaît — avant → après | Rideau fini — avant → après |
+|---|---|---|
+| 250 px/s | 63 % → 64 % de la hauteur | 22 % → 33 % |
+| 500 px/s | 37 % → 54 % | −3 % → 31 % |
+| 1000 px/s | **−11 %** (hors écran) → 35 % | −55 % → 32 % |
+
+Correctif : l'entrée est un tween en pause que le scroll pousse (200 px, vers
+l'avant seulement, lissé 0,55 s), et le rideau part de la fin de sa course. Il
+reste un décalage au départ : deux lissages de 0,55 s en série.
+
+> ⚠️ **La dernière modification a d'abord été accusée — à tort.** Le symptôme
+> est apparu pendant le chantier vidéo du hero. Un A/B mesuré (ancienne et
+> nouvelle vidéo, même scroll scripté) a donné un départ identique à 4 px près.
+> Mesurer l'A/B AVANT de défaire ce qui vient d'être livré.
 
 ---
 
