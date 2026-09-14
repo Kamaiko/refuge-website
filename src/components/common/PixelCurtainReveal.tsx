@@ -259,9 +259,8 @@ const E = {
    *  croisent avant d'être posées. */
   tilt: 1.5,
 
-  /** **DURÉE** d'une ligne. Plus des secondes depuis le 2026-09-14 : avec
-   *  `entreeCourse`, durée et cascade ne fixent que des PROPORTIONS de la
-   *  course de scroll. */
+  /** **DURÉE** d'une ligne — une proportion, pas des secondes : durée et
+   *  cascade se répartissent sur `entreeCourse` pixels de scroll. */
   duration: 0.9,
 
   /** **DURÉE TOTALE DE LA CASCADE** — l'écart entre le départ de la première
@@ -274,24 +273,18 @@ const E = {
   /** Une arrivée qui se pose : décélération franche, sans rebond. */
   ease: "expo.out",
 
-  /** **COURSE DE L'ENTRÉE**, en pixels de scroll : les lignes montent et se
-   *  posent pendant que la page avance d'autant, puis le rideau prend le
-   *  relais exactement là.
+  /** **COURSE DE L'ENTRÉE**, en pixels de scroll : les lignes se posent
+   *  pendant que la page avance d'autant, puis le rideau prend le relais
+   *  exactement là.
    *
-   *  ⚠️ Une course, pas une durée. L'entrée se jouait en 1,33 s de temps réel
-   *  et le rideau partait de l'endroit où se trouvait le bloc à la fin : son
-   *  départ dépendait donc de la vitesse de scroll. Mesuré le 2026-09-14 à
-   *  2560×1300 — couleur à 63 % de la hauteur à 250 px/s, 37 % à 500 px/s,
-   *  et −11 % à 1000 px/s, c'est-à-dire un rideau joué hors écran. */
+   *  ⚠️ Une course, jamais une durée : une entrée jouée en temps fait dépendre
+   *  le départ du rideau de la vitesse de scroll, jusqu'à le jouer hors écran
+   *  quand on scrolle vite. */
   entreeCourse: 200,
 
-  /** **LISSAGE** — le `scrub` de l'entrée ET du rideau : `true`, c'est-à-dire
-   *  AUCUN amorti ajouté. Lenis lisse déjà le scroll ; un `scrub` en secondes
-   *  par-dessus fait un double amorti qui laisse la couleur en retard sur le
-   *  bloc, d'autant plus qu'on scrolle vite. Mesuré le 2026-09-14 — couleur,
-   *  à 500 puis 1000 px/s : 83,5 / 83,5 % de la hauteur sans amorti, 74,8 /
-   *  65,7 % à 0,25 s, 63,8 / 43 % à 0,55 s. C'était « l'unlock » d'environ
-   *  une seconde relevé par Patrick. */
+  /** **LISSAGE** — le `scrub` de l'entrée ET du rideau : `true`, aucun amorti
+   *  ajouté. Lenis lisse déjà le scroll ; un `scrub` en secondes par-dessus
+   *  laisse la couleur en retard sur le bloc, d'autant plus qu'on scrolle vite. */
   lissage: true,
 
   /** **COURSE DU RIDEAU** après l'entrée, en pixels de scroll. Ne sert que
@@ -1126,22 +1119,13 @@ export default function PixelCurtainReveal({
             })
             .catch(() => showDomText());
 
-          /** Le rideau. Créé AU MONTAGE, avec ou sans entrée. Avec l'entrée, sa
-           *  fenêtre part de la FIN de celle de l'entrée : une position de scroll,
-           *  jamais un instant. Les deux fenêtres se suivent sans se chevaucher, si
-           *  bien que le rideau ne peut pas être consommé pendant l'entrée — le
-           *  piège d'origine, où le canvas reprenait la main sur un texte déjà
-           *  révélé à 100 %.
+          /** Le rideau, créé AU MONTAGE. Avec l'entrée, sa fenêtre part de la FIN
+           *  de celle de l'entrée : une position de scroll, jamais un instant. Les
+           *  deux fenêtres se suivent sans se chevaucher, si bien que le rideau ne
+           *  peut pas être consommé pendant l'entrée.
            *
-           *  ⚠️ Deux erreurs mesurées, dans cet ordre, le 2026-09-14 :
-           *  1. il partait de la position du bloc à la fin d'une entrée jouée EN
-           *     TEMPS — plus on scrollait vite, plus il partait haut, jusqu'à se
-           *     jouer hors écran (voir `E.entreeCourse`) ;
-           *  2. une fois l'entrée passée au scroll, il n'était encore CRÉÉ qu'à sa
-           *     fin, c'est-à-dire au dernier pixel de l'amorti : lignes posées et
-           *     immobiles pendant ~700 ms, puis un rideau parti de 0 qui
-           *     rattrapait le scroll d'un bond. Vu sur une capture de Patrick —
-           *     citation grise de 4,9 à 5,7 s, bascule en une image à 5,8 s. */
+           *  ⚠️ Créé seulement à la fin de l'entrée, il partirait de 0 et
+           *  rattraperait le scroll d'un bond, après un temps mort visible. */
           let tl: gsap.core.Timeline | null = null;
           const demarrerRideau = () => {
             if (tl) return;
@@ -1188,10 +1172,9 @@ export default function PixelCurtainReveal({
               onUpdate: render,
               onComplete: terminerEntree,
             });
-            // La course de scroll, au même `scrub` que le rideau. Elle
-            // ne pousse les lignes que vers l'avant — une entrée ne se rejoue pas
-            // à l'envers, pas plus qu'avant, où elle était `once` : la progression
-            // de `lignes` est donc toujours le maximum déjà atteint.
+            // La course de scroll, au même `scrub` que le rideau. Elle ne pousse
+            // les lignes que vers l'avant — une entrée ne se rejoue pas à
+            // l'envers : la progression de `lignes` est le maximum déjà atteint.
             const course = { p: 0 };
             entreeST =
               gsap.to(course, {

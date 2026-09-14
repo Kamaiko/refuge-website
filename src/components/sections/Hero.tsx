@@ -7,6 +7,12 @@ import { MQ } from "@/lib/breakpoints";
 import { wantsReducedMotion } from "@/lib/motion";
 import BrandMark from "@/components/common/BrandMark";
 
+/** Starting zoom of the scroll parallax — the most the video is ever enlarged. */
+const PARALLAX_SCALE = 1.1;
+
+/** Width of `MEDIA.landscape.videoCompact`. */
+const COMPACT_WIDTH = 2160;
+
 /** Art-directed hero sources. The section is `h-[100svh]` with `object-cover`,
  *  so on a 390×844 phone the container ratio is ~0.45 — a 16:9 source loses
  *  roughly two thirds of its width to the crop, which is what made the site
@@ -17,7 +23,7 @@ const MEDIA = {
   landscape: {
     poster: "/images/hero-shape.avif",
     video: "/videos/hero-loop.mp4?v=8",
-    /** 2160 px, ~3,5 Mo au lieu de ~6 : assez jusqu'à un écran 1920 à DPR 1. */
+    /** The same loop, `COMPACT_WIDTH` wide. */
     videoCompact: "/videos/hero-loop-2160.mp4?v=1",
   },
   portrait: {
@@ -34,7 +40,7 @@ const SUBCOPY =
 
 /** Full-viewport hero. A muted looping video sits behind the brand
  *  wordmark, tagline and subcopy (all GSAP fade-up on mount). The video
- *  parallaxes (scale 1.1 → 1.0) on scroll via a scrubbed ScrollTrigger.
+ *  parallaxes (scale `PARALLAX_SCALE` → 1) on scroll via a scrubbed ScrollTrigger.
  *  Reduced-motion: skips entrance + parallax tweens, copy lands at rest.
  *
  *  LCP strategy — the poster is rendered as a real `<img>` element
@@ -82,13 +88,11 @@ export default function Hero() {
     // wrong file after an orientation change. `preload="none"` means the
     // element has no src until this effect runs anyway, and `.load()` below
     // is already explicit.
-    // Deux largeurs en paysage, choisies sur les pixels physiques qu'affiche le
-    // hero : largeur × DPR × le zoom 1,1 du parallaxe. 2160 px couvrent un écran
-    // 1920 à DPR 1 ; au-delà, 2880. Mesuré le 2026-09-14 : 3,5 Mo au lieu de 6
-    // pour la majorité des écrans de bureau.
-    const pixels = window.innerWidth * window.devicePixelRatio * 1.1;
+    // Landscape comes in two widths, picked on the physical pixels the hero
+    // shows at its most zoomed: viewport width × DPR × PARALLAX_SCALE.
+    const shownPixels = window.innerWidth * window.devicePixelRatio * PARALLAX_SCALE;
     video.src = window.matchMedia(MQ.mdUp).matches
-      ? pixels <= 2160
+      ? shownPixels <= COMPACT_WIDTH
         ? MEDIA.landscape.videoCompact
         : MEDIA.landscape.video
       : MEDIA.portrait.video;
@@ -148,7 +152,7 @@ export default function Hero() {
         if (mediaRef.current && sectionRef.current) {
           gsap.fromTo(
             mediaRef.current,
-            { scale: 1.1 },
+            { scale: PARALLAX_SCALE },
             {
               scale: 1.0,
               ease: "none",
@@ -207,7 +211,7 @@ export default function Hero() {
           </picture>
           {/* Video layered above the poster but invisible at mount —
               `preload="none"` + no `autoplay` means the browser doesn't
-              touch the ~6 MB MP4 on the critical path. The effect above
+              touch the MP4 on the critical path. The effect above
               swaps `videoReady → true` once the `canplay` event fires,
               fading the video over the poster. */}
           <video
