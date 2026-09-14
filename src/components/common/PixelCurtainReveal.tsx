@@ -280,7 +280,7 @@ const E = {
    *  ⚠️ Une course, jamais une durée : une entrée jouée en temps fait dépendre
    *  le départ du rideau de la vitesse de scroll, jusqu'à le jouer hors écran
    *  quand on scrolle vite. */
-  entreeCourse: 200,
+  entreeCourse: 330,
 
   /** **LISSAGE** — le `scrub` de l'entrée ET du rideau : `true`, aucun amorti
    *  ajouté. Lenis lisse déjà le scroll ; un `scrub` en secondes par-dessus

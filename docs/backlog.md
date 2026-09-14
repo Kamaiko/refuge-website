@@ -309,7 +309,7 @@ Les deux ne coûtent pas la même chose, ni à produire ni à charger.
 | Sujet | Décision | Quand |
 |---|---|---|
 | Vitesse du rideau | Aucun pin, aucune fenêtre allongée : la cause était `bandLength`. | 2026-09-07 |
-| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas — **sur 200 px de scroll dès l'entrée dans l'écran, jamais en temps** ; rideau créé au montage, parti où elle finit, **sans amorti ajouté à Lenis**. | 2026-09-08, revue le 2026-09-14 |
+| Entrée de la citation | Les lignes montent et se redressent, peintes dans le canvas — **sur 330 px de scroll dès l'entrée dans l'écran, jamais en temps** ; rideau créé au montage, parti où elle finit, **sans amorti ajouté à Lenis**. | 2026-09-08, revue le 2026-09-14 |
 | Hero mobile | Rendu actuel jugé parfait ; régénération close sans suite. | 2026-08-30 |
 | `next/dynamic` sur les overlays | **Ne vaut pas le coup** — mesuré, voir ci-dessous. | 2026-08-30 |
 | Paysage mobile | Pas un breakpoint ; objectif « pas cassé ». | — |
@@ -432,6 +432,11 @@ bascule en UNE image. Trois causes empilées, mesurées une à une :
 > résolution — a montré que la couleur démarrait pile à la fin de l'entrée : le
 > retard était un amorti, pas un trou. Faire cette courbe avant de toucher aux
 > fenêtres.
+
+Le retard retiré, le rideau partait plus tôt qu'avant — ce départ tardif
+n'était que l'amorti. La course d'entrée a donc été portée de 200 à **330 px**
+(A/B de Patrick) : le rideau retrouve la fenêtre d'avant le correctif, couleur
+vers 74 % et fin vers 32 % de la hauteur, sans dépendre de la vitesse.
 
 ---
 
